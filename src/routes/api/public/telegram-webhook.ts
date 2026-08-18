@@ -114,7 +114,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             const messageId = cb.message.message_id;
             const data = cb.data;
             const state = userState.get(chatId);
-            if (!state || state.action !== 'cadastrar_cliente') return new Response('OK');
+            
+            if (data.startsWith('view_client:')) {
 
             // Callbacks Globais e Fluxo de Detalhes
             if (data.startsWith('view_client:')) {
