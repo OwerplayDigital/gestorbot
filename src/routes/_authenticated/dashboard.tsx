@@ -47,63 +47,85 @@ function Dashboard() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["dashboard-stats-detailed"],
     queryFn: async () => {
-      const [plans, servers, clients, transactions, expiringClients] = await Promise.all([
-        supabase.from("plans").select("*", { count: "exact", head: true }),
-        supabase.from("servidores_iptv").select("*", { count: "exact", head: true }),
-        supabase.from("clientes").select("status"),
-        supabase.from("transacoes").select("valor, tipo, data"),
-        supabase.from("clientes")
-          .select("nome, vencimento, plano_id, servers:servidores_ids")
-          .or("status.eq.vencido,vencimento.lte." + new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
-          .order("vencimento", { ascending: true })
-          .limit(10),
-      ]);
+      try {
+        const [plans, servers, clients, transactions, expiringClients] = await Promise.all([
+          supabase.from("plans").select("*", { count: "exact", head: true }),
+          supabase.from("servidores_iptv").select("*", { count: "exact", head: true }),
+          supabase.from("clientes").select("status"),
+          supabase.from("transacoes").select("valor, tipo, data"),
+          supabase.from("clientes")
+            .select("nome, vencimento, plano_id, servers:servidores_ids")
+            .or("status.eq.vencido,vencimento.lte." + new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+            .order("vencimento", { ascending: true })
+            .limit(10),
+        ]);
 
-      const totalClients = clients.data?.length || 0;
-      const activeClients = clients.data?.filter(c => c.status === "ativo").length || 0;
-      const expiredClients = clients.data?.filter(c => c.status === "vencido").length || 0;
+        const totalClients = clients.data?.length || 0;
+        const activeClients = clients.data?.filter(c => c.status === "ativo").length || 0;
+        const expiredClients = clients.data?.filter(c => c.status === "vencido").length || 0;
 
-      const entradas = transactions.data
-        ?.filter((t) => t.tipo === "entrada")
-        .reduce((acc, t) => acc + Number(t.valor), 0) || 0;
-      
-      const saidas = transactions.data
-        ?.filter((t) => t.tipo === "saida")
-        .reduce((acc, t) => acc + Number(t.valor), 0) || 0;
+        const entradas = transactions.data
+          ?.filter((t) => t.tipo === "entrada")
+          .reduce((acc, t) => acc + Number(t.valor), 0) || 0;
+        
+        const saidas = transactions.data
+          ?.filter((t) => t.tipo === "saida")
+          .reduce((acc, t) => acc + Number(t.valor), 0) || 0;
 
-      // Group transactions by month for a chart (last 6 months)
-      const monthlyData: Record<string, { name: string, faturamento: number }> = {};
-      const now = new Date();
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const key = d.toISOString().substring(0, 7);
-        monthlyData[key] = { name: format(d, "MMM", { locale: ptBR }), faturamento: 0 };
-      }
-
-      transactions.data?.forEach(t => {
-        if (t.tipo === "entrada" && t.data) {
-          const key = t.data.substring(0, 7);
-          if (monthlyData[key]) {
-            monthlyData[key].faturamento += Number(t.valor);
-          }
+        // Group transactions by month for a chart (last 6 months)
+        const monthlyData: Record<string, { name: string, faturamento: number }> = {};
+        const now = new Date();
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const key = d.toISOString().substring(0, 7);
+          monthlyData[key] = { name: format(d, "MMM", { locale: ptBR }), faturamento: 0 };
         }
-      });
 
-      return {
-        plans: plans.count || 0,
-        servers: servers.count || 0,
-        activeClients,
-        expiredClients,
-        totalClients,
-        lucro: entradas - saidas,
-        faturamentoTotal: entradas,
-        chartData: Object.values(monthlyData),
-        expiringClients: expiringClients.data || [],
-        pieData: [
-          { name: "Ativos", value: activeClients, color: "hsl(var(--chart-1))" },
-          { name: "Vencidos", value: expiredClients, color: "hsl(var(--chart-2))" },
-        ]
-      };
+        transactions.data?.forEach(t => {
+          if (t.tipo === "entrada" && t.data) {
+            const key = t.data.substring(0, 7);
+            if (monthlyData[key]) {
+              monthlyData[key].faturamento += Number(t.valor);
+            }
+          }
+        });
+
+        const activeClientsCount = activeClients;
+        const expiredClientsCount = expiredClients;
+
+        return {
+          plans: plans.count || 0,
+          servers: servers.count || 0,
+          activeClients: activeClientsCount,
+          expiredClients: expiredClientsCount,
+          totalClients,
+          lucro: entradas - saidas,
+          faturamentoTotal: entradas,
+          chartData: Object.values(monthlyData),
+          expiringClients: expiringClients.data || [],
+          pieData: [
+            { name: "Ativos", value: activeClientsCount, color: "hsl(var(--chart-1))" },
+            { name: "Vencidos", value: expiredClientsCount, color: "hsl(var(--chart-2))" },
+          ]
+        };
+      } catch (error) {
+        console.error("Erro ao carregar dados do dashboard:", error);
+        return {
+          plans: 0,
+          servers: 0,
+          activeClients: 0,
+          expiredClients: 0,
+          totalClients: 0,
+          lucro: 0,
+          faturamentoTotal: 0,
+          chartData: [],
+          expiringClients: [],
+          pieData: [
+            { name: "Ativos", value: 0, color: "hsl(var(--chart-1))" },
+            { name: "Vencidos", value: 0, color: "hsl(var(--chart-2))" },
+          ]
+        };
+      }
     },
   });
 
