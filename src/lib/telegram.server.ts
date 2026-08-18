@@ -1,6 +1,23 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export const getAuthorizedUser = async (chatId: number) => {
+  // Nesta fase, verificamos primeiro se o chat ID consta no Secret fixo para bypass/teste rápido,
+  // mantendo a compatibilidade com a tabela do banco para o futuro.
+  const allowedId = process.env['TELEGRAM_ALLOWED_USER_ID'];
+  
+  if (allowedId && chatId.toString() === allowedId) {
+    // Busca um usuário admin ou o primeiro disponível para associar ao ID fixo, 
+    // ou retorna um ID de sistema se necessário. Para manter a regra de user_id, 
+    // consultamos a tabela vinculada.
+    const { data } = await supabase
+      .from("telegram_authorized_users")
+      .select("user_id")
+      .eq("telegram_chat_id", chatId)
+      .maybeSingle();
+    
+    if (data?.user_id) return data.user_id;
+  }
+
   const { data, error } = await supabase
     .from("telegram_authorized_users")
     .select("user_id")
