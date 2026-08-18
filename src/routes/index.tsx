@@ -23,6 +23,8 @@ function Index() {
           <li className="flex items-center gap-2">✅ RLS e Políticas de Segurança ativos (Isolamento por UUID)</li>
           <li className="flex items-center gap-2">✅ Índices de performance criados</li>
           <li className="flex items-center gap-2">✅ Autenticação Social (Google) habilitada</li>
+          <li className="flex items-center gap-2 text-primary font-medium">🚀 Núcleo do Bot Telegram integrado (Webook pronto)</li>
+          <li className="flex items-center gap-2">⚠️ Configure TELEGRAM_BOT_TOKEN nos segredos do projeto</li>
         </ul>
       </div>
     </div>
