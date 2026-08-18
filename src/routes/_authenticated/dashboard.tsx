@@ -65,12 +65,12 @@ function Dashboard() {
         const expiredClients = clients.data?.filter(c => c?.status === "vencido").length ?? 0;
 
         const entradas = transactions.data
-          ?.filter((t) => t.tipo === "entrada")
-          .reduce((acc, t) => acc + Number(t.valor), 0) || 0;
+          ?.filter((t) => t?.tipo === "entrada")
+          .reduce((acc, t) => acc + Number(t?.valor ?? 0), 0) ?? 0;
         
         const saidas = transactions.data
-          ?.filter((t) => t.tipo === "saida")
-          .reduce((acc, t) => acc + Number(t.valor), 0) || 0;
+          ?.filter((t) => t?.tipo === "saida")
+          .reduce((acc, t) => acc + Number(t?.valor ?? 0), 0) ?? 0;
 
         // Group transactions by month for a chart (last 6 months)
         const monthlyData: Record<string, { name: string, faturamento: number }> = {};
