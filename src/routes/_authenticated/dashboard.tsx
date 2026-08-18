@@ -195,7 +195,7 @@ function Dashboard() {
               }}
               className="h-full w-full"
             >
-              <BarChart data={stats?.chartData}>
+              <BarChart data={stats?.chartData || []}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
                 <XAxis 
                   dataKey="name" 
@@ -234,7 +234,7 @@ function Dashboard() {
              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={stats?.pieData}
+                    data={stats?.pieData || []}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -242,7 +242,7 @@ function Dashboard() {
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {stats?.pieData.map((entry, index) => (
+                    {stats?.pieData?.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -285,11 +285,11 @@ function Dashboard() {
                 </TableRow>
               ) : (
                 stats?.expiringClients.map((client, idx) => {
-                  const isExpired = new Date(client.vencimento) < new Date();
+                  const isExpired = client.vencimento ? new Date(client.vencimento) < new Date() : false;
                   return (
                     <TableRow key={idx} className="group hover:bg-muted/20">
                       <TableCell className="pl-6 font-medium">{client.nome}</TableCell>
-                      <TableCell>{format(new Date(client.vencimento), "dd 'de' MMMM", { locale: ptBR })}</TableCell>
+                      <TableCell>{client.vencimento ? format(new Date(client.vencimento), "dd 'de' MMMM", { locale: ptBR }) : "N/A"}</TableCell>
                       <TableCell>
                         <Badge variant={isExpired ? "destructive" : "secondary"} className="font-normal">
                           {isExpired ? "Vencido" : "Vencendo"}
