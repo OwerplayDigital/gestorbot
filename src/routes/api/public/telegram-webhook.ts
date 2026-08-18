@@ -13,6 +13,7 @@ import {
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env['TELEGRAM_BOT_TOKEN']}`;
 
 type ClientRegistrationData = {
+  id?: string;
   nome: string;
   whatsapp: string;
   plano_id: string;
@@ -25,7 +26,7 @@ type ClientRegistrationData = {
 };
 
 type UserState = {
-  action: string;
+  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp';
   step: number;
   data: Partial<ClientRegistrationData>;
 };
