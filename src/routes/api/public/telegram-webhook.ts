@@ -51,7 +51,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           if (!userId) {
             await sendMessage(chatId, `Acesso negado. Seu Chat ID é: ${chatId}`);
             console.warn(`Tentativa de acesso não autorizado: Chat ID ${chatId}`);
-            return new Response('Unauthorized', { status: 401 });
+            // Retornamos 200 para o Telegram parar de reenviar a mesma mensagem
+            return new Response('OK');
           }
 
           // 2. Lógica de Navegação e Fluxos
