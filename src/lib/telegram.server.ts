@@ -52,7 +52,7 @@ export const createPlan = async (userId: string, name: string, price: number) =>
 export const listPlans = async () => {
   const { data, error } = await supabaseAdmin
     .from("plans")
-    .select("name, price, active");
+    .select("id, name, price, active");
 
   if (error) {
     console.error("Erro Supabase (plans select):", error);
@@ -83,7 +83,7 @@ export const createServer = async (userId: string, name: string, cost: number) =
 export const listServers = async () => {
   const { data, error } = await supabaseAdmin
     .from("servidores_iptv")
-    .select("name, valor, active");
+    .select("id, name, valor, active");
 
   if (error) {
     console.error("Erro Supabase (servidores select):", error);
@@ -153,23 +153,30 @@ export const findClientByName = async (name: string) => {
   return data;
 };
 
-export const createClient = async (userId: string, clientData: { nome: string; whatsapp: string; plano_id: string; vencimento: string }) => {
+export const createClientWithDetails = async (clientData: { 
+  nome: string; 
+  whatsapp: string; 
+  plano_id: string; 
+  servidores_ids: string[]; 
+  desconto: number; 
+  vencimento: string 
+}) => {
   const { data, error } = await supabaseAdmin
     .from("clientes")
     .insert({
-      user_id: userId,
       nome: clientData.nome,
       whatsapp: clientData.whatsapp,
       plano_id: clientData.plano_id,
+      servidores_ids: clientData.servidores_ids,
+      desconto: clientData.desconto,
       vencimento: clientData.vencimento,
       status: 'ativo',
-      valor: 0, // Default ou buscar do plano
     })
     .select()
     .single();
 
   if (error) {
-    console.error("Erro Supabase (createClient):", error);
+    console.error("Erro Supabase (createClientWithDetails):", error);
     throw error;
   }
   return data;
