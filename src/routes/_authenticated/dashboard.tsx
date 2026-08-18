@@ -276,12 +276,12 @@ function Dashboard() {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {stats?.pieData?.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-              </PieChart>
+                    {stats?.pieData?.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                </PieChart>
             </ChartContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none pt-16">
               <span className="text-2xl font-bold">{stats?.totalClients}</span>
