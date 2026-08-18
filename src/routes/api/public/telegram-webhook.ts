@@ -454,12 +454,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               break;
             case '📅 Vencendo Hoje':
               const today = await listClientsExpiringToday();
-              const tMsg = today.map(c => `• ${c.nome}`).join('\n') || 'Ninguém vence hoje.';
+              const tMsg = today.map((c: any) => `• ${c.nome}`).join('\n') || 'Ninguém vence hoje.';
               await sendMessage(chatId, `📅 <b>VENCENDO HOJE:</b>\n${tMsg}`, clientsSubMenu);
               break;
             case '❌ Vencidos':
               const expired = await listExpiredClients();
-              const eMsg = expired.map(c => `• ${c.nome} (${formatBRDate(new Date(c.vencimento + 'T12:00:00'))})`).join('\n') || 'Nenhum vencido.';
+              const eMsg = expired.map((c: any) => `• ${c.nome} (${formatBRDate(new Date(c.vencimento + 'T12:00:00'))})`).join('\n') || 'Nenhum vencido.';
               await sendMessage(chatId, `❌ <b>VENCIDOS:</b>\n${eMsg}`, clientsSubMenu);
               break;
             case '➕ Novo Cliente':
