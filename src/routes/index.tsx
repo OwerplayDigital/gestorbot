@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,6 +13,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -45,6 +46,8 @@ function Index() {
 
     if (error) {
       toast.error("Erro ao entrar: " + error.message);
+    } else {
+      navigate({ to: "/dashboard" });
     }
     setSigningIn(false);
   };
@@ -61,6 +64,11 @@ function Index() {
     );
   }
 
+  if (user) {
+    navigate({ to: "/dashboard" });
+    return null;
+  }
+
   return (
     <div className="flex flex-col min-h-screen items-center justify-center bg-background p-4">
       <Card className="max-w-md w-full">
@@ -69,48 +77,32 @@ function Index() {
           <CardDescription>Acesse o painel administrativo</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!user ? (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="admin@exemplo.com" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={signingIn}>
-                {signingIn ? "Entrando..." : "Entrar"}
-              </Button>
-            </form>
-          ) : (
-            <div className="space-y-4">
-              <div className="p-4 bg-secondary rounded-md break-all">
-                <p className="text-xs font-mono text-secondary-foreground mb-1 font-bold">Status: AUTENTICADO</p>
-                <p className="text-xs font-mono text-secondary-foreground">UUID: {user.id}</p>
-                <p className="text-xs font-mono text-secondary-foreground">Email: {user.email}</p>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Copie o UUID acima para vincular ao Telegram.
-              </p>
-              <Button onClick={handleLogout} className="w-full" variant="ghost">
-                Sair
-              </Button>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="admin@exemplo.com" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
-          )}
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={signingIn}>
+              {signingIn ? "Entrando..." : "Entrar"}
+            </Button>
+          </form>
         </CardContent>
       </Card>
       
