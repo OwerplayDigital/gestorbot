@@ -14,10 +14,28 @@ import {
   getFinancialSummary 
 } from '@/lib/telegram.server';
 
+type ClientRegistrationData = {
+  nome?: string;
+  whatsapp?: string;
+  plano_id?: string;
+  plano_name?: string;
+  servidores_ids?: string[];
+  servidores_names?: string[];
+  desconto?: number;
+  vencimento?: string;
+  vencimento_temp?: string;
+};
+
+type UserState = {
+  action: string;
+  step: number;
+  data: ClientRegistrationData;
+};
+
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env['TELEGRAM_BOT_TOKEN']}`;
 
 // Gerenciador de estado temporário para o fluxo de cadastro
-const userState = new Map<number, { action: string; step: number; data: any }>();
+const userState = new Map<number, UserState>();
 
 // Helper para enviar mensagens com teclado inline ou comum
 async function sendMessage(chatId: number, text: string, replyMarkup?: any) {
