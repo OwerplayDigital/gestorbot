@@ -78,7 +78,7 @@ function parseBRDate(brDate: string): string | null {
   const d = parts[0], m = parts[1], y = parts[2];
   if (!d || !m || !y) return null;
   const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-  return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
+  return isNaN(date.getTime()) ? null : (date.toISOString().split('T')[0] ?? null);
 }
 
 export const Route = createFileRoute('/api/public/telegram-webhook')({
@@ -153,7 +153,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               } else if (data === 'venc_confirm') {
                 const vt = state.data.vencimento_temp;
                 if (!vt) return new Response('OK');
-                state.data.vencimento = vt.split('T')[0];
+                const isoDate = vt.split('T')[0];
+                if (isoDate) state.data.vencimento = isoDate;
                 state.step = 7;
                 const resumo = `📝 <b>RESUMO:</b>\n• Nome: ${state.data.nome}\n• Plano: ${state.data.plano_name}\n• Venc: ${formatBRDate(new Date((state.data.vencimento || '') + 'T12:00:00'))}\n\nConfirmar?`;
                 await sendMessage(chatId, resumo, {
