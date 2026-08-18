@@ -122,8 +122,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             const state = userState.get(chatId);
             
             if (data === 'search_retry') {
-              await setUserStep(chatId, 'awaiting_search_query');
-              await sendMessage(chatId, "🔍 Digite o nome (ou parte do nome) do cliente que deseja buscar:");
+              await sendMessage(chatId, "Para buscar, envie: <code>/buscar nome</code> (Exemplo: <code>/buscar Ivan</code>)");
               return new Response('OK');
             }
 
@@ -322,20 +321,25 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           const dbStep = await getUserStep(chatId);
           const state = userState.get(chatId);
 
-          if (dbStep === 'awaiting_search_query') {
-            const results = await findClientByName(text);
-            if (results.length === 0) {
-              await sendMessage(chatId, "❌ Nenhum cliente encontrado com esse nome.", {
-                inline_keyboard: [
-                  [{ text: "🔍 Buscar Novamente", callback_data: "search_retry" }],
-                  [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
-                ]
-              });
-            } else {
-              const buttons = results.map(c => ([{ text: `👤 ${c.nome}`, callback_data: `view_client:${c.nome}` }]));
-              await sendMessage(chatId, "✅ Resultados encontrados:", { inline_keyboard: buttons });
+          // Comando /buscar simplificado
+          if (text.startsWith('/buscar ')) {
+            const nome = text.replace('/buscar ', '').trim();
+            if (nome) {
+              const results = await findClientByName(nome);
+              if (results.length === 0) {
+                await sendMessage(chatId, "❌ Nenhum cliente encontrado com esse nome.");
+              } else {
+                const buttons = results.map(c => ([{ text: `👤 ${c.nome}`, callback_data: `view_client:${c.nome}` }]));
+                await sendMessage(chatId, "✅ Resultados encontrados:", { inline_keyboard: buttons });
+              }
             }
+            return new Response('OK');
+          }
+
+          // Se o usuário estiver no passo de busca (clicou no botão)
+          if (dbStep === 'awaiting_search_query') {
             await setUserStep(chatId, null);
+            await sendMessage(chatId, "Para buscar, envie: <code>/buscar nome</code> (Exemplo: <code>/buscar Ivan</code>)");
             return new Response('OK');
           }
 
@@ -468,8 +472,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               await sendMessage(chatId, "Nome do cliente:");
               break;
             case '🔍 Buscar Cliente':
-              await setUserStep(chatId, 'awaiting_search_query');
-              await sendMessage(chatId, "🔍 Digite o nome (ou parte do nome) do cliente que deseja buscar:");
+              await sendMessage(chatId, "Para buscar, envie: <code>/buscar nome</code> (Exemplo: <code>/buscar Ivan</code>)");
               break;
             case '💰 Financeiro':
               const f = await getFinancialSummary();
