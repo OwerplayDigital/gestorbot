@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { getAuthorizedUser, createPlan, listPlans, createServer, listServers } from '@/lib/telegram.server';
 
-const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
+const TELEGRAM_API = `https://api.telegram.org/bot${process.env['TELEGRAM_BOT_TOKEN']}`;
 
 // Gerenciador de estado temporário para o fluxo de cadastro (simulado via memória no Worker por simplicidade nesta etapa)
 // Em produção, isso deveria ir para uma tabela de 'sessions' ou Redis.
