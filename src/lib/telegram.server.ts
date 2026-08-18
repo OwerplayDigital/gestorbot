@@ -31,7 +31,7 @@ export const getAuthorizedUser = async (chatId: number) => {
 };
 
 export const createPlan = async (userId: string, name: string, price: number) => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("plans")
     .insert({
       user_id: userId,
@@ -49,11 +49,10 @@ export const createPlan = async (userId: string, name: string, price: number) =>
   return data;
 };
 
-export const listPlans = async (userId: string) => {
-  const { data, error } = await supabase
+export const listPlans = async () => {
+  const { data, error } = await supabaseAdmin
     .from("plans")
-    .select("name, price, active")
-    .eq("user_id", userId);
+    .select("name, price, active");
 
   if (error) {
     console.error("Erro Supabase (plans select):", error);
@@ -63,7 +62,7 @@ export const listPlans = async (userId: string) => {
 };
 
 export const createServer = async (userId: string, name: string, cost: number) => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("servidores_iptv")
     .insert({
       user_id: userId,
@@ -81,11 +80,10 @@ export const createServer = async (userId: string, name: string, cost: number) =
   return data;
 };
 
-export const listServers = async (userId: string) => {
-  const { data, error } = await supabase
+export const listServers = async () => {
+  const { data, error } = await supabaseAdmin
     .from("servidores_iptv")
-    .select("name, valor, active")
-    .eq("user_id", userId);
+    .select("name, valor, active");
 
   if (error) {
     console.error("Erro Supabase (servidores select):", error);
