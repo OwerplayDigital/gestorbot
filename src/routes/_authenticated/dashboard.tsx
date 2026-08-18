@@ -12,9 +12,9 @@ function Dashboard() {
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const [plans, servers, clients, transactions] = await Promise.all([
-        supabase.from("plans").select("count"),
-        supabase.from("servidores_iptv").select("count"),
-        supabase.from("clientes").select("count"),
+        supabase.from("plans").select("*", { count: "exact", head: true }),
+        supabase.from("servidores_iptv").select("*", { count: "exact", head: true }),
+        supabase.from("clientes").select("*", { count: "exact", head: true }).eq("status", "ativo"),
         supabase.from("transacoes").select("valor, tipo"),
       ]);
 
