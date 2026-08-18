@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "./integrations/supabase/client.server";
+import { supabaseAdmin } from "../src/integrations/supabase/client.server";
 import fs from "fs";
 import path from "path";
 
