@@ -122,8 +122,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             const state = userState.get(chatId);
             
             if (data === 'search_retry') {
-              await setUserStep(chatId, 'awaiting_search_query');
-              await sendMessage(chatId, "🔍 Digite o nome (ou parte do nome) do cliente que deseja buscar:");
+              await sendMessage(chatId, "Para buscar, envie: <code>/buscar nome</code> (Exemplo: <code>/buscar Ivan</code>)");
               return new Response('OK');
             }
 
