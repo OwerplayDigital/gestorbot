@@ -48,6 +48,24 @@ async function sendMessage(chatId: number, text: string, replyMarkup?: any) {
   }
 }
 
+async function editMessage(chatId: number, messageId: number, text: string, replyMarkup?: any) {
+  try {
+    await fetch(`${TELEGRAM_API}/editMessageText`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        message_id: messageId,
+        text,
+        reply_markup: replyMarkup,
+        parse_mode: 'HTML'
+      }),
+    });
+  } catch (err) {
+    console.error("Erro ao editar mensagem:", err);
+  }
+}
+
 const mainMenu = {
   keyboard: [
     [{ text: '👥 Clientes' }, { text: '🖥️ Servidores' }],
@@ -91,6 +109,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           if (body.callback_query) {
             const cb = body.callback_query;
             const chatId = cb.message.chat.id;
+            const messageId = cb.message.message_id;
             const data = cb.data;
             const state = userState.get(chatId);
             if (!state || state.action !== 'cadastrar_cliente') return new Response('OK');
@@ -135,19 +154,20 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const currentIso = state.data.vencimento_temp;
               if (!currentIso) return new Response('OK');
               const d = new Date(currentIso);
-              if (data === 'venc_m5') d.setDate(d.getDate() - 5);
-              if (data === 'venc_m1') d.setDate(d.getDate() - 1);
-              if (data === 'venc_p1') d.setDate(d.getDate() + 1);
-              if (data === 'venc_p5') d.setDate(d.getDate() + 5);
               
-              if (data.startsWith('venc_')) {
+              if (data === 'venc_m5') d.setDate(d.getDate() - 5);
+              else if (data === 'venc_m1') d.setDate(d.getDate() - 1);
+              else if (data === 'venc_p1') d.setDate(d.getDate() + 1);
+              else if (data === 'venc_p5') d.setDate(d.getDate() + 5);
+              
+              if (data.startsWith('venc_') && data !== 'venc_confirm' && data !== 'venc_edit') {
                 state.data.vencimento_temp = d.toISOString();
                 const br = formatBRDate(d);
-                await sendMessage(chatId, `Vencimento: <b>${br}</b>`, {
+                await editMessage(chatId, messageId, `<b>Passo 6: Seleção de Vencimento</b>\nVencimento: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "venc_m5" }, { text: "-1d", callback_data: "venc_m1" }, { text: "+1d", callback_data: "venc_p1" }, { text: "+5d", callback_data: "venc_p5" }],
-                    [{ text: `Confirmar: ${br}`, callback_data: "venc_confirm" }],
-                    [{ text: "Digitar Data", callback_data: "venc_edit" }]
+                    [{ text: `📅 Confirmar Data: ${br}`, callback_data: "venc_confirm" }],
+                    [{ text: "✏️ Digitar Outra Data", callback_data: "venc_edit" }]
                   ]
                 });
               } else if (data === 'venc_confirm') {
@@ -155,13 +175,26 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 if (!vt) return new Response('OK');
                 const isoDate = vt.split('T')[0];
                 if (isoDate) state.data.vencimento = isoDate;
+                
                 state.step = 7;
-                const resumo = `📝 <b>RESUMO:</b>\n• Nome: ${state.data.nome}\n• Plano: ${state.data.plano_name}\n• Venc: ${formatBRDate(new Date((state.data.vencimento || '') + 'T12:00:00'))}\n\nConfirmar?`;
+                const brDate = formatBRDate(new Date((state.data.vencimento || '') + 'T12:00:00'));
+                const resumo = `📝 <b>RESUMO DO CADASTRO:</b>\n` +
+                  `• Nome: ${state.data.nome}\n` +
+                  `• WhatsApp: ${state.data.whatsapp === '0' ? 'Não informado' : state.data.whatsapp}\n` +
+                  `• Plano: ${state.data.plano_name}\n` +
+                  `• Servidores: ${state.data.servidores_names?.join(', ')}\n` +
+                  `• Desconto: R$ ${state.data.desconto?.toFixed(2)}\n` +
+                  `• Vencimento: ${brDate}\n\n` +
+                  `Deseja confirmar o cadastro?`;
+                
                 await sendMessage(chatId, resumo, {
-                  inline_keyboard: [[{ text: "✅ Confirmar", callback_data: "f_ok" }, { text: "❌ Cancelar", callback_data: "f_no" }]]
+                  inline_keyboard: [
+                    [{ text: "✅ Confirmar e Cadastrar", callback_data: "f_ok" }],
+                    [{ text: "❌ Cancelar", callback_data: "f_no" }]
+                  ]
                 });
               } else if (data === 'venc_edit') {
-                await sendMessage(chatId, "Digite DD/MM/AAAA:");
+                await sendMessage(chatId, "Digite a data no formato DD/MM/AAAA:");
               }
             }
             else if (data === 'f_ok') {
@@ -214,11 +247,11 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const d = new Date(); d.setDate(d.getDate() + 30);
               state.data.vencimento_temp = d.toISOString();
               const br = formatBRDate(d);
-              await sendMessage(chatId, `Vencimento: <b>${br}</b>`, {
+              await sendMessage(chatId, `<b>Passo 6: Seleção de Vencimento</b>\nVencimento: <b>${br}</b>`, {
                 inline_keyboard: [
                   [{ text: "-5d", callback_data: "venc_m5" }, { text: "-1d", callback_data: "venc_m1" }, { text: "+1d", callback_data: "venc_p1" }, { text: "+5d", callback_data: "venc_p5" }],
-                  [{ text: `Confirmar: ${br}`, callback_data: "venc_confirm" }],
-                  [{ text: "Digitar Data", callback_data: "venc_edit" }]
+                  [{ text: `📅 Confirmar Data: ${br}`, callback_data: "venc_confirm" }],
+                  [{ text: "✏️ Digitar Outra Data", callback_data: "venc_edit" }]
                 ]
               });
             } else if (state.step === 6) {
