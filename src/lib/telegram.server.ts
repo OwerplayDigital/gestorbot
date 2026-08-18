@@ -1,23 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export const getAuthorizedUser = async (chatId: number) => {
-  // Nesta fase, verificamos primeiro se o chat ID consta no Secret fixo para bypass/teste rápido,
-  // mantendo a compatibilidade com a tabela do banco para o futuro.
+  // A fonte de verdade é a tabela telegram_authorized_users.
+  // O TELEGRAM_ALLOWED_USER_ID (se presente) atua apenas como um filtro adicional de segurança,
+  // mas o vínculo obrigatório é o Chat ID no banco de dados.
   const allowedId = process.env['TELEGRAM_ALLOWED_USER_ID'];
   
-  if (allowedId && chatId.toString() === allowedId) {
-    // Busca um usuário admin ou o primeiro disponível para associar ao ID fixo, 
-    // ou retorna um ID de sistema se necessário. Para manter a regra de user_id, 
-    // consultamos a tabela vinculada.
-    const { data } = await supabase
-      .from("telegram_authorized_users")
-      .select("user_id")
-      .eq("telegram_chat_id", chatId)
-      .maybeSingle();
-    
-    if (data?.user_id) return data.user_id;
-  }
-
   const { data, error } = await supabase
     .from("telegram_authorized_users")
     .select("user_id")
@@ -28,7 +16,19 @@ export const getAuthorizedUser = async (chatId: number) => {
     console.error("Erro ao buscar usuário autorizado no Telegram:", error);
     return null;
   }
-  return data?.user_id || null;
+
+  const userId = data?.user_id || null;
+
+  // Se existir um ID permitido definido em segredo, validamos se o chatId coincide.
+  // Caso contrário, seguimos apenas com a validação do banco.
+  if (allowedId && userId) {
+    if (chatId.toString() !== allowedId) {
+      console.warn(`Chat ID ${chatId} vinculado a ${userId} mas não consta em TELEGRAM_ALLOWED_USER_ID`);
+      return null;
+    }
+  }
+
+  return userId;
 };
 
 export const createPlan = async (userId: string, name: string, price: number) => {
