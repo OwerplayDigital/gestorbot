@@ -126,12 +126,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               break;
             case 'Listar planos':
               try {
-                const plans = await listPlans(userId);
+                const plans = await listPlans();
                 if (plans.length === 0) {
                   await sendMessage(chatId, "Nenhum plano encontrado.");
                 } else {
-                  const listText = plans.map(p => `- ${p.name}: R$ ${p.price.toFixed(2)} (${p.active ? 'Ativo' : 'Inativo'})`).join('\n');
-                  await sendMessage(chatId, `Planos Cadastrados:\n\n${listText}`, plansMenu);
+                  const listText = plans.map(p => `• ${p.name}: R$ ${Number(p.price).toFixed(2)} (${p.active ? 'Ativo' : 'Inativo'})`).join('\n');
+                  await sendMessage(chatId, `📋 Planos Cadastrados:\n\n${listText}`, plansMenu);
                 }
               } catch (err) {
                 await sendMessage(chatId, "❌ Erro ao buscar planos.");
@@ -143,12 +143,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               break;
             case 'Listar servidores':
               try {
-                const servers = await listServers(userId);
+                const servers = await listServers();
                 if (servers.length === 0) {
                   await sendMessage(chatId, "Nenhum servidor encontrado.");
                 } else {
-                  const listText = servers.map(s => `- ${s.name}: R$ ${s.valor.toFixed(2)} (${s.active ? 'Ativo' : 'Inativo'})`).join('\n');
-                  await sendMessage(chatId, `Servidores Cadastrados:\n\n${listText}`, serversMenu);
+                  const listText = servers.map(s => `• ${s.name}: R$ ${Number(s.valor).toFixed(2)} (${s.active ? 'Ativo' : 'Inativo'})`).join('\n');
+                  await sendMessage(chatId, `🖥️ Servidores Cadastrados:\n\n${listText}`, serversMenu);
                 }
               } catch (err) {
                 await sendMessage(chatId, "❌ Erro ao buscar servidores.");
