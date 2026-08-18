@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { getAuthorizedUser, createPlan, listPlans, createServer, listServers, getClientsSummary, listExpiredClients, listClientsExpiringToday } from '@/lib/telegram.server';
+import { getAuthorizedUser, createPlan, listPlans, createServer, listServers, getClientsSummary, listExpiredClients, listClientsExpiringToday, findClientByName, createClient, getFinancialSummary } from '@/lib/telegram.server';
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env['TELEGRAM_BOT_TOKEN']}`;
 
@@ -21,19 +21,28 @@ async function sendMessage(chatId: number, text: string, replyMarkup?: any) {
 
 const mainMenu = {
   keyboard: [
-    [{ text: 'PLANOS' }, { text: 'SERVIDORES' }],
-    [{ text: 'Clientes' }, { text: 'Vencidos' }, { text: 'Vencendo Hoje' }]
+    [{ text: '👥 Clientes' }, { text: '🖥️ Servidores' }],
+    [{ text: '📋 Planos' }, { text: '💰 Financeiro' }]
+  ],
+  resize_keyboard: true,
+};
+
+const clientsSubMenu = {
+  keyboard: [
+    [{ text: '📊 Resumo' }, { text: '📅 Vencendo Hoje' }],
+    [{ text: '❌ Vencidos' }, { text: '🔍 Buscar Cliente' }],
+    [{ text: '➕ Novo Cliente' }, { text: '🔙 Voltar' }]
   ],
   resize_keyboard: true,
 };
 
 const plansMenu = {
-  keyboard: [[{ text: 'Cadastrar plano' }], [{ text: 'Listar planos' }], [{ text: 'Voltar' }]],
+  keyboard: [[{ text: 'Cadastrar plano' }], [{ text: 'Listar planos' }], [{ text: '🔙 Voltar' }]],
   resize_keyboard: true,
 };
 
 const serversMenu = {
-  keyboard: [[{ text: 'Cadastrar servidor' }], [{ text: 'Listar servidores' }], [{ text: 'Voltar' }]],
+  keyboard: [[{ text: 'Cadastrar servidor' }], [{ text: 'Listar servidores' }], [{ text: '🔙 Voltar' }]],
   resize_keyboard: true,
 };
 
@@ -61,7 +70,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           // 2. Lógica de Navegação e Fluxos
           const state = userState.get(chatId);
 
-          if (text === '/start' || text === 'Voltar') {
+          if (text === '/start' || text === '🔙 Voltar' || text === 'Voltar') {
             userState.delete(chatId);
             await sendMessage(chatId, "Menu Principal:", mainMenu);
             return new Response('OK');
@@ -115,13 +124,129 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             }
           }
 
+          // Fluxo de Busca de Cliente
+          if (state?.action === 'buscar_cliente') {
+            try {
+              const clients = await findClientByName(text);
+              if (clients.length === 0) {
+                await sendMessage(chatId, "Nenhum cliente encontrado com esse nome.", clientsSubMenu);
+              } else {
+                const listText = clients.map(c => `👤 ${c.nome}\n📱 ${c.whatsapp || 'N/A'}\n📅 Vencimento: ${c.vencimento}\n⚖️ Status: ${c.status}`).join('\n\n');
+                await sendMessage(chatId, `🔍 Resultados da Busca:\n\n${listText}`, clientsSubMenu);
+              }
+              userState.delete(chatId);
+            } catch (err) {
+              await sendMessage(chatId, "❌ Erro ao buscar cliente.", clientsSubMenu);
+            }
+            return new Response('OK');
+          }
+
+          // Fluxo de Cadastro de Novo Cliente (Simplificado)
+          if (state?.action === 'cadastrar_cliente') {
+            if (state.step === 1) {
+              state.data.nome = text;
+              state.step = 2;
+              await sendMessage(chatId, "Digite o WhatsApp do cliente (ou 'N/A'):");
+              return new Response('OK');
+            } else if (state.step === 2) {
+              state.data.whatsapp = text;
+              state.step = 3;
+              // Buscamos planos para mostrar opções (opcionalmente simplificado aqui para pegar o ID do primeiro plano ou pedir manual)
+              await sendMessage(chatId, "Digite a Data de Vencimento (AAAA-MM-DD):");
+              return new Response('OK');
+            } else if (state.step === 3) {
+              state.data.vencimento = text;
+              try {
+                // Para o MVP de cadastro via bot, vamos usar um plano padrão ou o primeiro plano ativo
+                const plans = await listPlans();
+                if (plans.length === 0) {
+                  await sendMessage(chatId, "Erro: Cadastre um plano antes de cadastrar clientes.", mainMenu);
+                  userState.delete(chatId);
+                  return new Response('OK');
+                }
+                // Simplesmente associamos ao primeiro plano
+                const { data: firstPlan } = await supabaseAdmin.from('plans').select('id').limit(1).single();
+                
+                await createClient(userId, {
+                  nome: state.data.nome,
+                  whatsapp: state.data.whatsapp === 'N/A' ? '' : state.data.whatsapp,
+                  plano_id: (firstPlan as any).id,
+                  vencimento: state.data.vencimento
+                });
+                
+                await sendMessage(chatId, `✅ Cliente ${state.data.nome} cadastrado com sucesso!`, clientsSubMenu);
+                userState.delete(chatId);
+              } catch (err) {
+                console.error(err);
+                await sendMessage(chatId, "❌ Erro ao cadastrar cliente. Verifique o formato da data (AAAA-MM-DD).", clientsSubMenu);
+              }
+              return new Response('OK');
+            }
+          }
+
           // Comandos Iniciais
           switch (text) {
-            case 'PLANOS':
+            case '👥 Clientes':
+              await sendMessage(chatId, "Área de Clientes:", clientsSubMenu);
+              break;
+            case '📋 Planos':
               await sendMessage(chatId, "Gerenciar Planos:", plansMenu);
               break;
-            case 'SERVIDORES':
+            case '🖥️ Servidores':
               await sendMessage(chatId, "Gerenciar Servidores:", serversMenu);
+              break;
+            case '💰 Financeiro':
+              try {
+                const fin = await getFinancialSummary();
+                const msg = `💰 RESUMO FINANCEIRO\n\n📈 Entradas: R$ ${fin.entradas.toFixed(2)}\n📉 Saídas: R$ ${fin.saidas.toFixed(2)}\n💎 Lucro: R$ ${fin.lucro.toFixed(2)}`;
+                await sendMessage(chatId, msg, mainMenu);
+              } catch (err) {
+                await sendMessage(chatId, "❌ Erro ao buscar financeiro.");
+              }
+              break;
+            case '📊 Resumo':
+              try {
+                const summary = await getClientsSummary();
+                const msg = `📊 RESUMO DE CLIENTES\n• Total: ${summary.total} clientes\n• Ativos: ${summary.ativos} clientes\n• Vencidos: ${summary.vencidos} clientes`;
+                await sendMessage(chatId, msg, clientsSubMenu);
+              } catch (err) {
+                await sendMessage(chatId, "❌ Erro ao buscar resumo de clientes.");
+              }
+              break;
+            case '📅 Vencendo Hoje':
+              try {
+                const todayList = await listClientsExpiringToday();
+                if (!todayList || todayList.length === 0) {
+                  await sendMessage(chatId, "Nenhum cliente vencendo hoje.", clientsSubMenu);
+                } else {
+                  const listText = todayList.map(c => `• ${c.nome} (${c.vencimento})`).join('\n');
+                  await sendMessage(chatId, `📅 Vencendo Hoje:\n\n${listText}`, clientsSubMenu);
+                }
+              } catch (err) {
+                await sendMessage(chatId, "❌ Erro ao buscar vencimentos de hoje.");
+              }
+              break;
+            case '❌ Vencidos':
+              try {
+                const expired = await listExpiredClients();
+                if (!expired || expired.length === 0) {
+                  await sendMessage(chatId, "Nenhum cliente vencido encontrado.", clientsSubMenu);
+                } else {
+                  const listText = expired.map(c => `• ${c.nome} | ${c.vencimento}`).join('\n');
+                  await sendMessage(chatId, `❌ CLIENTES VENCIDOS (Exibindo os primeiros 15)\n\n${listText}`, clientsSubMenu);
+                }
+              } catch (err) {
+                console.error("DEBUG Telegram Vencidos:", err);
+                await sendMessage(chatId, "❌ Erro ao buscar vencidos.");
+              }
+              break;
+            case '🔍 Buscar Cliente':
+              userState.set(chatId, { action: 'buscar_cliente', step: 1, data: {} });
+              await sendMessage(chatId, "Digite o nome (ou parte dele) para buscar:");
+              break;
+            case '➕ Novo Cliente':
+              userState.set(chatId, { action: 'cadastrar_cliente', step: 1, data: {} });
+              await sendMessage(chatId, "Digite o Nome completo do cliente:");
               break;
             case 'Cadastrar plano':
               userState.set(chatId, { action: 'cadastrar_plano', step: 1, data: {} });
@@ -155,42 +280,6 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 }
               } catch (err) {
                 await sendMessage(chatId, "❌ Erro ao buscar servidores.");
-              }
-              break;
-            case 'Clientes':
-              try {
-                const summary = await getClientsSummary();
-                const msg = `📊 RESUMO DE CLIENTES\n• Total: ${summary.total} clientes\n• Ativos: ${summary.ativos} clientes\n• Vencidos: ${summary.vencidos} clientes`;
-                await sendMessage(chatId, msg, mainMenu);
-              } catch (err) {
-                await sendMessage(chatId, "❌ Erro ao buscar resumo de clientes.");
-              }
-              break;
-            case 'Vencidos':
-              try {
-                const expired = await listExpiredClients();
-                if (!expired || expired.length === 0) {
-                  await sendMessage(chatId, "Nenhum cliente vencido encontrado.", mainMenu);
-                } else {
-                  const listText = expired.map(c => `• ${c.nome} | ${c.vencimento}`).join('\n');
-                  await sendMessage(chatId, `❌ CLIENTES VENCIDOS (Exibindo os primeiros 15)\n\n${listText}`, mainMenu);
-                }
-              } catch (err) {
-                console.error("DEBUG Telegram Vencidos:", err);
-                await sendMessage(chatId, "❌ Erro ao buscar vencidos.");
-              }
-              break;
-            case 'Vencendo Hoje':
-              try {
-                const todayList = await listClientsExpiringToday();
-                if (!todayList || todayList.length === 0) {
-                  await sendMessage(chatId, "Nenhum cliente vencendo hoje.", mainMenu);
-                } else {
-                  const listText = todayList.map(c => `• ${c.nome} (${c.vencimento})`).join('\n');
-                  await sendMessage(chatId, `📅 Vencendo Hoje:\n\n${listText}`, mainMenu);
-                }
-              } catch (err) {
-                await sendMessage(chatId, "❌ Erro ao buscar vencimentos de hoje.");
               }
               break;
             default:
