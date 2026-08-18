@@ -69,9 +69,14 @@ function formatBRDate(date: Date): string {
 function parseBRDate(brDate: string): string | null {
   const parts = brDate.split('/');
   if (parts.length !== 3) return null;
-  const day = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10) - 1;
-  const year = parseInt(parts[2], 10);
+  const dayStr = parts[0];
+  const monthStr = parts[1];
+  const yearStr = parts[2];
+  if (dayStr === undefined || monthStr === undefined || yearStr === undefined) return null;
+  
+  const day = parseInt(dayStr, 10);
+  const month = parseInt(monthStr, 10) - 1;
+  const year = parseInt(yearStr, 10);
   const date = new Date(year, month, day);
   if (isNaN(date.getTime())) return null;
   return date.toISOString().split('T')[0];
