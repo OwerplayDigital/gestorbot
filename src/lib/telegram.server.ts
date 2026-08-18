@@ -1,15 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const getAuthorizedUser = async (chatId: number) => {
   const allowedId = process.env['TELEGRAM_ALLOWED_USER_ID'];
   
-  // A tipagem automática do Supabase espera um number, mas o PostgreSQL usa BIGINT.
-  // Fazemos o bypass da tipagem do TS para enviar como string e evitar perda de precisão
-  // ou falha na comparação direta do PostgREST.
-  const { data, error } = await supabase
+  // A tabela telegram_authorized_users possui RLS restrito ao user_id.
+  // Como o webhook é um serviço de backend sem sessão de usuário, precisamos
+  // usar o supabaseAdmin para consultar o vínculo do Chat ID.
+  const { data, error } = await supabaseAdmin
     .from("telegram_authorized_users")
     .select("user_id")
-    .eq("telegram_chat_id", chatId as any)
+    .eq("telegram_chat_id", chatId)
     .maybeSingle();
 
   if (error) {
