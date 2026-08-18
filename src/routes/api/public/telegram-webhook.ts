@@ -322,19 +322,26 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           const state = userState.get(chatId);
 
           // Comando /buscar simplificado
-          if (text.startsWith('/buscar ')) {
-            const nome = text.replace('/buscar ', '').trim();
-            if (nome) {
-              const results = await findClientByName(nome);
-              if (results.length === 0) {
-                await sendMessage(chatId, "❌ Nenhum cliente encontrado com esse nome.");
-              } else {
-                const buttons = results.map(c => ([{ text: `👤 ${c.nome}`, callback_data: `view_client:${c.nome}` }]));
-                await sendMessage(chatId, "✅ Resultados encontrados:", { inline_keyboard: buttons });
-              }
+          const lowerText = text.toLowerCase();
+          if (lowerText.startsWith('/buscar')) {
+            const termo = text.includes(' ') ? text.split(' ').slice(1).join(' ').trim() : '';
+            if (!termo) {
+              await sendMessage(chatId, "Por favor, informe o nome para buscar.\nExemplo: <code>/buscar Ivan</code>");
+              return new Response('OK');
+            }
+
+            const results = await findClientByName(termo);
+            if (results.length === 0) {
+              await sendMessage(chatId, `❌ Nenhum cliente encontrado com o nome '${termo}'.`, {
+                inline_keyboard: [[{ text: "🔙 Voltar", callback_data: "voltar_clients" }]]
+              });
+            } else {
+              const buttons = results.map(c => ([{ text: `👤 ${c.nome}`, callback_data: `view_client:${c.nome}` }]));
+              await sendMessage(chatId, `🔍 Resultados para '${termo}':`, { inline_keyboard: buttons });
             }
             return new Response('OK');
           }
+
 
           // Se o usuário estiver no passo de busca (clicou no botão)
           if (dbStep === 'awaiting_search_query') {

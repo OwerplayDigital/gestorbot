@@ -178,11 +178,11 @@ export const findClientByName = async (name: string) => {
       desconto,
       plano_id,
       servidores_ids,
-      plans(name),
-      servidores_iptv:servidores_ids(name)
+      plans(name)
     `)
     .ilike("nome", `%${name}%`)
-    .limit(5);
+    .limit(10);
+
 
   if (error) {
     console.error("Erro Supabase (findClientByName):", error);
