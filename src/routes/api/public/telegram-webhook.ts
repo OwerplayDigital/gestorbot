@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getAuthorizedUser, createPlan, listPlans, createServer, listServers, getClientsSummary, listExpiredClients, listClientsExpiringToday, findClientByName, createClient, getFinancialSummary } from '@/lib/telegram.server';
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env['TELEGRAM_BOT_TOKEN']}`;
