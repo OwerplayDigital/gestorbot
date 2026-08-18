@@ -3,12 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 export const getAuthorizedUser = async (chatId: number) => {
   const allowedId = process.env['TELEGRAM_ALLOWED_USER_ID'];
   
-  // Garantimos que a comparação seja feita com o valor exato. 
-  // O PostgREST/Supabase-js lida melhor com BigInt quando passamos como string ou número exato.
+  // O Supabase-js pode ter problemas com a precisão de números grandes (BigInt)
+  // vindo do JavaScript. Usamos template string para garantir que o PostgREST
+  // receba o valor correto para comparação com o campo BIGINT.
   const { data, error } = await supabase
     .from("telegram_authorized_users")
     .select("user_id")
-    .eq("telegram_chat_id", chatId)
+    .eq("telegram_chat_id", `${chatId}`)
     .maybeSingle();
 
   if (error) {
