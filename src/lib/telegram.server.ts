@@ -136,7 +136,7 @@ export const listClientsExpiringToday = async () => {
   const { data, error } = await supabaseAdmin
     .from("clientes")
     .select("nome, vencimento")
-    .eq("vencimento", today);
+    .eq("vencimento", today as string);
 
   if (error) {
     console.error("Erro Supabase (today select):", error);
