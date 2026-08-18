@@ -279,7 +279,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await sendMessage(chatId, "Digite a data no formato DD/MM/AAAA:");
               }
             }
-            else if (data === 'f_ok') {
+            else if (data === 'f_ok' && state && state.action === 'cadastrar_cliente') {
               const d = state.data;
               if (d.nome && d.whatsapp && d.plano_id && d.servidores_ids && d.desconto !== undefined && d.vencimento) {
                 await createClientWithDetails({
