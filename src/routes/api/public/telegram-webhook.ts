@@ -324,17 +324,19 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
           // Comando /buscar simplificado
           const lowerText = text.toLowerCase();
-          if (lowerText.startsWith('/buscar')) {
-            const termo = text.includes(' ') ? text.split(' ').slice(1).join(' ').trim() : '';
-            if (!termo) {
-              await sendMessage(chatId, "Por favor, informe o nome para buscar.\nExemplo: <code>/buscar Ivan</code>");
-              return new Response('OK');
-            }
 
+          // 1. Verificar se é uma resposta de busca (step persistente no banco)
+          if (dbStep === 'aguardando_busca' && !text.startsWith('/')) {
+            await setUserStep(chatId, null);
+            const termo = text.trim();
             const results = await findClientByName(termo);
+
             if (results.length === 0) {
               await sendMessage(chatId, `❌ Nenhum cliente encontrado com o nome '${termo}'.`, {
-                inline_keyboard: [[{ text: "🔙 Voltar", callback_data: "voltar_clients" }]]
+                inline_keyboard: [
+                  [{ text: "🔍 Buscar Novamente", callback_data: "search_retry" }],
+                  [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
+                ]
               });
             } else {
               const buttons = results.map(c => ([{ text: `👤 ${c.nome}`, callback_data: `view_client:${c.nome}` }]));
@@ -343,11 +345,27 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             return new Response('OK');
           }
 
+          // 2. Comandos e Menu
+          if (lowerText.startsWith('/buscar')) {
+            const termo = text.includes(' ') ? text.split(' ').slice(1).join(' ').trim() : '';
+            if (!termo) {
+              await setUserStep(chatId, 'aguardando_busca');
+              await sendMessage(chatId, "🔍 Digite o nome (ou parte do nome) do cliente:");
+              return new Response('OK');
+            }
 
-          // Se o usuário estiver no passo de busca (clicou no botão)
-          if (dbStep === 'awaiting_search_query') {
-            await setUserStep(chatId, null);
-            await sendMessage(chatId, "Para buscar, envie: <code>/buscar nome</code> (Exemplo: <code>/buscar Ivan</code>)");
+            const results = await findClientByName(termo);
+            if (results.length === 0) {
+              await sendMessage(chatId, `❌ Nenhum cliente encontrado com o nome '${termo}'.`, {
+                inline_keyboard: [
+                  [{ text: "🔍 Buscar Novamente", callback_data: "search_retry" }],
+                  [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
+                ]
+              });
+            } else {
+              const buttons = results.map(c => ([{ text: `👤 ${c.nome}`, callback_data: `view_client:${c.nome}` }]));
+              await sendMessage(chatId, `🔍 Resultados para '${termo}':`, { inline_keyboard: buttons });
+            }
             return new Response('OK');
           }
 
