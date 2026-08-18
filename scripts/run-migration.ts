@@ -148,6 +148,17 @@ async function migrate() {
     transacoes: transactionsToInsert.length
   };
   console.log(JSON.stringify(counts, null, 2));
+
+  // Validação Financeira
+  const finance = transactionsToInsert.reduce((acc, t) => {
+    if (t.tipo === "entrada") acc.entradas += t.valor;
+    if (t.tipo === "saida") acc.saidas += t.valor;
+    return acc;
+  }, { entradas: 0, saidas: 0 });
+  console.log("Financeiro:", {
+    ...finance,
+    lucro: finance.entradas - finance.saidas
+  });
 }
 
 migrate().catch((err) => {
