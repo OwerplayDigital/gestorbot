@@ -14,7 +14,227 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clientes: {
+        Row: {
+          cadastrado_em: string | null
+          created_at: string | null
+          desconto: number | null
+          id: string
+          nome: string
+          plano_id: string | null
+          servidores_ids: string[] | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+          valor: number | null
+          vencimento: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          cadastrado_em?: string | null
+          created_at?: string | null
+          desconto?: number | null
+          id?: string
+          nome: string
+          plano_id?: string | null
+          servidores_ids?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+          valor?: number | null
+          vencimento?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          cadastrado_em?: string | null
+          created_at?: string | null
+          desconto?: number | null
+          id?: string
+          nome?: string
+          plano_id?: string | null
+          servidores_ids?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+          valor?: number | null
+          vencimento?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          name: string
+          price: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name: string
+          price?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          price?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      renovacoes: {
+        Row: {
+          cliente_id: string | null
+          created_at: string | null
+          data_renovacao: string | null
+          desconto: number | null
+          id: string
+          novo_vencimento: string | null
+          plano_id: string | null
+          user_id: string
+          valor: number | null
+          vencimento_anterior: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string | null
+          data_renovacao?: string | null
+          desconto?: number | null
+          id?: string
+          novo_vencimento?: string | null
+          plano_id?: string | null
+          user_id?: string
+          valor?: number | null
+          vencimento_anterior?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string | null
+          data_renovacao?: string | null
+          desconto?: number | null
+          id?: string
+          novo_vencimento?: string | null
+          plano_id?: string | null
+          user_id?: string
+          valor?: number | null
+          vencimento_anterior?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renovacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renovacoes_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      servidores_iptv: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id?: string
+          valor?: number
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      transacoes: {
+        Row: {
+          cliente_id: string | null
+          created_at: string | null
+          data: string | null
+          descricao: string | null
+          id: string
+          serv_id: string | null
+          tipo: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string | null
+          data?: string | null
+          descricao?: string | null
+          id?: string
+          serv_id?: string | null
+          tipo: string
+          user_id?: string
+          valor?: number
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string | null
+          data?: string | null
+          descricao?: string | null
+          id?: string
+          serv_id?: string | null
+          tipo?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transacoes_serv_id_fkey"
+            columns: ["serv_id"]
+            isOneToOne: false
+            referencedRelation: "servidores_iptv"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
