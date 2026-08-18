@@ -3,6 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 
 export const Route = createFileRoute("/")({
@@ -12,6 +15,10 @@ export const Route = createFileRoute("/")({
 function Index() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [signingIn, setSigningIn] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -26,13 +33,20 @@ function Index() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-      },
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+    
+    setSigningIn(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
+
+    if (error) {
+      toast.error("Erro ao entrar: " + error.message);
+    }
+    setSigningIn(false);
   };
 
   const handleLogout = async () => {
@@ -52,18 +66,36 @@ function Index() {
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Gestão IPTV</CardTitle>
-          <CardDescription>Mecanismo de Provisionamento Administrativo</CardDescription>
+          <CardDescription>Acesse o painel administrativo</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {!user ? (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground text-center">
-                Acesse com sua conta Google para criar sua identidade administrativa.
-              </p>
-              <Button onClick={handleGoogleLogin} className="w-full" variant="outline">
-                Entrar com Google
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="admin@exemplo.com" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={signingIn}>
+                {signingIn ? "Entrando..." : "Entrar"}
               </Button>
-            </div>
+            </form>
           ) : (
             <div className="space-y-4">
               <div className="p-4 bg-secondary rounded-md break-all">
@@ -83,7 +115,7 @@ function Index() {
       </Card>
       
       <div className="mt-8 text-xs text-muted-foreground max-w-sm text-center">
-        Página de acesso mínima para provisionamento do primeiro administrador via Supabase Auth.
+        Painel de acesso para o administrador do sistema.
       </div>
     </div>
   );
