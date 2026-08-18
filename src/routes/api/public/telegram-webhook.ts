@@ -311,7 +311,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           const msg = body.message;
           if (!msg) return new Response('OK');
           const chatId = msg.chat.id;
-          const text = msg.text;
+          const text = msg.text || '';
+          
           const userId = await getAuthorizedUser(chatId);
           if (!userId) return new Response('OK');
 
