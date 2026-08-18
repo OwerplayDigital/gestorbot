@@ -6,12 +6,14 @@ import {
   listServers, 
   getClientsSummary, 
   getFinancialSummary,
-  createClientWithDetails 
+  createClientWithDetails,
+  findClientByName
 } from '@/lib/telegram.server';
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env['TELEGRAM_BOT_TOKEN']}`;
 
 type ClientRegistrationData = {
+  id?: string;
   nome: string;
   whatsapp: string;
   plano_id: string;
@@ -24,7 +26,7 @@ type ClientRegistrationData = {
 };
 
 type UserState = {
-  action: string;
+  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp';
   step: number;
   data: Partial<ClientRegistrationData>;
 };
@@ -112,10 +114,90 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             const messageId = cb.message.message_id;
             const data = cb.data;
             const state = userState.get(chatId);
-            if (!state || state.action !== 'cadastrar_cliente') return new Response('OK');
-
-            // Fluxo de Cadastro - Callbacks
-            if (state.step === 3 && data.startsWith('plano:')) {
+            
+            // Callbacks Globais e Fluxo de Detalhes
+            if (data.startsWith('view_client:')) {
+               const nome = data.split(':')[1];
+               if (!nome) return new Response('OK');
+               const results = await findClientByName(nome);
+               const c = results[0];
+               if (c) {
+                 const planName = (c.plans as any)?.name || 'N/A';
+                 const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
+                             `• Nome: ${c.nome}\n` +
+                             `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
+                             `• Plano: ${planName}\n` +
+                             `• Desconto: R$ ${c.desconto?.toFixed(2)}\n` +
+                             `• Vencimento: ${formatBRDate(new Date(c.vencimento + 'T12:00:00'))}\n` +
+                             `• Status: ${c.status}`;
+                 await sendMessage(chatId, msg, {
+                   inline_keyboard: [
+                     [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
+                     [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
+                     [{ text: "📱 Alterar WhatsApp", callback_data: `edit_wpp:${c.id}` }],
+                     [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
+                   ]
+                 });
+               }
+            }
+            else if (data.startsWith('edit_venc:')) {
+              const id = data.split(':')[1];
+              const { data: c } = await supabaseAdmin.from('clientes').select('vencimento').eq('id', id).single();
+              if (c) {
+                userState.set(chatId, { action: 'editar_vencimento', step: 1, data: { id, vencimento_temp: new Date(c.vencimento + 'T12:00:00').toISOString() } as any });
+                const br = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+                await editMessage(chatId, messageId, `<b>Alterar Vencimento</b>\nAtual: <b>${br}</b>`, {
+                  inline_keyboard: [
+                    [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
+                    [{ text: `📅 Salvar: ${br}`, callback_data: "evenc_save" }],
+                    [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                  ]
+                });
+              }
+            }
+            else if (data.startsWith('edit_desc:')) {
+              userState.set(chatId, { action: 'editar_desconto', step: 1, data: { id: data.split(':')[1] } as any });
+              await sendMessage(chatId, "Digite o novo valor do desconto (R$):");
+            }
+            else if (data.startsWith('edit_wpp:')) {
+              userState.set(chatId, { action: 'editar_whatsapp', step: 1, data: { id: data.split(':')[1] } as any });
+              await sendMessage(chatId, "Digite o novo WhatsApp com DDD:");
+            }
+            else if (state?.action === 'editar_vencimento') {
+              const currentIso = state.data.vencimento_temp;
+              if (!currentIso) return new Response('OK');
+              const d = new Date(currentIso);
+              
+              if (data === 'evenc_m5') d.setDate(d.getDate() - 5);
+              else if (data === 'evenc_m1') d.setDate(d.getDate() - 1);
+              else if (data === 'evenc_p1') d.setDate(d.getDate() + 1);
+              else if (data === 'evenc_p5') d.setDate(d.getDate() + 5);
+              
+              if (data.startsWith('evenc_') && data !== 'evenc_save') {
+                state.data.vencimento_temp = d.toISOString();
+                const br = formatBRDate(d);
+                await editMessage(chatId, messageId, `<b>Alterar Vencimento</b>\nNovo: <b>${br}</b>`, {
+                  inline_keyboard: [
+                    [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
+                    [{ text: `📅 Salvar: ${br}`, callback_data: "evenc_save" }],
+                    [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                  ]
+                });
+              } else if (data === 'evenc_save') {
+                const isoDate = state.data.vencimento_temp?.split('T')[0];
+                if (isoDate && state.data.id) {
+                  const { data: updated } = await supabaseAdmin.from('clientes').update({ vencimento: isoDate }).eq('id', state.data.id).select('nome').single();
+                  await sendMessage(chatId, `✅ Vencimento atualizado!`, clientsSubMenu);
+                  if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
+                }
+                userState.delete(chatId);
+              }
+            }
+            else if (data === 'voltar_clients') {
+               await sendMessage(chatId, "Clientes:", clientsSubMenu);
+               userState.delete(chatId);
+            }
+            else if (state && state.action === 'cadastrar_cliente' && state.step === 3 && data.startsWith('plano:')) {
               const parts = data.split(':');
               const id = parts[1] ?? '';
               const name = parts[2] ?? '';
@@ -128,7 +210,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const buttons = servers.map(s => ([{ text: s.name, callback_data: `serv:${s.id}:${s.name}` }]));
               await sendMessage(chatId, "<b>Passo 4: Seleção de Servidor</b>\nSelecione os servidores:", { inline_keyboard: buttons });
             } 
-            else if (state.step === 4) {
+            else if (state && state.action === 'cadastrar_cliente' && state.step === 4) {
               if (data.startsWith('serv:')) {
                 const [_, id, name] = data.split(':');
                 if (id && name && !state.data.servidores_ids?.includes(id)) {
@@ -150,7 +232,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await sendMessage(chatId, "<b>Passo 5: Desconto</b>\nInforme o valor (ex: 5 ou 0):");
               }
             }
-            else if (state.step === 6) {
+            else if (state && state.action === 'cadastrar_cliente' && state.step === 6) {
               const currentIso = state.data.vencimento_temp;
               if (!currentIso) return new Response('OK');
               const d = new Date(currentIso);
@@ -197,7 +279,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await sendMessage(chatId, "Digite a data no formato DD/MM/AAAA:");
               }
             }
-            else if (data === 'f_ok') {
+            else if (data === 'f_ok' && state && state.action === 'cadastrar_cliente') {
               const d = state.data;
               if (d.nome && d.whatsapp && d.plano_id && d.servidores_ids && d.desconto !== undefined && d.vencimento) {
                 await createClientWithDetails({
@@ -228,6 +310,62 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           if (text === '/start' || text === '🔙 Voltar') {
             userState.delete(chatId);
             await sendMessage(chatId, "Menu:", mainMenu);
+            return new Response('OK');
+          }
+
+          if (state?.action === 'editar_desconto') {
+            const val = parseFloat(text.replace(',', '.'));
+            if (!isNaN(val) && state.data.id) {
+              await supabaseAdmin.from('clientes').update({ desconto: val }).eq('id', state.data.id);
+              await sendMessage(chatId, "✅ Desconto atualizado!", clientsSubMenu);
+            }
+            userState.delete(chatId);
+            return new Response('OK');
+          }
+
+          if (state?.action === 'editar_whatsapp') {
+            if (state.data.id) {
+              await supabaseAdmin.from('clientes').update({ whatsapp: text }).eq('id', state.data.id);
+              await sendMessage(chatId, "✅ WhatsApp atualizado!", clientsSubMenu);
+            }
+            userState.delete(chatId);
+            return new Response('OK');
+          }
+
+          if (state?.action === 'buscar_cliente') {
+            const results = await findClientByName(text);
+            if (results.length === 0) {
+              await sendMessage(chatId, "Nenhum cliente encontrado.", clientsSubMenu);
+            } else {
+              const buttons = results.map(c => ([{ text: c.nome, callback_data: `view_client:${c.nome}` }]));
+              await sendMessage(chatId, "Selecione o cliente:", { inline_keyboard: buttons });
+            }
+            userState.delete(chatId);
+            return new Response('OK');
+          }
+
+          if (text.startsWith('/view_')) {
+            const nome = text.replace('/view_', '').replace(/_/g, ' ');
+            const results = await findClientByName(nome);
+            const c = results[0];
+            if (c) {
+              const planName = (c.plans as any)?.name || 'N/A';
+              const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
+                          `• Nome: ${c.nome}\n` +
+                          `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
+                          `• Plano: ${planName}\n` +
+                          `• Desconto: R$ ${c.desconto?.toFixed(2)}\n` +
+                          `• Vencimento: ${formatBRDate(new Date(c.vencimento + 'T12:00:00'))}\n` +
+                          `• Status: ${c.status}`;
+              await sendMessage(chatId, msg, {
+                inline_keyboard: [
+                  [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
+                  [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
+                  [{ text: "📱 Alterar WhatsApp", callback_data: `edit_wpp:${c.id}` }],
+                  [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
+                ]
+              });
+            }
             return new Response('OK');
           }
 
@@ -271,6 +409,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             case '➕ Novo Cliente':
               userState.set(chatId, { action: 'cadastrar_cliente', step: 1, data: {} });
               await sendMessage(chatId, "Nome do cliente:");
+              break;
+            case '🔍 Buscar Cliente':
+              userState.set(chatId, { action: 'buscar_cliente', step: 1, data: {} });
+              await sendMessage(chatId, "Digite o nome (ou parte do nome) do cliente:");
               break;
             case '💰 Financeiro':
               const f = await getFinancialSummary();
