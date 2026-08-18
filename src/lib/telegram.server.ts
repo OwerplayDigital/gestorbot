@@ -138,3 +138,60 @@ export const listClientsExpiringToday = async () => {
   }
   return data;
 };
+
+export const findClientByName = async (name: string) => {
+  const { data, error } = await supabaseAdmin
+    .from("clientes")
+    .select("nome, whatsapp, vencimento, status")
+    .ilike("nome", `%${name}%`)
+    .limit(5);
+
+  if (error) {
+    console.error("Erro Supabase (findClientByName):", error);
+    throw error;
+  }
+  return data;
+};
+
+export const createClient = async (userId: string, clientData: { nome: string; whatsapp: string; plano_id: string; vencimento: string }) => {
+  const { data, error } = await supabaseAdmin
+    .from("clientes")
+    .insert({
+      user_id: userId,
+      nome: clientData.nome,
+      whatsapp: clientData.whatsapp,
+      plano_id: clientData.plano_id,
+      vencimento: clientData.vencimento,
+      status: 'ativo',
+      valor: 0, // Default ou buscar do plano
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Erro Supabase (createClient):", error);
+    throw error;
+  }
+  return data;
+};
+
+export const getFinancialSummary = async () => {
+  const { data: transacoes, error } = await supabaseAdmin
+    .from("transacoes")
+    .select("tipo, valor");
+
+  if (error) {
+    console.error("Erro Supabase (financial summary):", error);
+    throw error;
+  }
+
+  const entradas = transacoes
+    .filter(t => t.tipo === 'entrada')
+    .reduce((sum, t) => sum + Number(t.valor), 0);
+  
+  const saidas = transacoes
+    .filter(t => t.tipo === 'saida')
+    .reduce((sum, t) => sum + Number(t.valor), 0);
+
+  return { entradas, saidas, lucro: entradas - saidas };
+};
