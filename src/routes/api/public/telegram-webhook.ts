@@ -20,7 +20,10 @@ async function sendMessage(chatId: number, text: string, replyMarkup?: any) {
 }
 
 const mainMenu = {
-  keyboard: [[{ text: 'PLANOS' }, { text: 'SERVIDORES' }]],
+  keyboard: [
+    [{ text: 'PLANOS' }, { text: 'SERVIDORES' }],
+    [{ text: 'Clientes' }, { text: 'Vencidos' }, { text: 'Vencendo Hoje' }]
+  ],
   resize_keyboard: true,
 };
 
