@@ -30,6 +30,33 @@ export const getAuthorizedUser = async (chatId: number) => {
   return userId;
 };
 
+export const setUserStep = async (chatId: number, step: string | null) => {
+  const { error } = await supabaseAdmin
+    .from("telegram_authorized_users")
+    .update({ current_step: step })
+    .eq("telegram_chat_id", chatId);
+
+  if (error) {
+    console.error("Erro ao definir step do usuário:", error);
+    throw error;
+  }
+};
+
+export const getUserStep = async (chatId: number) => {
+  const { data, error } = await supabaseAdmin
+    .from("telegram_authorized_users")
+    .select("current_step")
+    .eq("telegram_chat_id", chatId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Erro ao buscar step do usuário:", error);
+    return null;
+  }
+  return data?.current_step || null;
+};
+
+
 export const createPlan = async (userId: string, name: string, price: number) => {
   const { data, error } = await supabaseAdmin
     .from("plans")
