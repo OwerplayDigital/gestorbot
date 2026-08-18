@@ -1,32 +1,91 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { User } from "@supabase/supabase-js";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center bg-background p-4 text-center">
-      <h1 className="text-4xl font-bold tracking-tight mb-4">Gestão IPTV</h1>
-      <p className="text-muted-foreground mb-8 max-w-md">
-        Fundação do sistema concluída com sucesso. Banco de dados e segurança configurados.
-      </p>
-      <div className="bg-card border rounded-lg p-6 shadow-sm max-w-lg w-full text-left">
-        <h2 className="text-xl font-semibold mb-4">Status da Fundação</h2>
-        <ul className="space-y-2 text-sm">
-          <li className="flex items-center gap-2">✅ Tabelas criadas (plans, servidores, clientes, transacoes, renovacoes)</li>
-          <li className="flex items-center gap-2">✅ Relacionamentos e Chaves Estrangeiras configurados</li>
-          <li className="flex items-center gap-2">✅ RLS e Políticas de Segurança ativos (Isolamento por UUID)</li>
-          <li className="flex items-center gap-2">✅ Índices de performance criados</li>
-          <li className="flex items-center gap-2">✅ Autenticação Social (Google) habilitada</li>
-          <li className="flex items-center gap-2 text-primary font-medium">🚀 Núcleo do Bot Telegram integrado (Webook pronto)</li>
-          <li className="flex items-center gap-2">⚠️ Configure TELEGRAM_BOT_TOKEN nos segredos do projeto</li>
-        </ul>
+    <div className="flex flex-col min-h-screen items-center justify-center bg-background p-4">
+      <Card className="max-w-md w-full">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Gestão IPTV</CardTitle>
+          <CardDescription>Mecanismo de Provisionamento Administrativo</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!user ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Acesse com sua conta Google para criar sua identidade administrativa.
+              </p>
+              <Button onClick={handleGoogleLogin} className="w-full" variant="outline">
+                Entrar com Google
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="p-4 bg-secondary rounded-md break-all">
+                <p className="text-xs font-mono text-secondary-foreground mb-1 font-bold">Status: AUTENTICADO</p>
+                <p className="text-xs font-mono text-secondary-foreground">UUID: {user.id}</p>
+                <p className="text-xs font-mono text-secondary-foreground">Email: {user.email}</p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Copie o UUID acima para vincular ao Telegram.
+              </p>
+              <Button onClick={handleLogout} className="w-full" variant="ghost">
+                Sair
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      <div className="mt-8 text-xs text-muted-foreground max-w-sm text-center">
+        Página de acesso mínima para provisionamento do primeiro administrador via Supabase Auth.
       </div>
     </div>
   );
 }
+
