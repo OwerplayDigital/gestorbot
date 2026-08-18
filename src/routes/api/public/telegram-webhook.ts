@@ -15,21 +15,21 @@ import {
 } from '@/lib/telegram.server';
 
 type ClientRegistrationData = {
-  nome?: string;
-  whatsapp?: string;
-  plano_id?: string;
-  plano_name?: string;
-  servidores_ids?: string[];
-  servidores_names?: string[];
-  desconto?: number;
-  vencimento?: string;
-  vencimento_temp?: string;
+  nome: string;
+  whatsapp: string;
+  plano_id: string;
+  plano_name: string;
+  servidores_ids: string[];
+  servidores_names: string[];
+  desconto: number;
+  vencimento: string;
+  vencimento_temp: string;
 };
 
 type UserState = {
   action: string;
   step: number;
-  data: ClientRegistrationData;
+  data: Partial<ClientRegistrationData>;
 };
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env['TELEGRAM_BOT_TOKEN']}`;
