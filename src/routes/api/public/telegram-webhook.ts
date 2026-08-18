@@ -115,8 +115,6 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             const data = cb.data;
             const state = userState.get(chatId);
             
-            if (data.startsWith('view_client:')) {
-
             // Callbacks Globais e Fluxo de Detalhes
             if (data.startsWith('view_client:')) {
                const nome = data.split(':')[1];
@@ -199,7 +197,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                await sendMessage(chatId, "Clientes:", clientsSubMenu);
                userState.delete(chatId);
             }
-            else if (state && state.action === 'cadastrar_cliente') {
+            else if (state && state.action === 'cadastrar_cliente' && state.step === 3 && data.startsWith('plano:')) {
               const parts = data.split(':');
               const id = parts[1] ?? '';
               const name = parts[2] ?? '';
@@ -212,7 +210,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const buttons = servers.map(s => ([{ text: s.name, callback_data: `serv:${s.id}:${s.name}` }]));
               await sendMessage(chatId, "<b>Passo 4: Seleção de Servidor</b>\nSelecione os servidores:", { inline_keyboard: buttons });
             } 
-            else if (state.step === 4) {
+            else if (state && state.action === 'cadastrar_cliente' && state.step === 4) {
               if (data.startsWith('serv:')) {
                 const [_, id, name] = data.split(':');
                 if (id && name && !state.data.servidores_ids?.includes(id)) {
@@ -234,7 +232,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await sendMessage(chatId, "<b>Passo 5: Desconto</b>\nInforme o valor (ex: 5 ou 0):");
               }
             }
-            else if (state.step === 6) {
+            else if (state && state.action === 'cadastrar_cliente' && state.step === 6) {
               const currentIso = state.data.vencimento_temp;
               if (!currentIso) return new Response('OK');
               const d = new Date(currentIso);
