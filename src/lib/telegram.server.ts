@@ -112,22 +112,16 @@ export const getClientsSummary = async () => {
 export const listExpiredClients = async () => {
   const { data, error } = await supabaseAdmin
     .from("clientes")
-    .select(`
-      nome,
-      vencimento,
-      servidores_iptv:servidores_ids (
-        name
-      )
-    `)
-    .eq("status", "vencido");
+    .select("nome, vencimento")
+    .eq("status", "vencido")
+    .order('vencimento', { ascending: true })
+    .limit(15);
 
   if (error) {
     console.error("Erro Supabase (expired select):", error);
-    throw new Error("Erro ao listar clientes vencidos.");
+    throw error;
   }
   
-  // Como servidores_ids é um UUID[], o relacionamento pode precisar de tratamento dependendo do PostgREST
-  // Mas para o retorno textual, podemos simplificar se a query acima falhar ou retornar nulo
   return data;
 };
 
