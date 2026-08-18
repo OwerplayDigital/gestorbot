@@ -60,17 +60,17 @@ function Dashboard() {
             .limit(10),
         ]);
 
-        const totalClients = clients.data?.length || 0;
-        const activeClients = clients.data?.filter(c => c.status === "ativo").length || 0;
-        const expiredClients = clients.data?.filter(c => c.status === "vencido").length || 0;
+        const totalClients = clients.data?.length ?? 0;
+        const activeClients = clients.data?.filter(c => c?.status === "ativo").length ?? 0;
+        const expiredClients = clients.data?.filter(c => c?.status === "vencido").length ?? 0;
 
         const entradas = transactions.data
-          ?.filter((t) => t.tipo === "entrada")
-          .reduce((acc, t) => acc + Number(t.valor), 0) || 0;
+          ?.filter((t) => t?.tipo === "entrada")
+          .reduce((acc, t) => acc + Number(t?.valor ?? 0), 0) ?? 0;
         
         const saidas = transactions.data
-          ?.filter((t) => t.tipo === "saida")
-          .reduce((acc, t) => acc + Number(t.valor), 0) || 0;
+          ?.filter((t) => t?.tipo === "saida")
+          .reduce((acc, t) => acc + Number(t?.valor ?? 0), 0) ?? 0;
 
         // Group transactions by month for a chart (last 6 months)
         const monthlyData: Record<string, { name: string, faturamento: number }> = {};
@@ -82,10 +82,10 @@ function Dashboard() {
         }
 
         transactions.data?.forEach(t => {
-          if (t.tipo === "entrada" && t.data) {
+          if (t?.tipo === "entrada" && t?.data) {
             const key = t.data.substring(0, 7);
             if (monthlyData[key]) {
-              monthlyData[key].faturamento += Number(t.valor);
+              monthlyData[key].faturamento += Number(t.valor || 0);
             }
           }
         });
@@ -94,15 +94,15 @@ function Dashboard() {
         const expiredClientsCount = expiredClients;
 
         return {
-          plans: plans.count || 0,
-          servers: servers.count || 0,
+          plans: plans?.count ?? 0,
+          servers: servers?.count ?? 0,
           activeClients: activeClientsCount,
           expiredClients: expiredClientsCount,
           totalClients,
           lucro: entradas - saidas,
           faturamentoTotal: entradas,
           chartData: Object.values(monthlyData),
-          expiringClients: expiringClients.data || [],
+          expiringClients: expiringClients.data ?? [],
           pieData: [
             { name: "Ativos", value: activeClientsCount, color: "hsl(var(--chart-1))" },
             { name: "Vencidos", value: expiredClientsCount, color: "hsl(var(--chart-2))" },
