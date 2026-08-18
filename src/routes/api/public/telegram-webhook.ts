@@ -1,25 +1,46 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getAuthorizedUser, createPlan, listPlans, createServer, listServers, getClientsSummary, listExpiredClients, listClientsExpiringToday, findClientByName, createClient, getFinancialSummary } from '@/lib/telegram.server';
+import { 
+  getAuthorizedUser, 
+  createPlan, 
+  listPlans, 
+  createServer, 
+  listServers, 
+  getClientsSummary, 
+  listExpiredClients, 
+  listClientsExpiringToday, 
+  findClientByName, 
+  createClientWithDetails, 
+  getFinancialSummary 
+} from '@/lib/telegram.server';
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env['TELEGRAM_BOT_TOKEN']}`;
 
-// Gerenciador de estado temporário para o fluxo de cadastro (simulado via memória no Worker por simplicidade nesta etapa)
-// Em produção, isso deveria ir para uma tabela de 'sessions' ou Redis.
+// Gerenciador de estado temporário para o fluxo de cadastro
 const userState = new Map<number, { action: string; step: number; data: any }>();
 
+// Helper para enviar mensagens com teclado inline ou comum
 async function sendMessage(chatId: number, text: string, replyMarkup?: any) {
-  await fetch(`${TELEGRAM_API}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      reply_markup: replyMarkup,
-    }),
-  });
+  try {
+    const response = await fetch(`${TELEGRAM_API}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        reply_markup: replyMarkup,
+        parse_mode: 'HTML'
+      }),
+    });
+    if (!response.ok) {
+      console.error("Erro ao enviar mensagem Telegram:", await response.text());
+    }
+  } catch (err) {
+    console.error("Exceção ao enviar mensagem Telegram:", err);
+  }
 }
 
+// Menus
 const mainMenu = {
   keyboard: [
     [{ text: '👥 Clientes' }, { text: '🖥️ Servidores' }],
@@ -37,15 +58,24 @@ const clientsSubMenu = {
   resize_keyboard: true,
 };
 
-const plansMenu = {
-  keyboard: [[{ text: 'Cadastrar plano' }], [{ text: 'Listar planos' }], [{ text: '🔙 Voltar' }]],
-  resize_keyboard: true,
-};
+// Utils de Data
+function formatBRDate(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
 
-const serversMenu = {
-  keyboard: [[{ text: 'Cadastrar servidor' }], [{ text: 'Listar servidores' }], [{ text: '🔙 Voltar' }]],
-  resize_keyboard: true,
-};
+function parseBRDate(brDate: string): string | null {
+  const parts = brDate.split('/');
+  if (parts.length !== 3) return null;
+  const day = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const year = parseInt(parts[2], 10);
+  const date = new Date(year, month, day);
+  if (isNaN(date.getTime())) return null;
+  return date.toISOString().split('T')[0];
+}
 
 export const Route = createFileRoute('/api/public/telegram-webhook')({
   server: {
@@ -53,244 +83,272 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
       POST: async ({ request }) => {
         try {
           const body = await request.json();
+          
+          // Lidar com Callback Query (Botões Inline)
+          if (body.callback_query) {
+            const cb = body.callback_query;
+            const chatId = cb.message.chat.id;
+            const data = cb.data;
+            const userId = await getAuthorizedUser(chatId);
+            if (!userId) return new Response('OK');
+
+            const state = userState.get(chatId);
+            if (!state || state.action !== 'cadastrar_cliente') return new Response('OK');
+
+            // Passo 3: Seleção de Plano
+            if (state.step === 3 && data.startsWith('plano:')) {
+              const planoId = data.split(':')[1];
+              const planoName = data.split(':')[2];
+              state.data.plano_id = planoId;
+              state.data.plano_name = planoName;
+              state.step = 4;
+              state.data.servidores_ids = [];
+              state.data.servidores_names = [];
+              
+              const servers = await listServers();
+              const buttons = servers.map(s => ([{ 
+                text: `${s.name} (R$ ${Number(s.valor).toFixed(2)})`, 
+                callback_data: `serv:${s.id}:${s.name}` 
+              }]));
+              
+              await sendMessage(chatId, "<b>Passo 4: Seleção de Servidor</b>\nClique nos servidores para adicionar:", {
+                inline_keyboard: buttons
+              });
+              return new Response('OK');
+            }
+
+            // Passo 4: Seleção de Servidores
+            if (state.step === 4) {
+              if (data.startsWith('serv:')) {
+                const [_, servId, servName] = data.split(':');
+                if (!state.data.servidores_ids.includes(servId)) {
+                  state.data.servidores_ids.push(servId);
+                  state.data.servidores_names.push(servName);
+                }
+                
+                await sendMessage(chatId, `✅ Servidor <b>${servName}</b> adicionado.\n\nDeseja adicionar mais um ou avançar?`, {
+                  inline_keyboard: [
+                    [{ text: "➕ Adicionar Outro Servidor", callback_data: "serv_outro" }],
+                    [{ text: "▶️ Avançar", callback_data: "serv_avancar" }]
+                  ]
+                });
+              } else if (data === 'serv_outro') {
+                const servers = await listServers();
+                const buttons = servers.map(s => ([{ 
+                  text: `${s.name} (R$ ${Number(s.valor).toFixed(2)})`, 
+                  callback_data: `serv:${s.id}:${s.name}` 
+                }]));
+                await sendMessage(chatId, "Selecione outro servidor:", { inline_keyboard: buttons });
+              } else if (data === 'serv_avancar') {
+                if (state.data.servidores_ids.length === 0) {
+                  await sendMessage(chatId, "⚠️ Selecione pelo menos um servidor antes de avançar.");
+                  return new Response('OK');
+                }
+                state.step = 5;
+                await sendMessage(chatId, "<b>Passo 5: Informar Desconto</b>\nInforme o valor do desconto recorrente em R$ (ex: 5 ou 0 para nenhum):");
+              }
+              return new Response('OK');
+            }
+
+            // Passo 6: Ajuste de Vencimento
+            if (state.step === 6) {
+              const currentVenc = new Date(state.data.vencimento_temp);
+              if (data === 'venc_m5') currentVenc.setDate(currentVenc.getDate() - 5);
+              if (data === 'venc_m1') currentVenc.setDate(currentVenc.getDate() - 1);
+              if (data === 'venc_p1') currentVenc.setDate(currentVenc.getDate() + 1);
+              if (data === 'venc_p5') currentVenc.setDate(currentVenc.getDate() + 5);
+              
+              if (data.startsWith('venc_')) {
+                state.data.vencimento_temp = currentVenc.toISOString();
+                const brDate = formatBRDate(currentVenc);
+                await sendMessage(chatId, `Ajuste a data de vencimento:\n📅 <b>${brDate}</b>`, {
+                  inline_keyboard: [
+                    [
+                      { text: "➖ 5 dias", callback_data: "venc_m5" },
+                      { text: "➖ 1 dia", callback_data: "venc_m1" },
+                      { text: "➕ 1 dia", callback_data: "venc_p1" },
+                      { text: "➕ 5 dias", callback_data: "venc_p5" }
+                    ],
+                    [{ text: `📅 Confirmar Data: ${brDate}`, callback_data: "venc_confirmar" }],
+                    [{ text: "✏️ Digitar Outra Data", callback_data: "venc_digitar" }]
+                  ]
+                });
+              } else if (data === 'venc_confirmar') {
+                state.data.vencimento = state.data.vencimento_temp.split('T')[0];
+                state.step = 7; // Resumo
+                
+                const resumo = `📝 <b>RESUMO DO CADASTRO:</b>\n` +
+                  `• Nome: ${state.data.nome}\n` +
+                  `• WhatsApp: ${state.data.whatsapp}\n` +
+                  `• Plano: ${state.data.plano_name}\n` +
+                  `• Servidores: ${state.data.servidores_names.join(', ')}\n` +
+                  `• Desconto: R$ ${Number(state.data.desconto).toFixed(2)}\n` +
+                  `• Vencimento: ${formatBRDate(new Date(state.data.vencimento + 'T12:00:00'))}\n\n` +
+                  `Deseja confirmar o cadastro?`;
+                
+                await sendMessage(chatId, resumo, {
+                  inline_keyboard: [
+                    [{ text: "✅ Confirmar e Cadastrar", callback_data: "cad_confirmar" }],
+                    [{ text: "❌ Cancelar", callback_data: "cad_cancelar" }]
+                  ]
+                });
+              } else if (data === 'venc_digitar') {
+                await sendMessage(chatId, "Digite a data no formato DD/MM/AAAA:");
+              }
+              return new Response('OK');
+            }
+
+            // Confirmação Final
+            if (data === 'cad_confirmar') {
+              try {
+                await createClientWithDetails({
+                  nome: state.data.nome,
+                  whatsapp: state.data.whatsapp === '0' ? '' : state.data.whatsapp,
+                  plano_id: state.data.plano_id,
+                  servidores_ids: state.data.servidores_ids,
+                  desconto: state.data.desconto,
+                  vencimento: state.data.vencimento
+                });
+                await sendMessage(chatId, "✅ <b>Cliente cadastrado com sucesso!</b>", clientsSubMenu);
+                userState.delete(chatId);
+              } catch (err) {
+                await sendMessage(chatId, "❌ Erro ao salvar cliente no banco de dados.");
+              }
+            } else if (data === 'cad_cancelar') {
+              await sendMessage(chatId, "❌ Cadastro cancelado.", clientsSubMenu);
+              userState.delete(chatId);
+            }
+
+            return new Response('OK');
+          }
+
           const message = body.message;
           if (!message) return new Response('OK');
 
           const chatId = message.chat.id;
           const text = message.text;
 
-          // 1. Autenticação
           const userId = await getAuthorizedUser(chatId);
-          if (!userId) {
-            await sendMessage(chatId, `Acesso negado. Seu Chat ID é: ${chatId}`);
-            console.warn(`Tentativa de acesso não autorizado: Chat ID ${chatId}`);
-            // Retornamos 200 para o Telegram parar de reenviar a mesma mensagem
-            return new Response('OK');
-          }
+          if (!userId) return new Response('OK');
 
-          // 2. Lógica de Navegação e Fluxos
           const state = userState.get(chatId);
 
-          if (text === '/start' || text === '🔙 Voltar' || text === 'Voltar') {
+          if (text === '/start' || text === '🔙 Voltar') {
             userState.delete(chatId);
             await sendMessage(chatId, "Menu Principal:", mainMenu);
             return new Response('OK');
           }
 
-          // Fluxo de Cadastro de Planos
-          if (state?.action === 'cadastrar_plano') {
-            if (state.step === 1) {
-              state.data.name = text;
-              state.step = 2;
-              await sendMessage(chatId, "Informe o Preço do plano:");
-              return new Response('OK');
-            } else if (state.step === 2) {
-              const price = parseFloat(text.replace(',', '.'));
-              if (isNaN(price)) {
-                await sendMessage(chatId, "Preço inválido. Digite um número (ex: 29.90):");
-                return new Response('OK');
-              }
-              try {
-                const plan = await createPlan(userId, state.data.name, price);
-                await sendMessage(chatId, `✅ Plano Cadastrado!\n\nNome: ${plan.name}\nPreço: R$ ${plan.price.toFixed(2)}`, plansMenu);
-                userState.delete(chatId);
-              } catch (err) {
-                await sendMessage(chatId, "❌ Erro técnico ao salvar o plano. O administrador foi notificado.");
-              }
-              return new Response('OK');
-            }
-          }
-
-          // Fluxo de Cadastro de Servidores
-          if (state?.action === 'cadastrar_servidor') {
-            if (state.step === 1) {
-              state.data.name = text;
-              state.step = 2;
-              await sendMessage(chatId, "Informe o Custo do servidor:");
-              return new Response('OK');
-            } else if (state.step === 2) {
-              const cost = parseFloat(text.replace(',', '.'));
-              if (isNaN(cost)) {
-                await sendMessage(chatId, "Custo inválido. Digite um número (ex: 10.00):");
-                return new Response('OK');
-              }
-              try {
-                const server = await createServer(userId, state.data.name, cost);
-                await sendMessage(chatId, `✅ Servidor Cadastrado!\n\nNome: ${server.name}\nCusto: R$ ${server.valor.toFixed(2)}`, serversMenu);
-                userState.delete(chatId);
-              } catch (err) {
-                await sendMessage(chatId, "❌ Erro técnico ao salvar o servidor. O administrador foi notificado.");
-              }
-              return new Response('OK');
-            }
-          }
-
-          // Fluxo de Busca de Cliente
-          if (state?.action === 'buscar_cliente') {
-            try {
-              const clients = await findClientByName(text);
-              if (clients.length === 0) {
-                await sendMessage(chatId, "Nenhum cliente encontrado com esse nome.", clientsSubMenu);
-              } else {
-                const listText = clients.map(c => `👤 ${c.nome}\n📱 ${c.whatsapp || 'N/A'}\n📅 Vencimento: ${c.vencimento}\n⚖️ Status: ${c.status}`).join('\n\n');
-                await sendMessage(chatId, `🔍 Resultados da Busca:\n\n${listText}`, clientsSubMenu);
-              }
-              userState.delete(chatId);
-            } catch (err) {
-              await sendMessage(chatId, "❌ Erro ao buscar cliente.", clientsSubMenu);
-            }
-            return new Response('OK');
-          }
-
-          // Fluxo de Cadastro de Novo Cliente (Simplificado)
+          // Handlers de Fluxo de Texto
           if (state?.action === 'cadastrar_cliente') {
             if (state.step === 1) {
               state.data.nome = text;
               state.step = 2;
-              await sendMessage(chatId, "Digite o WhatsApp do cliente (ou 'N/A'):");
+              await sendMessage(chatId, "<b>Passo 2: WhatsApp</b>\nDigite o WhatsApp com DDD ou envie 0:");
               return new Response('OK');
-            } else if (state.step === 2) {
+            }
+            if (state.step === 2) {
               state.data.whatsapp = text;
               state.step = 3;
-              // Buscamos planos para mostrar opções (opcionalmente simplificado aqui para pegar o ID do primeiro plano ou pedir manual)
-              await sendMessage(chatId, "Digite a Data de Vencimento (AAAA-MM-DD):");
+              const plans = await listPlans();
+              const buttons = plans.map(p => ([{ 
+                text: `${p.name} - R$ ${Number(p.price).toFixed(2)}`, 
+                callback_data: `plano:${p.id}:${p.name}` 
+              }]));
+              await sendMessage(chatId, "<b>Passo 3: Seleção de Plano</b>\nSelecione o plano desejado:", {
+                inline_keyboard: buttons
+              });
               return new Response('OK');
-            } else if (state.step === 3) {
-              state.data.vencimento = text;
-              try {
-                // Para o MVP de cadastro via bot, vamos usar um plano padrão ou o primeiro plano ativo
-                const plans = await listPlans();
-                if (plans.length === 0) {
-                  await sendMessage(chatId, "Erro: Cadastre um plano antes de cadastrar clientes.", mainMenu);
-                  userState.delete(chatId);
-                  return new Response('OK');
-                }
-                // Simplesmente associamos ao primeiro plano
-                const { data: firstPlan } = await supabaseAdmin.from('plans').select('id').limit(1).single();
-                
-                await createClient(userId, {
-                  nome: state.data.nome,
-                  whatsapp: state.data.whatsapp === 'N/A' ? '' : state.data.whatsapp,
-                  plano_id: (firstPlan as any).id,
-                  vencimento: state.data.vencimento
-                });
-                
-                await sendMessage(chatId, `✅ Cliente ${state.data.nome} cadastrado com sucesso!`, clientsSubMenu);
-                userState.delete(chatId);
-              } catch (err) {
-                console.error(err);
-                await sendMessage(chatId, "❌ Erro ao cadastrar cliente. Verifique o formato da data (AAAA-MM-DD).", clientsSubMenu);
+            }
+            if (state.step === 5) {
+              const desc = parseFloat(text.replace(',', '.'));
+              if (isNaN(desc)) {
+                await sendMessage(chatId, "Valor inválido. Digite o desconto (ex: 5 ou 0):");
+                return new Response('OK');
               }
+              state.data.desconto = desc;
+              state.step = 6;
+              
+              // Calcular vencimento padrão (+30 dias)
+              const vDate = new Date();
+              vDate.setDate(vDate.getDate() + 30);
+              state.data.vencimento_temp = vDate.toISOString();
+              
+              const brDate = formatBRDate(vDate);
+              await sendMessage(chatId, `<b>Passo 6: Seleção de Vencimento</b>\nAjuste a data de vencimento:\n📅 <b>${brDate}</b>`, {
+                inline_keyboard: [
+                  [
+                    { text: "➖ 5 dias", callback_data: "venc_m5" },
+                    { text: "➖ 1 dia", callback_data: "venc_m1" },
+                    { text: "➕ 1 dia", callback_data: "venc_p1" },
+                    { text: "➕ 5 dias", callback_data: "venc_p5" }
+                  ],
+                  [{ text: `📅 Confirmar Data: ${brDate}`, callback_data: "venc_confirmar" }],
+                  [{ text: "✏️ Digitar Outra Data", callback_data: "venc_digitar" }]
+                ]
+              });
+              return new Response('OK');
+            }
+            if (state.step === 6) {
+              // Entrada manual de data
+              const isoDate = parseBRDate(text);
+              if (!isoDate) {
+                await sendMessage(chatId, "⚠️ Formato inválido. Digite a data como DD/MM/AAAA:");
+                return new Response('OK');
+              }
+              state.data.vencimento_temp = new Date(isoDate + 'T12:00:00').toISOString();
+              const brDate = formatBRDate(new Date(state.data.vencimento_temp));
+              await sendMessage(chatId, `Data atualizada:\n📅 <b>${brDate}</b>`, {
+                inline_keyboard: [
+                  [
+                    { text: "➖ 5 dias", callback_data: "venc_m5" },
+                    { text: "➖ 1 dia", callback_data: "venc_m1" },
+                    { text: "➕ 1 dia", callback_data: "venc_p1" },
+                    { text: "➕ 5 dias", callback_data: "venc_p5" }
+                  ],
+                  [{ text: `📅 Confirmar Data: ${brDate}`, callback_data: "venc_confirmar" }],
+                  [{ text: "✏️ Digitar Outra Data", callback_data: "venc_digitar" }]
+                ]
+              });
               return new Response('OK');
             }
           }
 
-          // Comandos Iniciais
+          // Menu Principal e Comandos
           switch (text) {
             case '👥 Clientes':
               await sendMessage(chatId, "Área de Clientes:", clientsSubMenu);
               break;
-            case '📋 Planos':
-              await sendMessage(chatId, "Gerenciar Planos:", plansMenu);
-              break;
-            case '🖥️ Servidores':
-              await sendMessage(chatId, "Gerenciar Servidores:", serversMenu);
-              break;
-            case '💰 Financeiro':
-              try {
-                const fin = await getFinancialSummary();
-                const msg = `💰 RESUMO FINANCEIRO\n\n📈 Entradas: R$ ${fin.entradas.toFixed(2)}\n📉 Saídas: R$ ${fin.saidas.toFixed(2)}\n💎 Lucro: R$ ${fin.lucro.toFixed(2)}`;
-                await sendMessage(chatId, msg, mainMenu);
-              } catch (err) {
-                await sendMessage(chatId, "❌ Erro ao buscar financeiro.");
-              }
-              break;
             case '📊 Resumo':
-              try {
-                const summary = await getClientsSummary();
-                const msg = `📊 RESUMO DE CLIENTES\n• Total: ${summary.total} clientes\n• Ativos: ${summary.ativos} clientes\n• Vencidos: ${summary.vencidos} clientes`;
-                await sendMessage(chatId, msg, clientsSubMenu);
-              } catch (err) {
-                await sendMessage(chatId, "❌ Erro ao buscar resumo de clientes.");
-              }
-              break;
-            case '📅 Vencendo Hoje':
-              try {
-                const todayList = await listClientsExpiringToday();
-                if (!todayList || todayList.length === 0) {
-                  await sendMessage(chatId, "Nenhum cliente vencendo hoje.", clientsSubMenu);
-                } else {
-                  const listText = todayList.map(c => `• ${c.nome} (${c.vencimento})`).join('\n');
-                  await sendMessage(chatId, `📅 Vencendo Hoje:\n\n${listText}`, clientsSubMenu);
-                }
-              } catch (err) {
-                await sendMessage(chatId, "❌ Erro ao buscar vencimentos de hoje.");
-              }
-              break;
-            case '❌ Vencidos':
-              try {
-                const expired = await listExpiredClients();
-                if (!expired || expired.length === 0) {
-                  await sendMessage(chatId, "Nenhum cliente vencido encontrado.", clientsSubMenu);
-                } else {
-                  const listText = expired.map(c => `• ${c.nome} | ${c.vencimento}`).join('\n');
-                  await sendMessage(chatId, `❌ CLIENTES VENCIDOS (Exibindo os primeiros 15)\n\n${listText}`, clientsSubMenu);
-                }
-              } catch (err) {
-                console.error("DEBUG Telegram Vencidos:", err);
-                await sendMessage(chatId, "❌ Erro ao buscar vencidos.");
-              }
-              break;
-            case '🔍 Buscar Cliente':
-              userState.set(chatId, { action: 'buscar_cliente', step: 1, data: {} });
-              await sendMessage(chatId, "Digite o nome (ou parte dele) para buscar:");
+              const summary = await getClientsSummary();
+              await sendMessage(chatId, `📊 <b>RESUMO DE CLIENTES</b>\n• Total: ${summary.total}\n• Ativos: ${summary.ativos}\n• Vencidos: ${summary.vencidos}`, clientsSubMenu);
               break;
             case '➕ Novo Cliente':
               userState.set(chatId, { action: 'cadastrar_cliente', step: 1, data: {} });
-              await sendMessage(chatId, "Digite o Nome completo do cliente:");
+              await sendMessage(chatId, "<b>Passo 1: Nome</b>\nDigite o nome do cliente:");
               break;
-            case 'Cadastrar plano':
-              userState.set(chatId, { action: 'cadastrar_plano', step: 1, data: {} });
-              await sendMessage(chatId, "Digite o Nome do plano:");
+            case '💰 Financeiro':
+              const fin = await getFinancialSummary();
+              await sendMessage(chatId, `💰 <b>RESUMO FINANCEIRO</b>\n\n📈 Entradas: R$ ${fin.entradas.toFixed(2)}\n📉 Saídas: R$ ${fin.saidas.toFixed(2)}\n💎 Lucro: R$ ${fin.lucro.toFixed(2)}`, mainMenu);
               break;
-            case 'Listar planos':
-              try {
-                const plans = await listPlans();
-                if (plans.length === 0) {
-                  await sendMessage(chatId, "Nenhum plano encontrado.");
-                } else {
-                  const listText = plans.map(p => `• ${p.name}: R$ ${Number(p.price).toFixed(2)} (${p.active ? 'Ativo' : 'Inativo'})`).join('\n');
-                  await sendMessage(chatId, `📋 Planos Cadastrados:\n\n${listText}`, plansMenu);
-                }
-              } catch (err) {
-                await sendMessage(chatId, "❌ Erro ao buscar planos.");
-              }
+            case '🖥️ Servidores':
+              const servers = await listServers();
+              const sText = servers.map(s => `• ${s.name}: R$ ${Number(s.valor).toFixed(2)}`).join('\n');
+              await sendMessage(chatId, `🖥️ <b>Servidores:</b>\n\n${sText || 'Nenhum'}`, mainMenu);
               break;
-            case 'Cadastrar servidor':
-              userState.set(chatId, { action: 'cadastrar_servidor', step: 1, data: {} });
-              await sendMessage(chatId, "Digite o Nome do servidor:");
-              break;
-            case 'Listar servidores':
-              try {
-                const servers = await listServers();
-                if (servers.length === 0) {
-                  await sendMessage(chatId, "Nenhum servidor encontrado.");
-                } else {
-                  const listText = servers.map(s => `• ${s.name}: R$ ${Number(s.valor).toFixed(2)} (${s.active ? 'Ativo' : 'Inativo'})`).join('\n');
-                  await sendMessage(chatId, `🖥️ Servidores Cadastrados:\n\n${listText}`, serversMenu);
-                }
-              } catch (err) {
-                await sendMessage(chatId, "❌ Erro ao buscar servidores.");
-              }
+            case '📋 Planos':
+              const plans = await listPlans();
+              const pText = plans.map(p => `• ${p.name}: R$ ${Number(p.price).toFixed(2)}`).join('\n');
+              await sendMessage(chatId, `📋 <b>Planos:</b>\n\n${pText || 'Nenhum'}`, mainMenu);
               break;
             default:
-              await sendMessage(chatId, "Comando não reconhecido. Use o menu abaixo:", mainMenu);
+              if (!state) await sendMessage(chatId, "Comando não reconhecido.", mainMenu);
           }
 
           return new Response('OK');
         } catch (error) {
-          console.error("Erro no Webhook do Telegram:", error);
-          return new Response('Internal Server Error', { status: 500 });
+          console.error("Erro no Webhook:", error);
+          return new Response('OK');
         }
       },
     },
