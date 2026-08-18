@@ -436,6 +436,30 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
           switch (text) {
             case '👥 Clientes': await sendMessage(chatId, "Clientes:", clientsSubMenu); break;
+            case '🖥️ Servidores':
+              const servers = await listServers();
+              const sMsg = servers.map(s => `• ${s.name}: R$ ${s.valor}`).join('\n') || 'Nenhum servidor.';
+              await sendMessage(chatId, `🖥️ <b>SERVIDORES:</b>\n${sMsg}`, mainMenu);
+              break;
+            case '📋 Planos':
+              const plans = await listPlans();
+              const pMsg = plans.map(p => `• ${p.name}: R$ ${p.price}`).join('\n') || 'Nenhum plano.';
+              await sendMessage(chatId, `📋 <b>PLANOS:</b>\n${pMsg}`, mainMenu);
+              break;
+            case '📊 Resumo':
+              const summary = await getClientsSummary();
+              await sendMessage(chatId, `📊 <b>RESUMO:</b>\nTotal: ${summary.total}\nAtivos: ${summary.ativos}\nVencidos: ${summary.vencidos}`, clientsSubMenu);
+              break;
+            case '📅 Vencendo Hoje':
+              const today = await listClientsExpiringToday();
+              const tMsg = today.map(c => `• ${c.nome}`).join('\n') || 'Ninguém vence hoje.';
+              await sendMessage(chatId, `📅 <b>VENCENDO HOJE:</b>\n${tMsg}`, clientsSubMenu);
+              break;
+            case '❌ Vencidos':
+              const expired = await listExpiredClients();
+              const eMsg = expired.map(c => `• ${c.nome} (${formatBRDate(new Date(c.vencimento + 'T12:00:00'))})`).join('\n') || 'Nenhum vencido.';
+              await sendMessage(chatId, `❌ <b>VENCIDOS:</b>\n${eMsg}`, clientsSubMenu);
+              break;
             case '➕ Novo Cliente':
               userState.set(chatId, { action: 'cadastrar_cliente', step: 1, data: {} });
               await sendMessage(chatId, "Nome do cliente:");
@@ -444,15 +468,15 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               await setUserStep(chatId, 'awaiting_search_query');
               await sendMessage(chatId, "🔍 Digite o nome (ou parte do nome) do cliente que deseja buscar:");
               break;
-
             case '💰 Financeiro':
               const f = await getFinancialSummary();
-              await sendMessage(chatId, `💰 Lucro: R$ ${f.lucro.toFixed(2)}`, mainMenu);
+              await sendMessage(chatId, `💰 <b>FINANCEIRO:</b>\nEntradas: R$ ${f.entradas.toFixed(2)}\nSaídas: R$ ${f.saidas.toFixed(2)}\nLucro: R$ ${f.lucro.toFixed(2)}`, mainMenu);
               break;
           }
 
           return new Response('OK');
         } catch (e) {
+          console.error("ERRO WEBHOOK TELEGRAM:", e);
           return new Response('OK');
         }
       }
