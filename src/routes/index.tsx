@@ -36,11 +36,13 @@ function Index() {
 
     checkSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
-    return () => subscription?.unsubscribe?.();
+    return () => {
+      authListener?.subscription?.unsubscribe?.();
+    };
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
