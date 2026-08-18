@@ -97,8 +97,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
             // Passo 3: Seleção de Plano
             if (state.step === 3 && data.startsWith('plano:')) {
-              const planoId = data.split(':')[1];
-              const planoName = data.split(':')[2];
+              const parts = data.split(':');
+              const planoId = parts[1];
+              const planoName = parts[2];
               state.data.plano_id = planoId;
               state.data.plano_name = planoName;
               state.step = 4;
@@ -174,7 +175,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   ]
                 });
               } else if (data === 'venc_confirmar') {
-                state.data.vencimento = state.data.vencimento_temp.split('T')[0];
+                state.data.vencimento = (state.data.vencimento_temp as string).split('T')[0];
                 state.step = 7; // Resumo
                 
                 const resumo = `📝 <b>RESUMO DO CADASTRO:</b>\n` +
