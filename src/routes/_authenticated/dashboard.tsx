@@ -60,9 +60,9 @@ function Dashboard() {
             .limit(10),
         ]);
 
-        const totalClients = clients.data?.length || 0;
-        const activeClients = clients.data?.filter(c => c.status === "ativo").length || 0;
-        const expiredClients = clients.data?.filter(c => c.status === "vencido").length || 0;
+        const totalClients = clients.data?.length ?? 0;
+        const activeClients = clients.data?.filter(c => c?.status === "ativo").length ?? 0;
+        const expiredClients = clients.data?.filter(c => c?.status === "vencido").length ?? 0;
 
         const entradas = transactions.data
           ?.filter((t) => t.tipo === "entrada")
@@ -102,7 +102,7 @@ function Dashboard() {
           lucro: entradas - saidas,
           faturamentoTotal: entradas,
           chartData: Object.values(monthlyData),
-          expiringClients: expiringClients.data || [],
+          expiringClients: expiringClients.data ?? [],
           pieData: [
             { name: "Ativos", value: activeClientsCount, color: "hsl(var(--chart-1))" },
             { name: "Vencidos", value: expiredClientsCount, color: "hsl(var(--chart-2))" },
