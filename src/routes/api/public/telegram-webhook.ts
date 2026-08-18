@@ -151,7 +151,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   ]
                 });
               } else if (data === 'venc_confirm') {
-                state.data.vencimento = (state.data.vencimento_temp || '').split('T')[0];
+                const vt = state.data.vencimento_temp;
+                if (!vt) return new Response('OK');
+                state.data.vencimento = vt.split('T')[0];
                 state.step = 7;
                 const resumo = `📝 <b>RESUMO:</b>\n• Nome: ${state.data.nome}\n• Plano: ${state.data.plano_name}\n• Venc: ${formatBRDate(new Date((state.data.vencimento || '') + 'T12:00:00'))}\n\nConfirmar?`;
                 await sendMessage(chatId, resumo, {
