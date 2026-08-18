@@ -244,7 +244,7 @@ function Dashboard() {
         </Card>
 
         {/* Distribuição de Clientes */}
-        <Card className="md:col-span-3 shadow-sm">
+        <Card className="md:col-span-3 shadow-sm relative">
           <CardHeader>
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
@@ -253,28 +253,40 @@ function Dashboard() {
             <CardDescription>Proporção de ativos vs vencidos</CardDescription>
           </CardHeader>
           <CardContent className="h-[300px] flex items-center justify-center">
-             <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={stats?.pieData || []}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
+            <ChartContainer
+              config={{
+                ativos: {
+                  label: "Ativos",
+                  color: "hsl(var(--chart-1))",
+                },
+                vencidos: {
+                  label: "Vencidos",
+                  color: "hsl(var(--chart-2))",
+                },
+              }}
+              className="h-full w-full"
+            >
+              <PieChart>
+                <Pie
+                  data={stats?.pieData || []}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
                     {stats?.pieData?.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartTooltip content={<ChartTooltipContent hideLabel />} />
                 </PieChart>
-             </ResponsiveContainer>
-             <div className="absolute flex flex-col items-center justify-center text-center">
-                <span className="text-2xl font-bold">{stats?.totalClients}</span>
-                <span className="text-[10px] uppercase text-muted-foreground">Total</span>
-             </div>
+            </ChartContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none pt-16">
+              <span className="text-2xl font-bold">{stats?.totalClients}</span>
+              <span className="text-[10px] uppercase text-muted-foreground">Total</span>
+            </div>
           </CardContent>
         </Card>
       </div>
