@@ -498,7 +498,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               await sendMessage(chatId, "Nome do cliente:");
               break;
             case '🔍 Buscar Cliente':
-              await sendMessage(chatId, "Para buscar, envie: <code>/buscar nome</code> (Exemplo: <code>/buscar Ivan</code>)");
+              await setUserStep(chatId, 'aguardando_busca');
+              await sendMessage(chatId, "🔍 Digite o nome (ou parte do nome) do cliente:");
               break;
             case '💰 Financeiro':
               const f = await getFinancialSummary();
