@@ -91,3 +91,56 @@ export const listServers = async () => {
   }
   return data;
 };
+
+export const getClientsSummary = async () => {
+  const { data: allClients, error } = await supabaseAdmin
+    .from("clientes")
+    .select("status");
+
+  if (error) {
+    console.error("Erro Supabase (summary select):", error);
+    throw new Error("Erro ao buscar resumo de clientes.");
+  }
+
+  const total = allClients.length;
+  const ativos = allClients.filter(c => c.status === 'ativo').length;
+  const vencidos = allClients.filter(c => c.status === 'vencido').length;
+
+  return { total, ativos, vencidos };
+};
+
+export const listExpiredClients = async () => {
+  const { data, error } = await supabaseAdmin
+    .from("clientes")
+    .select(`
+      nome,
+      vencimento,
+      servidores_iptv:servidores_ids (
+        name
+      )
+    `)
+    .eq("status", "vencido");
+
+  if (error) {
+    console.error("Erro Supabase (expired select):", error);
+    throw new Error("Erro ao listar clientes vencidos.");
+  }
+  
+  // Como servidores_ids é um UUID[], o relacionamento pode precisar de tratamento dependendo do PostgREST
+  // Mas para o retorno textual, podemos simplificar se a query acima falhar ou retornar nulo
+  return data;
+};
+
+export const listClientsExpiringToday = async () => {
+  const today = new Date().toISOString().split('T')[0];
+  const { data, error } = await supabaseAdmin
+    .from("clientes")
+    .select("nome, vencimento")
+    .eq("vencimento", today);
+
+  if (error) {
+    console.error("Erro Supabase (today select):", error);
+    throw new Error("Erro ao listar clientes vencendo hoje.");
+  }
+  return data;
+};
