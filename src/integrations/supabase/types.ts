@@ -187,18 +187,21 @@ export type Database = {
       telegram_authorized_users: {
         Row: {
           created_at: string | null
+          current_step: string | null
           id: string
           telegram_chat_id: number
           user_id: string
         }
         Insert: {
           created_at?: string | null
+          current_step?: string | null
           id?: string
           telegram_chat_id: number
           user_id: string
         }
         Update: {
           created_at?: string | null
+          current_step?: string | null
           id?: string
           telegram_chat_id?: number
           user_id?: string
