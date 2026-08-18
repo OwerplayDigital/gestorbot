@@ -10,15 +10,21 @@ export const Route = createFileRoute("/")({
 // IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="flex flex-col min-h-screen items-center justify-center bg-background p-4 text-center">
+      <h1 className="text-4xl font-bold tracking-tight mb-4">Gestão IPTV</h1>
+      <p className="text-muted-foreground mb-8 max-w-md">
+        Fundação do sistema concluída com sucesso. Banco de dados e segurança configurados.
+      </p>
+      <div className="bg-card border rounded-lg p-6 shadow-sm max-w-lg w-full text-left">
+        <h2 className="text-xl font-semibold mb-4">Status da Fundação</h2>
+        <ul className="space-y-2 text-sm">
+          <li className="flex items-center gap-2">✅ Tabelas criadas (plans, servidores, clientes, transacoes, renovacoes)</li>
+          <li className="flex items-center gap-2">✅ Relacionamentos e Chaves Estrangeiras configurados</li>
+          <li className="flex items-center gap-2">✅ RLS e Políticas de Segurança ativos (Isolamento por UUID)</li>
+          <li className="flex items-center gap-2">✅ Índices de performance criados</li>
+          <li className="flex items-center gap-2">✅ Autenticação Social (Google) habilitada</li>
+        </ul>
+      </div>
     </div>
   );
 }
