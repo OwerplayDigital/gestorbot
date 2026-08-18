@@ -173,9 +173,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   await sendMessage(chatId, "Nenhum cliente vencido encontrado.", mainMenu);
                 } else {
                   const listText = expired.map(c => `• ${c.nome} | ${c.vencimento}`).join('\n');
-                  await sendMessage(chatId, `📉 Clientes Vencidos:\n\n${listText}`, mainMenu);
+                  await sendMessage(chatId, `❌ CLIENTES VENCIDOS (Exibindo os primeiros 15)\n\n${listText}`, mainMenu);
                 }
               } catch (err) {
+                console.error("DEBUG Telegram Vencidos:", err);
                 await sendMessage(chatId, "❌ Erro ao buscar vencidos.");
               }
               break;
