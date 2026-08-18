@@ -82,10 +82,10 @@ function Dashboard() {
         }
 
         transactions.data?.forEach(t => {
-          if (t.tipo === "entrada" && t.data) {
+          if (t?.tipo === "entrada" && t?.data) {
             const key = t.data.substring(0, 7);
             if (monthlyData[key]) {
-              monthlyData[key].faturamento += Number(t.valor);
+              monthlyData[key].faturamento += Number(t.valor || 0);
             }
           }
         });
@@ -94,8 +94,8 @@ function Dashboard() {
         const expiredClientsCount = expiredClients;
 
         return {
-          plans: plans.count || 0,
-          servers: servers.count || 0,
+          plans: plans?.count ?? 0,
+          servers: servers?.count ?? 0,
           activeClients: activeClientsCount,
           expiredClients: expiredClientsCount,
           totalClients,
