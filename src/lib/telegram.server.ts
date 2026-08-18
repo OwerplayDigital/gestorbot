@@ -1,11 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export const getAuthorizedUser = async (chatId: number) => {
-  // A fonte de verdade é a tabela telegram_authorized_users.
-  // O TELEGRAM_ALLOWED_USER_ID (se presente) atua apenas como um filtro adicional de segurança,
-  // mas o vínculo obrigatório é o Chat ID no banco de dados.
   const allowedId = process.env['TELEGRAM_ALLOWED_USER_ID'];
   
+  // Garantimos que a comparação seja feita com o valor exato. 
+  // O PostgREST/Supabase-js lida melhor com BigInt quando passamos como string ou número exato.
   const { data, error } = await supabase
     .from("telegram_authorized_users")
     .select("user_id")
@@ -19,8 +18,6 @@ export const getAuthorizedUser = async (chatId: number) => {
 
   const userId = data?.user_id || null;
 
-  // Se existir um ID permitido definido em segredo, validamos se o chatId coincide.
-  // Caso contrário, seguimos apenas com a validação do banco.
   if (allowedId && userId) {
     if (chatId.toString() !== allowedId) {
       console.warn(`Chat ID ${chatId} vinculado a ${userId} mas não consta em TELEGRAM_ALLOWED_USER_ID`);
