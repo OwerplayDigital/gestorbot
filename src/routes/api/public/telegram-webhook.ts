@@ -112,6 +112,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
       POST: async ({ request }) => {
         try {
           const body = await request.json();
+          if (!body) return new Response('OK');
           
           if (body.callback_query) {
             const cb = body.callback_query;
