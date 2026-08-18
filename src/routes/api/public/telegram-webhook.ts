@@ -118,9 +118,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             // Fluxo de Cadastro - Callbacks
             if (data.startsWith('view_client:')) {
                const nome = data.split(':')[1];
+               if (!nome) return new Response('OK');
                const results = await findClientByName(nome);
-               if (results.length > 0) {
-                 const c = results[0];
+               const c = results[0];
+               if (c) {
                  const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
                              `• Nome: ${c.nome}\n` +
                              `• WhatsApp: ${c.whatsapp}\n` +
@@ -134,7 +135,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                  });
                }
             }
-            else if (state.step === 3 && data.startsWith('plano:')) {
+            else if (data === 'voltar_clients') {
+               await sendMessage(chatId, "Clientes:", clientsSubMenu);
+            }
+            else if (state && state.step === 3 && data.startsWith('plano:')) {
               const parts = data.split(':');
               const id = parts[1] ?? '';
               const name = parts[2] ?? '';
