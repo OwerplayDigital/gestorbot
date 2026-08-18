@@ -100,6 +100,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const parts = data.split(':');
               const id = parts[1] ?? '';
               const name = parts[2] ?? '';
+              state.data.plano_id = id;
               state.data.plano_name = name;
               state.step = 4;
               state.data.servidores_ids = [];
