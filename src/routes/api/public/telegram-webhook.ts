@@ -49,7 +49,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           // 1. Autenticação
           const userId = await getAuthorizedUser(chatId);
           if (!userId) {
-            await sendMessage(chatId, "Acesso negado. Este bot é restrito a revendedores autorizados.");
+            await sendMessage(chatId, `Acesso negado. Seu Chat ID é: ${chatId}`);
             console.warn(`Tentativa de acesso não autorizado: Chat ID ${chatId}`);
             return new Response('Unauthorized', { status: 401 });
           }
