@@ -2,17 +2,14 @@ import { createFileRoute } from '@tanstack/react-router';
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { 
   getAuthorizedUser, 
-  createPlan, 
   listPlans, 
-  createServer, 
   listServers, 
   getClientsSummary, 
-  listExpiredClients, 
-  listClientsExpiringToday, 
-  findClientByName, 
-  createClientWithDetails, 
-  getFinancialSummary 
+  getFinancialSummary,
+  createClientWithDetails 
 } from '@/lib/telegram.server';
+
+const TELEGRAM_API = `https://api.telegram.org/bot${process.env['TELEGRAM_BOT_TOKEN']}`;
 
 type ClientRegistrationData = {
   nome: string;
@@ -32,15 +29,11 @@ type UserState = {
   data: Partial<ClientRegistrationData>;
 };
 
-const TELEGRAM_API = `https://api.telegram.org/bot${process.env['TELEGRAM_BOT_TOKEN']}`;
-
-// Gerenciador de estado temporário para o fluxo de cadastro
 const userState = new Map<number, UserState>();
 
-// Helper para enviar mensagens com teclado inline ou comum
 async function sendMessage(chatId: number, text: string, replyMarkup?: any) {
   try {
-    const response = await fetch(`${TELEGRAM_API}/sendMessage`, {
+    await fetch(`${TELEGRAM_API}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -50,15 +43,11 @@ async function sendMessage(chatId: number, text: string, replyMarkup?: any) {
         parse_mode: 'HTML'
       }),
     });
-    if (!response.ok) {
-      console.error("Erro ao enviar mensagem Telegram:", await response.text());
-    }
   } catch (err) {
-    console.error("Exceção ao enviar mensagem Telegram:", err);
+    console.error("Erro ao enviar mensagem:", err);
   }
 }
 
-// Menus
 const mainMenu = {
   keyboard: [
     [{ text: '👥 Clientes' }, { text: '🖥️ Servidores' }],
@@ -76,7 +65,6 @@ const clientsSubMenu = {
   resize_keyboard: true,
 };
 
-// Utils de Data
 function formatBRDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -87,17 +75,10 @@ function formatBRDate(date: Date): string {
 function parseBRDate(brDate: string): string | null {
   const parts = brDate.split('/');
   if (parts.length !== 3) return null;
-  const dayStr = parts[0];
-  const monthStr = parts[1];
-  const yearStr = parts[2];
-  if (dayStr === undefined || monthStr === undefined || yearStr === undefined) return null;
-  
-  const day = parseInt(dayStr, 10);
-  const month = parseInt(monthStr, 10) - 1;
-  const year = parseInt(yearStr, 10);
-  const date = new Date(year, month, day);
-  if (isNaN(date.getTime())) return null;
-  return date.toISOString().split('T')[0];
+  const d = parts[0], m = parts[1], y = parts[2];
+  if (!d || !m || !y) return null;
+  const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+  return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
 }
 
 export const Route = createFileRoute('/api/public/telegram-webhook')({
@@ -107,154 +88,100 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
         try {
           const body = await request.json();
           
-          // Lidar com Callback Query (Botões Inline)
           if (body.callback_query) {
             const cb = body.callback_query;
             const chatId = cb.message.chat.id;
             const data = cb.data;
-            const userId = await getAuthorizedUser(chatId);
-            if (!userId) return new Response('OK');
-
             const state = userState.get(chatId);
             if (!state || state.action !== 'cadastrar_cliente') return new Response('OK');
 
-            // Passo 3: Seleção de Plano
+            // Fluxo de Cadastro - Callbacks
             if (state.step === 3 && data.startsWith('plano:')) {
-              const parts = data.split(':');
-              const planoId = parts[1];
-              const planoName = parts[2];
-              state.data.plano_id = planoId;
-              state.data.plano_name = planoName;
+              const [_, id, name] = data.split(':');
+              state.data.plano_id = id;
+              state.data.plano_name = name;
               state.step = 4;
               state.data.servidores_ids = [];
               state.data.servidores_names = [];
-              
               const servers = await listServers();
-              const buttons = servers.map(s => ([{ 
-                text: `${s.name} (R$ ${Number(s.valor).toFixed(2)})`, 
-                callback_data: `serv:${s.id}:${s.name}` 
-              }]));
-              
-              await sendMessage(chatId, "<b>Passo 4: Seleção de Servidor</b>\nClique nos servidores para adicionar:", {
-                inline_keyboard: buttons
-              });
-              return new Response('OK');
-            }
-
-            // Passo 4: Seleção de Servidores
-            if (state.step === 4) {
+              const buttons = servers.map(s => ([{ text: s.name, callback_data: `serv:${s.id}:${s.name}` }]));
+              await sendMessage(chatId, "<b>Passo 4: Seleção de Servidor</b>\nSelecione os servidores:", { inline_keyboard: buttons });
+            } 
+            else if (state.step === 4) {
               if (data.startsWith('serv:')) {
-                const [_, servId, servName] = data.split(':');
-                if (!state.data.servidores_ids.includes(servId)) {
-                  state.data.servidores_ids.push(servId);
-                  state.data.servidores_names.push(servName);
+                const [_, id, name] = data.split(':');
+                if (id && name && !state.data.servidores_ids?.includes(id)) {
+                  state.data.servidores_ids?.push(id);
+                  state.data.servidores_names?.push(name);
                 }
-                
-                await sendMessage(chatId, `✅ Servidor <b>${servName}</b> adicionado.\n\nDeseja adicionar mais um ou avançar?`, {
+                await sendMessage(chatId, `✅ <b>${name}</b> adicionado.\nMais algum ou avançar?`, {
                   inline_keyboard: [
-                    [{ text: "➕ Adicionar Outro Servidor", callback_data: "serv_outro" }],
+                    [{ text: "➕ Adicionar Outro", callback_data: "serv_outro" }],
                     [{ text: "▶️ Avançar", callback_data: "serv_avancar" }]
                   ]
                 });
               } else if (data === 'serv_outro') {
                 const servers = await listServers();
-                const buttons = servers.map(s => ([{ 
-                  text: `${s.name} (R$ ${Number(s.valor).toFixed(2)})`, 
-                  callback_data: `serv:${s.id}:${s.name}` 
-                }]));
-                await sendMessage(chatId, "Selecione outro servidor:", { inline_keyboard: buttons });
+                const buttons = servers.map(s => ([{ text: s.name, callback_data: `serv:${s.id}:${s.name}` }]));
+                await sendMessage(chatId, "Selecione outro:", { inline_keyboard: buttons });
               } else if (data === 'serv_avancar') {
-                if (state.data.servidores_ids.length === 0) {
-                  await sendMessage(chatId, "⚠️ Selecione pelo menos um servidor antes de avançar.");
-                  return new Response('OK');
-                }
                 state.step = 5;
-                await sendMessage(chatId, "<b>Passo 5: Informar Desconto</b>\nInforme o valor do desconto recorrente em R$ (ex: 5 ou 0 para nenhum):");
+                await sendMessage(chatId, "<b>Passo 5: Desconto</b>\nInforme o valor (ex: 5 ou 0):");
               }
-              return new Response('OK');
             }
-
-            // Passo 6: Ajuste de Vencimento
-            if (state.step === 6) {
-              const currentVencTemp = state.data.vencimento_temp;
-              if (typeof currentVencTemp !== 'string') return new Response('OK');
-              const currentVenc = new Date(currentVencTemp);
-              
-              if (data === 'venc_m5') currentVenc.setDate(currentVenc.getDate() - 5);
-              if (data === 'venc_m1') currentVenc.setDate(currentVenc.getDate() - 1);
-              if (data === 'venc_p1') currentVenc.setDate(currentVenc.getDate() + 1);
-              if (data === 'venc_p5') currentVenc.setDate(currentVenc.getDate() + 5);
+            else if (state.step === 6) {
+              const currentIso = state.data.vencimento_temp;
+              if (!currentIso) return new Response('OK');
+              const d = new Date(currentIso);
+              if (data === 'venc_m5') d.setDate(d.getDate() - 5);
+              if (data === 'venc_m1') d.setDate(d.getDate() - 1);
+              if (data === 'venc_p1') d.setDate(d.getDate() + 1);
+              if (data === 'venc_p5') d.setDate(d.getDate() + 5);
               
               if (data.startsWith('venc_')) {
-                state.data.vencimento_temp = currentVenc.toISOString();
-                const brDate = formatBRDate(currentVenc);
-                await sendMessage(chatId, `Ajuste a data de vencimento:\n📅 <b>${brDate}</b>`, {
+                state.data.vencimento_temp = d.toISOString();
+                const br = formatBRDate(d);
+                await sendMessage(chatId, `Vencimento: <b>${br}</b>`, {
                   inline_keyboard: [
-                    [
-                      { text: "➖ 5 dias", callback_data: "venc_m5" },
-                      { text: "➖ 1 dia", callback_data: "venc_m1" },
-                      { text: "➕ 1 dia", callback_data: "venc_p1" },
-                      { text: "➕ 5 dias", callback_data: "venc_p5" }
-                    ],
-                    [{ text: `📅 Confirmar Data: ${brDate}`, callback_data: "venc_confirmar" }],
-                    [{ text: "✏️ Digitar Outra Data", callback_data: "venc_digitar" }]
+                    [{ text: "-5d", callback_data: "venc_m5" }, { text: "-1d", callback_data: "venc_m1" }, { text: "+1d", callback_data: "venc_p1" }, { text: "+5d", callback_data: "venc_p5" }],
+                    [{ text: `Confirmar: ${br}`, callback_data: "venc_confirm" }],
+                    [{ text: "Digitar Data", callback_data: "venc_edit" }]
                   ]
                 });
-              } else if (data === 'venc_confirmar') {
-                state.data.vencimento = (state.data.vencimento_temp as string).split('T')[0];
-                state.step = 7; // Resumo
-                
-                const resumo = `📝 <b>RESUMO DO CADASTRO:</b>\n` +
-                  `• Nome: ${state.data.nome}\n` +
-                  `• WhatsApp: ${state.data.whatsapp}\n` +
-                  `• Plano: ${state.data.plano_name}\n` +
-                  `• Servidores: ${state.data.servidores_names.join(', ')}\n` +
-                  `• Desconto: R$ ${Number(state.data.desconto).toFixed(2)}\n` +
-                  `• Vencimento: ${formatBRDate(new Date(state.data.vencimento + 'T12:00:00'))}\n\n` +
-                  `Deseja confirmar o cadastro?`;
-                
+              } else if (data === 'venc_confirm') {
+                state.data.vencimento = state.data.vencimento_temp?.split('T')[0];
+                state.step = 7;
+                const resumo = `📝 <b>RESUMO:</b>\n• Nome: ${state.data.nome}\n• Plano: ${state.data.plano_name}\n• Venc: ${formatBRDate(new Date((state.data.vencimento || '') + 'T12:00:00'))}\n\nConfirmar?`;
                 await sendMessage(chatId, resumo, {
-                  inline_keyboard: [
-                    [{ text: "✅ Confirmar e Cadastrar", callback_data: "cad_confirmar" }],
-                    [{ text: "❌ Cancelar", callback_data: "cad_cancelar" }]
-                  ]
+                  inline_keyboard: [[{ text: "✅ Confirmar", callback_data: "f_ok" }, { text: "❌ Cancelar", callback_data: "f_no" }]]
                 });
-              } else if (data === 'venc_digitar') {
-                await sendMessage(chatId, "Digite a data no formato DD/MM/AAAA:");
+              } else if (data === 'venc_edit') {
+                await sendMessage(chatId, "Digite DD/MM/AAAA:");
               }
-              return new Response('OK');
             }
-
-            // Confirmação Final
-            if (data === 'cad_confirmar') {
-              try {
+            else if (data === 'f_ok') {
+              const d = state.data;
+              if (d.nome && d.whatsapp && d.plano_id && d.servidores_ids && d.desconto !== undefined && d.vencimento) {
                 await createClientWithDetails({
-                  nome: state.data.nome,
-                  whatsapp: state.data.whatsapp === '0' ? '' : state.data.whatsapp,
-                  plano_id: state.data.plano_id,
-                  servidores_ids: state.data.servidores_ids,
-                  desconto: state.data.desconto,
-                  vencimento: state.data.vencimento
+                  nome: d.nome, whatsapp: d.whatsapp === '0' ? '' : d.whatsapp,
+                  plano_id: d.plano_id, servidores_ids: d.servidores_ids,
+                  desconto: d.desconto, vencimento: d.vencimento
                 });
-                await sendMessage(chatId, "✅ <b>Cliente cadastrado com sucesso!</b>", clientsSubMenu);
+                await sendMessage(chatId, "✅ <b>Sucesso!</b>", clientsSubMenu);
                 userState.delete(chatId);
-              } catch (err) {
-                await sendMessage(chatId, "❌ Erro ao salvar cliente no banco de dados.");
               }
-            } else if (data === 'cad_cancelar') {
-              await sendMessage(chatId, "❌ Cadastro cancelado.", clientsSubMenu);
+            } else if (data === 'f_no') {
               userState.delete(chatId);
+              await sendMessage(chatId, "❌ Cancelado.", clientsSubMenu);
             }
 
             return new Response('OK');
           }
 
-          const message = body.message;
-          if (!message) return new Response('OK');
-
-          const chatId = message.chat.id;
-          const text = message.text;
-
+          const msg = body.message;
+          if (!msg) return new Response('OK');
+          const chatId = msg.chat.id;
+          const text = msg.text;
           const userId = await getAuthorizedUser(chatId);
           if (!userId) return new Response('OK');
 
@@ -262,122 +189,62 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
           if (text === '/start' || text === '🔙 Voltar') {
             userState.delete(chatId);
-            await sendMessage(chatId, "Menu Principal:", mainMenu);
+            await sendMessage(chatId, "Menu:", mainMenu);
             return new Response('OK');
           }
 
-          // Handlers de Fluxo de Texto
           if (state?.action === 'cadastrar_cliente') {
             if (state.step === 1) {
-              state.data.nome = text;
-              state.step = 2;
-              await sendMessage(chatId, "<b>Passo 2: WhatsApp</b>\nDigite o WhatsApp com DDD ou envie 0:");
-              return new Response('OK');
-            }
-            if (state.step === 2) {
-              state.data.whatsapp = text;
-              state.step = 3;
+              state.data.nome = text; state.step = 2;
+              await sendMessage(chatId, "WhatsApp (ou 0):");
+            } else if (state.step === 2) {
+              state.data.whatsapp = text; state.step = 3;
               const plans = await listPlans();
-              const buttons = plans.map(p => ([{ 
-                text: `${p.name} - R$ ${Number(p.price).toFixed(2)}`, 
-                callback_data: `plano:${p.id}:${p.name}` 
-              }]));
-              await sendMessage(chatId, "<b>Passo 3: Seleção de Plano</b>\nSelecione o plano desejado:", {
-                inline_keyboard: buttons
-              });
-              return new Response('OK');
-            }
-            if (state.step === 5) {
-              const desc = parseFloat(text.replace(',', '.'));
-              if (isNaN(desc)) {
-                await sendMessage(chatId, "Valor inválido. Digite o desconto (ex: 5 ou 0):");
-                return new Response('OK');
-              }
-              state.data.desconto = desc;
-              state.step = 6;
-              
-              // Calcular vencimento padrão (+30 dias)
-              const vDate = new Date();
-              vDate.setDate(vDate.getDate() + 30);
-              state.data.vencimento_temp = vDate.toISOString();
-              
-              const brDate = formatBRDate(vDate);
-              await sendMessage(chatId, `<b>Passo 6: Seleção de Vencimento</b>\nAjuste a data de vencimento:\n📅 <b>${brDate}</b>`, {
+              const buttons = plans.map(p => ([{ text: `${p.name} (R$${p.price})`, callback_data: `plano:${p.id}:${p.name}` }]));
+              await sendMessage(chatId, "Selecione o Plano:", { inline_keyboard: buttons });
+            } else if (state.step === 5) {
+              const val = parseFloat(text.replace(',', '.'));
+              if (isNaN(val)) return new Response('OK');
+              state.data.desconto = val; state.step = 6;
+              const d = new Date(); d.setDate(d.getDate() + 30);
+              state.data.vencimento_temp = d.toISOString();
+              const br = formatBRDate(d);
+              await sendMessage(chatId, `Vencimento: <b>${br}</b>`, {
                 inline_keyboard: [
-                  [
-                    { text: "➖ 5 dias", callback_data: "venc_m5" },
-                    { text: "➖ 1 dia", callback_data: "venc_m1" },
-                    { text: "➕ 1 dia", callback_data: "venc_p1" },
-                    { text: "➕ 5 dias", callback_data: "venc_p5" }
-                  ],
-                  [{ text: `📅 Confirmar Data: ${brDate}`, callback_data: "venc_confirmar" }],
-                  [{ text: "✏️ Digitar Outra Data", callback_data: "venc_digitar" }]
+                  [{ text: "-5d", callback_data: "venc_m5" }, { text: "-1d", callback_data: "venc_m1" }, { text: "+1d", callback_data: "venc_p1" }, { text: "+5d", callback_data: "venc_p5" }],
+                  [{ text: `Confirmar: ${br}`, callback_data: "venc_confirm" }],
+                  [{ text: "Digitar Data", callback_data: "venc_edit" }]
                 ]
               });
-              return new Response('OK');
-            }
-            if (state.step === 6) {
-              // Entrada manual de data
-              const isoDate = parseBRDate(text);
-              if (!isoDate) {
-                await sendMessage(chatId, "⚠️ Formato inválido. Digite a data como DD/MM/AAAA:");
-                return new Response('OK');
-              }
-              state.data.vencimento_temp = new Date(isoDate + 'T12:00:00').toISOString();
-              const brDate = formatBRDate(new Date(state.data.vencimento_temp));
-              await sendMessage(chatId, `Data atualizada:\n📅 <b>${brDate}</b>`, {
-                inline_keyboard: [
-                  [
-                    { text: "➖ 5 dias", callback_data: "venc_m5" },
-                    { text: "➖ 1 dia", callback_data: "venc_m1" },
-                    { text: "➕ 1 dia", callback_data: "venc_p1" },
-                    { text: "➕ 5 dias", callback_data: "venc_p5" }
-                  ],
-                  [{ text: `📅 Confirmar Data: ${brDate}`, callback_data: "venc_confirmar" }],
-                  [{ text: "✏️ Digitar Outra Data", callback_data: "venc_digitar" }]
-                ]
+            } else if (state.step === 6) {
+              const iso = parseBRDate(text);
+              if (!iso) return new Response('OK');
+              state.data.vencimento_temp = new Date(iso + 'T12:00:00').toISOString();
+              const br = formatBRDate(new Date(state.data.vencimento_temp));
+              await sendMessage(chatId, `Data: <b>${br}</b>`, {
+                inline_keyboard: [[{ text: `Confirmar: ${br}`, callback_data: "venc_confirm" }]]
               });
-              return new Response('OK');
             }
+            return new Response('OK');
           }
 
-          // Menu Principal e Comandos
           switch (text) {
-            case '👥 Clientes':
-              await sendMessage(chatId, "Área de Clientes:", clientsSubMenu);
-              break;
-            case '📊 Resumo':
-              const summary = await getClientsSummary();
-              await sendMessage(chatId, `📊 <b>RESUMO DE CLIENTES</b>\n• Total: ${summary.total}\n• Ativos: ${summary.ativos}\n• Vencidos: ${summary.vencidos}`, clientsSubMenu);
-              break;
+            case '👥 Clientes': await sendMessage(chatId, "Clientes:", clientsSubMenu); break;
             case '➕ Novo Cliente':
               userState.set(chatId, { action: 'cadastrar_cliente', step: 1, data: {} });
-              await sendMessage(chatId, "<b>Passo 1: Nome</b>\nDigite o nome do cliente:");
+              await sendMessage(chatId, "Nome do cliente:");
               break;
             case '💰 Financeiro':
-              const fin = await getFinancialSummary();
-              await sendMessage(chatId, `💰 <b>RESUMO FINANCEIRO</b>\n\n📈 Entradas: R$ ${fin.entradas.toFixed(2)}\n📉 Saídas: R$ ${fin.saidas.toFixed(2)}\n💎 Lucro: R$ ${fin.lucro.toFixed(2)}`, mainMenu);
+              const f = await getFinancialSummary();
+              await sendMessage(chatId, `💰 Lucro: R$ ${f.lucro.toFixed(2)}`, mainMenu);
               break;
-            case '🖥️ Servidores':
-              const servers = await listServers();
-              const sText = servers.map(s => `• ${s.name}: R$ ${Number(s.valor).toFixed(2)}`).join('\n');
-              await sendMessage(chatId, `🖥️ <b>Servidores:</b>\n\n${sText || 'Nenhum'}`, mainMenu);
-              break;
-            case '📋 Planos':
-              const plans = await listPlans();
-              const pText = plans.map(p => `• ${p.name}: R$ ${Number(p.price).toFixed(2)}`).join('\n');
-              await sendMessage(chatId, `📋 <b>Planos:</b>\n\n${pText || 'Nenhum'}`, mainMenu);
-              break;
-            default:
-              if (!state) await sendMessage(chatId, "Comando não reconhecido.", mainMenu);
           }
 
           return new Response('OK');
-        } catch (error) {
-          console.error("Erro no Webhook:", error);
+        } catch (e) {
           return new Response('OK');
         }
-      },
-    },
-  },
+      }
+    }
+  }
 });
