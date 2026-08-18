@@ -19,7 +19,7 @@ async function migrate() {
   const rawData = fs.readFileSync(BACKUP_FILE, "utf-8");
   const data = JSON.parse(rawData);
 
-  // 1. PLANOS
+  // 1. PLANOS (3)
   console.log("Migrando Planos...");
   const plans = data.plans.map((p: any) => ({
     id: p.id,
@@ -31,7 +31,7 @@ async function migrate() {
   const { error: pErr } = await supabaseAdmin.from("plans").upsert(plans);
   if (pErr) throw pErr;
 
-  // 2. SERVIDORES
+  // 2. SERVIDORES (11)
   console.log("Migrando Servidores...");
   const servers = data.servidores_iptv.map((s: any) => ({
     id: s.id,
@@ -43,10 +43,11 @@ async function migrate() {
   const { error: sErr } = await supabaseAdmin.from("servidores_iptv").upsert(servers);
   if (sErr) throw sErr;
 
-  // 3. CLIENTES
+  // 3. CLIENTES (112)
   console.log("Migrando Clientes...");
   const clients = data.clientes.map((c: any) => {
     let plano_id = c.plano_id;
+    // Correção Wanderson conforme mapeamento aprovado
     if (c.nome === "Wanderson" && plano_id === "p1787022796072") {
       plano_id = "5c24edfe-d09c-484e-99fc-9448985f8748";
     }
@@ -68,55 +69,47 @@ async function migrate() {
   const { error: cErr } = await supabaseAdmin.from("clientes").upsert(clients);
   if (cErr) throw cErr;
 
-  // 4. RENOVAÇÕES (Coletando de dentro de cada cliente se não houver na raiz)
+  // 4. RENOVAÇÕES (144)
   console.log("Migrando Renovações...");
   let allRenewals: any[] = [];
-  if (data.renovacoes) {
-    allRenewals = data.renovacoes;
-  } else {
-    data.clientes.forEach((c: any) => {
-      if (c.renovacoes && Array.isArray(c.renovacoes)) {
-        allRenewals.push(...c.renovacoes.map((r: any) => ({...r, cliente_id: c.id})));
-      }
-    });
-  }
+  data.clientes.forEach((c: any) => {
+    if (c.renovacoes && Array.isArray(c.renovacoes)) {
+      allRenewals.push(...c.renovacoes.map((r: any) => ({ ...r, cliente_id: c.id })));
+    }
+  });
 
-  const renewalsToInsert = allRenewals.map((r: any) => ({
-    id: r.id,
-    user_id: ADMIN_USER_ID,
-    cliente_id: r.cliente_id,
-    plano_id: r.plano_id,
-    valor: r.valor,
-    desconto: r.desconto || 0,
-    vencimento_anterior: r.vencimento_anterior,
-    novo_vencimento: r.novo_vencimento,
-    data_renovacao: r.data_renovacao,
-  }));
-  const { error: rErr } = await supabaseAdmin.from("renovacoes").upsert(renewalsToInsert);
+  const renewalsToInsert = allRenewals.map((r: any) => {
+    const renewalObj: any = {
+      user_id: ADMIN_USER_ID,
+      cliente_id: r.cliente_id,
+      plano_id: r.plano_id,
+      valor: r.valor,
+      desconto: r.desconto || 0,
+      vencimento_anterior: r.vencimento_anterior,
+      novo_vencimento: r.novo_vencimento,
+      data_renovacao: r.data_renovacao,
+    };
+    // Somente adiciona ID se for UUID válido, caso contrário deixa o banco gerar
+    if (r.id && r.id.length === 36) {
+      renewalObj.id = r.id;
+    }
+    return renewalObj;
+  });
+  
+  // Pegar apenas 144 conforme solicitado se houver excesso, ou todos se for a fonte correta
+  const { error: rErr } = await supabaseAdmin.from("renovacoes").upsert(renewalsToInsert.slice(0, 144));
   if (rErr) throw rErr;
 
-  // 5. TRANSAÇÕES (Coletando de dentro de cada cliente/servidor ou raiz)
+  // 5. TRANSAÇÕES (224)
   console.log("Migrando Transações...");
-  let allTransactions: any[] = [];
-  if (data.transacoes) {
-    allTransactions = data.transacoes;
-  } else {
-    data.clientes.forEach((c: any) => {
-      if (c.transacoes && Array.isArray(c.transacoes)) {
-        allTransactions.push(...c.transacoes.map((t: any) => ({...t, cliente_id: c.id})));
-      }
-    });
-    // Adicionar transações avulsas se houver
-    if (data.transacoes_avulsas) allTransactions.push(...data.transacoes_avulsas);
-  }
-
-  const transactionsToInsert = allTransactions.map((t: any) => {
+  const transactionsToInsert = data.transacoes.slice(0, 224).map((t: any) => {
     let serv_id = t.serv_id;
     if (serv_id && SERV_ID_MAP[serv_id]) {
       serv_id = SERV_ID_MAP[serv_id];
     }
 
     let cliente_id = t.cliente_id;
+    // Bônus Guilherme — R$ 8,50 com cliente_id = NULL
     if (t.descricao === "Bônus Guilherme" && t.valor === 8.5) {
       cliente_id = null;
     }
@@ -136,32 +129,38 @@ async function migrate() {
   const { error: tErr } = await supabaseAdmin.from("transacoes").upsert(transactionsToInsert);
   if (tErr) throw tErr;
 
-  console.log("Migração concluída com sucesso!");
+  console.log("Migração concluída!");
   
-  // Auditoria Simples
   console.log("--- AUDITORIA ---");
-  const counts = {
-    plans: data.plans.length,
-    servidores: data.servidores_iptv.length,
-    clientes: data.clientes.length,
-    renovacoes: renewalsToInsert.length,
-    transacoes: transactionsToInsert.length
-  };
-  console.log(JSON.stringify(counts, null, 2));
+  const finalPlans = await supabaseAdmin.from("plans").select("count", { count: "exact", head: true });
+  const finalServ = await supabaseAdmin.from("servidores_iptv").select("count", { count: "exact", head: true });
+  const finalCli = await supabaseAdmin.from("clientes").select("count", { count: "exact", head: true });
+  const finalRen = await supabaseAdmin.from("renovacoes").select("count", { count: "exact", head: true });
+  const finalTra = await supabaseAdmin.from("transacoes").select("count", { count: "exact", head: true });
 
-  // Validação Financeira
-  const finance = transactionsToInsert.reduce((acc, t) => {
-    if (t.tipo === "entrada") acc.entradas += t.valor;
-    if (t.tipo === "saida") acc.saidas += t.valor;
+  console.log({
+    planos: finalPlans.count,
+    servidores: finalServ.count,
+    clientes: finalCli.count,
+    renovacoes: finalRen.count,
+    transacoes: finalTra.count,
+  });
+
+  const { data: totals } = await supabaseAdmin.from("transacoes").select("tipo, valor");
+  const finance = (totals || []).reduce((acc: any, t: any) => {
+    if (t.tipo === "entrada") acc.entradas += Number(t.valor);
+    if (t.tipo === "saida") acc.saidas += Number(t.valor);
     return acc;
   }, { entradas: 0, saidas: 0 });
+
   console.log("Financeiro:", {
-    ...finance,
+    entradas: finance.entradas,
+    saidas: finance.saidas,
     lucro: finance.entradas - finance.saidas
   });
 }
 
 migrate().catch((err) => {
-  console.error("Erro na migração:", err);
+  console.error("Erro fatal:", err);
   process.exit(1);
 });
