@@ -153,7 +153,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
             // Passo 6: Ajuste de Vencimento
             if (state.step === 6) {
-              const currentVenc = new Date(state.data.vencimento_temp);
+              const currentVencTemp = state.data.vencimento_temp;
+              if (typeof currentVencTemp !== 'string') return new Response('OK');
+              const currentVenc = new Date(currentVencTemp);
+              
               if (data === 'venc_m5') currentVenc.setDate(currentVenc.getDate() - 5);
               if (data === 'venc_m1') currentVenc.setDate(currentVenc.getDate() - 1);
               if (data === 'venc_p1') currentVenc.setDate(currentVenc.getDate() + 1);
