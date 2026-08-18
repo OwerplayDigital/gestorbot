@@ -89,10 +89,6 @@ async function migrate() {
       novo_vencimento: r.novo_vencimento,
       data_renovacao: r.data_renovacao,
     };
-    // Somente adiciona ID se for UUID válido, caso contrário deixa o banco gerar
-    if (r.id && r.id.length === 36) {
-      renewalObj.id = r.id;
-    }
     return renewalObj;
   });
   
