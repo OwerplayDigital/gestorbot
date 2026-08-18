@@ -142,12 +142,38 @@ export const listClientsExpiringToday = async () => {
 export const findClientByName = async (name: string) => {
   const { data, error } = await supabaseAdmin
     .from("clientes")
-    .select("nome, whatsapp, vencimento, status")
+    .select(`
+      id, 
+      nome, 
+      whatsapp, 
+      vencimento, 
+      status, 
+      desconto,
+      plano_id,
+      servidores_ids,
+      plans(name),
+      servidores_iptv:servidores_ids(name)
+    `)
     .ilike("nome", `%${name}%`)
     .limit(5);
 
   if (error) {
     console.error("Erro Supabase (findClientByName):", error);
+    throw error;
+  }
+  return data;
+};
+
+export const updateClient = async (id: string, updates: any) => {
+  const { data, error } = await supabaseAdmin
+    .from("clientes")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Erro Supabase (updateClient):", error);
     throw error;
   }
   return data;
