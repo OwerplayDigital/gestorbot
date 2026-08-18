@@ -6,7 +6,8 @@ import {
   listServers, 
   getClientsSummary, 
   getFinancialSummary,
-  createClientWithDetails 
+  createClientWithDetails,
+  findClientByName
 } from '@/lib/telegram.server';
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env['TELEGRAM_BOT_TOKEN']}`;
@@ -115,7 +116,25 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (!state || state.action !== 'cadastrar_cliente') return new Response('OK');
 
             // Fluxo de Cadastro - Callbacks
-            if (state.step === 3 && data.startsWith('plano:')) {
+            if (data.startsWith('view_client:')) {
+               const nome = data.split(':')[1];
+               const results = await findClientByName(nome);
+               if (results.length > 0) {
+                 const c = results[0];
+                 const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
+                             `• Nome: ${c.nome}\n` +
+                             `• WhatsApp: ${c.whatsapp}\n` +
+                             `• Vencimento: ${formatBRDate(new Date(c.vencimento + 'T12:00:00'))}\n` +
+                             `• Status: ${c.status}`;
+                 await sendMessage(chatId, msg, {
+                   inline_keyboard: [
+                     [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.nome}` }],
+                     [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
+                   ]
+                 });
+               }
+            }
+            else if (state.step === 3 && data.startsWith('plano:')) {
               const parts = data.split(':');
               const id = parts[1] ?? '';
               const name = parts[2] ?? '';
@@ -231,6 +250,18 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             return new Response('OK');
           }
 
+          if (state?.action === 'buscar_cliente') {
+            const results = await findClientByName(text);
+            if (results.length === 0) {
+              await sendMessage(chatId, "Nenhum cliente encontrado.", clientsSubMenu);
+            } else {
+              const buttons = results.map(c => ([{ text: c.nome, callback_data: `view_client:${c.nome}` }]));
+              await sendMessage(chatId, "Selecione o cliente:", { inline_keyboard: buttons });
+            }
+            userState.delete(chatId);
+            return new Response('OK');
+          }
+
           if (state?.action === 'cadastrar_cliente') {
             if (state.step === 1) {
               state.data.nome = text; state.step = 2;
@@ -271,6 +302,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             case '➕ Novo Cliente':
               userState.set(chatId, { action: 'cadastrar_cliente', step: 1, data: {} });
               await sendMessage(chatId, "Nome do cliente:");
+              break;
+            case '🔍 Buscar Cliente':
+              userState.set(chatId, { action: 'buscar_cliente', step: 1, data: {} });
+              await sendMessage(chatId, "Digite o nome (ou parte do nome) do cliente:");
               break;
             case '💰 Financeiro':
               const f = await getFinancialSummary();
