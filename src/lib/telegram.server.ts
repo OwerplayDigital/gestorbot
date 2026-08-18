@@ -1,12 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const getAuthorizedUser = async (chatId: number) => {
-  // A fonte de verdade é a tabela telegram_authorized_users.
-  // O TELEGRAM_ALLOWED_USER_ID (se presente) atua apenas como um filtro adicional de segurança,
-  // mas o vínculo obrigatório é o Chat ID no banco de dados.
   const allowedId = process.env['TELEGRAM_ALLOWED_USER_ID'];
   
-  const { data, error } = await supabase
+  // A tabela telegram_authorized_users possui RLS restrito ao user_id.
+  // Como o webhook é um serviço de backend sem sessão de usuário, precisamos
+  // usar o supabaseAdmin para consultar o vínculo do Chat ID.
+  const { data, error } = await supabaseAdmin
     .from("telegram_authorized_users")
     .select("user_id")
     .eq("telegram_chat_id", chatId)
@@ -19,8 +20,6 @@ export const getAuthorizedUser = async (chatId: number) => {
 
   const userId = data?.user_id || null;
 
-  // Se existir um ID permitido definido em segredo, validamos se o chatId coincide.
-  // Caso contrário, seguimos apenas com a validação do banco.
   if (allowedId && userId) {
     if (chatId.toString() !== allowedId) {
       console.warn(`Chat ID ${chatId} vinculado a ${userId} mas não consta em TELEGRAM_ALLOWED_USER_ID`);
