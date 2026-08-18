@@ -97,8 +97,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
             // Fluxo de Cadastro - Callbacks
             if (state.step === 3 && data.startsWith('plano:')) {
-              const [_, id, name] = data.split(':');
-              state.data.plano_id = id;
+              const parts = data.split(':');
+              const id = parts[1] ?? '';
+              const name = parts[2] ?? '';
               state.data.plano_name = name;
               state.step = 4;
               state.data.servidores_ids = [];
@@ -149,7 +150,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   ]
                 });
               } else if (data === 'venc_confirm') {
-                state.data.vencimento = state.data.vencimento_temp?.split('T')[0];
+                state.data.vencimento = (state.data.vencimento_temp || '').split('T')[0];
                 state.step = 7;
                 const resumo = `📝 <b>RESUMO:</b>\n• Nome: ${state.data.nome}\n• Plano: ${state.data.plano_name}\n• Venc: ${formatBRDate(new Date((state.data.vencimento || '') + 'T12:00:00'))}\n\nConfirmar?`;
                 await sendMessage(chatId, resumo, {
