@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { getAuthorizedUser, createPlan, listPlans, createServer, listServers } from '@/lib/telegram.server';
+import { getAuthorizedUser, createPlan, listPlans, createServer, listServers, getClientsSummary, listExpiredClients, listClientsExpiringToday } from '@/lib/telegram.server';
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env['TELEGRAM_BOT_TOKEN']}`;
 
@@ -20,7 +20,10 @@ async function sendMessage(chatId: number, text: string, replyMarkup?: any) {
 }
 
 const mainMenu = {
-  keyboard: [[{ text: 'PLANOS' }, { text: 'SERVIDORES' }]],
+  keyboard: [
+    [{ text: 'PLANOS' }, { text: 'SERVIDORES' }],
+    [{ text: 'Clientes' }, { text: 'Vencidos' }, { text: 'Vencendo Hoje' }]
+  ],
   resize_keyboard: true,
 };
 
@@ -152,6 +155,41 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 }
               } catch (err) {
                 await sendMessage(chatId, "❌ Erro ao buscar servidores.");
+              }
+              break;
+            case 'Clientes':
+              try {
+                const summary = await getClientsSummary();
+                const msg = `📊 RESUMO DE CLIENTES\n• Total: ${summary.total} clientes\n• Ativos: ${summary.ativos} clientes\n• Vencidos: ${summary.vencidos} clientes`;
+                await sendMessage(chatId, msg, mainMenu);
+              } catch (err) {
+                await sendMessage(chatId, "❌ Erro ao buscar resumo de clientes.");
+              }
+              break;
+            case 'Vencidos':
+              try {
+                const expired = await listExpiredClients();
+                if (!expired || expired.length === 0) {
+                  await sendMessage(chatId, "Nenhum cliente vencido encontrado.", mainMenu);
+                } else {
+                  const listText = expired.map(c => `• ${c.nome} | ${c.vencimento}`).join('\n');
+                  await sendMessage(chatId, `📉 Clientes Vencidos:\n\n${listText}`, mainMenu);
+                }
+              } catch (err) {
+                await sendMessage(chatId, "❌ Erro ao buscar vencidos.");
+              }
+              break;
+            case 'Vencendo Hoje':
+              try {
+                const todayList = await listClientsExpiringToday();
+                if (!todayList || todayList.length === 0) {
+                  await sendMessage(chatId, "Nenhum cliente vencendo hoje.", mainMenu);
+                } else {
+                  const listText = todayList.map(c => `• ${c.nome} (${c.vencimento})`).join('\n');
+                  await sendMessage(chatId, `📅 Vencendo Hoje:\n\n${listText}`, mainMenu);
+                }
+              } catch (err) {
+                await sendMessage(chatId, "❌ Erro ao buscar vencimentos de hoje.");
               }
               break;
             default:
