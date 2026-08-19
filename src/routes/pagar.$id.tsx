@@ -4,17 +4,17 @@ import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import logoAsset from "@/assets/logo-owerplay.png.asset.json";
+import logoAsset from "@/assets/logo-owerplay-transparent.png.asset.json";
 
 export const Route = createFileRoute('/pagar/$id')({
   head: () => ({
     meta: [
       { property: "og:title", content: "OWERPLAY TV" },
       { property: "og:description", content: "Renove seu acesso de forma rápida e segura." },
-      { property: "og:image", content: logoAsset.url },
+      { property: "og:image", content: "https://gestorbot.lovable.app/og-logo.png" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: logoAsset.url },
+      { name: "twitter:image", content: "https://gestorbot.lovable.app/og-logo.png" },
     ],
   }),
   component: RenewPage,
@@ -69,12 +69,11 @@ function RenewPage() {
       <div className="w-full max-w-md space-y-8">
         {/* LOGO CENTRALIZADA */}
         <div className="flex flex-col items-center mt-6">
-           <img 
-             src={logoAsset.url} 
-             alt="OWERPLAY TV" 
-             className="w-48 h-48 object-contain mb-2 drop-shadow-[0_0_25px_rgba(59,130,246,0.3)] bg-transparent"
-             style={{ mixBlendMode: 'screen' }}
-           />
+            <img 
+              src={logoAsset.url} 
+              alt="OWERPLAY TV" 
+              className="w-48 h-48 object-contain mb-2 drop-shadow-[0_0_25px_rgba(59,130,246,0.3)] bg-transparent"
+            />
 
            <h1 className="text-3xl font-black text-white tracking-[0.2em] italic">OWERPLAY TV</h1>
            <div className="h-1 w-12 bg-blue-500 rounded-full mt-2 opacity-50"></div>
