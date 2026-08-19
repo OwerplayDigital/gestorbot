@@ -77,7 +77,7 @@ function Dashboard() {
     queryKey: ["dashboard-stats-detailed", selectedMonth, selectedYear],
     queryFn: async () => {
       try {
-        const today = new Date().toISOString().split('T')[0];
+        const todayStr = new Date().toISOString().split('T')[0];
         
         const [
           clientsRes, 
@@ -91,7 +91,7 @@ function Dashboard() {
           supabase.from("servidores_iptv").select("id, name"),
           supabase.from("clientes")
             .select("id, nome, vencimento, valor, desconto, servidores_ids")
-            .eq("vencimento", today)
+            .eq("vencimento", todayStr)
             .order("nome"),
           supabase.from("clientes")
             .select("id, nome, vencimento, valor, status")
@@ -211,7 +211,7 @@ function Dashboard() {
               <span className="bg-background/20 px-2 py-0.5 rounded-full">
                 {selectedMonth}/{selectedYear}
               </span>
-              {stats?.lucro && stats.lucro > 0 && (
+              {stats?.lucro !== undefined && stats.lucro > 0 && (
                 <span className="flex items-center gap-0.5 text-emerald-900">
                   <TrendingUp size={12} /> Em alta
                 </span>
@@ -267,7 +267,7 @@ function Dashboard() {
               <DialogTitle>Clientes Vencidos</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-2 mt-4">
-              {stats?.vencidos.length === 0 ? (
+              {stats?.vencidos && stats.vencidos.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">Nenhum inadimplente encontrado.</p>
               ) : (
                 stats?.vencidos.map(c => (
