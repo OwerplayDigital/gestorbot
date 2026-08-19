@@ -103,7 +103,7 @@ function Dashboard() {
           vencidosRes
         ] = await Promise.all([
           supabase.from("clientes").select("id, status"),
-          supabase.from("transacoes").select("*, clientes(nome), servidores_iptv(name)"),
+          supabase.from("transacoes").select("*, clientes(nome), servidores_iptv(name)").order("data", { ascending: false }),
           supabase.from("servidores_iptv").select("id, name"),
           supabase.from("clientes")
             .select("id, nome, vencimento, valor, desconto, servidores_ids, plano_id, plans(price)")
@@ -132,14 +132,13 @@ function Dashboard() {
         });
 
         const entradas = currentMonthTransactions
-          .filter(t => t.tipo === "entrada")
-          .reduce((acc, t) => acc + Number(t.valor ?? 0), 0);
+          .reduce((acc, t) => acc + Number(t.entrada ?? 0), 0);
         
         const saidas = currentMonthTransactions
-          .filter(t => t.tipo === "saida")
-          .reduce((acc, t) => acc + Number(t.valor ?? 0), 0);
+          .reduce((acc, t) => acc + Number(t.custo ?? 0), 0);
 
-        const lucro = entradas - saidas;
+        const lucro = currentMonthTransactions
+          .reduce((acc, t) => acc + Number(t.lucro_liquido ?? 0), 0);
 
         const monthsLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
         const chartData = monthsLabels.map((m, idx) => {
@@ -149,8 +148,8 @@ function Dashboard() {
             const d = parseISO(t.data);
             return format(d, "MM") === monthStr && format(d, "yyyy") === selectedYear;
           });
-          const ent = monthTrans.filter(t => t.tipo === "entrada").reduce((a, b) => a + Number(b.valor ?? 0), 0);
-          const sai = monthTrans.filter(t => t.tipo === "saida").reduce((a, b) => a + Number(b.valor ?? 0), 0);
+          const ent = monthTrans.reduce((a, b) => a + Number(b.entrada ?? 0), 0);
+          const sai = monthTrans.reduce((a, b) => a + Number(b.custo ?? 0), 0);
           return {
             name: m,
             entradas: ent,
@@ -478,23 +477,14 @@ function Dashboard() {
             {stats && stats.recentTransactions && stats.recentTransactions.length === 0 ? (
                <p className="text-center text-muted-foreground py-4 text-sm">Nenhuma transação este mês.</p>
             ) : (
-              (() => {
-                const grouped = stats?.recentTransactions.reduce((acc: any, t) => {
-                  const key = t.cliente_id || `other-${t.id}`;
-                  if (!acc[key]) acc[key] = { items: [], date: t.data, cliente: t.clientes?.nome || "Geral" };
-                  acc[key].items.push(t);
-                  return acc;
-                }, {});
-
-                return Object.entries(grouped || {}).map(([key, group]: [string, any]) => {
-                  const items = group.items;
-                  const entrada = items.find((i: any) => i.tipo === 'entrada')?.valor || 0;
-                  const saida = items.filter((i: any) => i.tipo === 'saida').reduce((acc: number, i: any) => acc + Number(i.valor), 0);
-                  const lucro = entrada - saida;
-                  const ids = items.map((i: any) => i.id);
+              stats?.recentTransactions.map((t) => {
+                const entrada = Number(t.entrada || 0);
+                const saida = Number(t.custo || 0);
+                const lucro = Number(t.lucro_liquido || 0);
+                const id = t.id;
 
                   return (
-                    <div key={key} className="bg-card border rounded-2xl p-4 flex flex-col gap-3 relative">
+                    <div key={id} className="bg-card border rounded-2xl p-4 flex flex-col gap-3 relative">
                       <div className="absolute top-4 right-4">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -502,7 +492,7 @@ function Dashboard() {
                               variant="ghost" 
                               size="icon" 
                               className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded-full"
-                              disabled={ids.some((id: string) => isDeleting === id)}
+                              disabled={isDeleting === id}
                             >
                               <Trash2 size={16} />
                             </Button>
@@ -518,9 +508,7 @@ function Dashboard() {
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
                               <AlertDialogAction 
                                 onClick={async () => {
-                                  for (const id of ids as string[]) {
                                     await handleDeleteTransaction(id);
-                                  }
                                 }}
 
                                 className="bg-rose-500 hover:bg-rose-600"
@@ -533,8 +521,8 @@ function Dashboard() {
                       </div>
 
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold pr-8">Renovação - {group.cliente}</span>
-                        <span className="text-[10px] text-muted-foreground">{group.date ? format(parseISO(group.date), "dd/MM/yyyy") : "?"}</span>
+                        <span className="text-sm font-bold pr-8">Renovação - {t.clientes?.nome || "Geral"}</span>
+                        <span className="text-[10px] text-muted-foreground">{t.data ? format(parseISO(t.data), "dd/MM/yyyy") : "?"}</span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-dashed">
@@ -554,8 +542,8 @@ function Dashboard() {
                       </div>
                     </div>
                   );
-                });
-              })()
+                })
+              )()
             )}
 
           </div>
