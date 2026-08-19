@@ -139,7 +139,7 @@ export const getClientsSummary = async () => {
 export const listExpiredClients = async () => {
   const { data, error } = await supabaseAdmin
     .from("clientes")
-    .select("nome, vencimento")
+    .select("id, nome, vencimento, whatsapp")
     .eq("status", "vencido")
     .order('vencimento', { ascending: true })
     .limit(15);
@@ -156,7 +156,7 @@ export const listClientsExpiringToday = async () => {
   const today = new Date().toISOString().split('T')[0];
   const { data, error } = await supabaseAdmin
     .from("clientes")
-    .select("nome, vencimento")
+    .select("id, nome, vencimento, whatsapp")
     .eq("vencimento", today as string);
 
   if (error) {

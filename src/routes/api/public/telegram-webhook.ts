@@ -494,8 +494,23 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 ]
               });
             } else {
-              const buttons = results.map(c => ([{ text: `👤 ${c.nome}`, callback_data: `view_client:${c.nome}` }]));
-              await sendMessage(chatId, `🔍 Resultados para '${termo}':`, { inline_keyboard: buttons });
+              for (const c of results) {
+                const encodedMsg = encodeURIComponent(
+                  `Olá ${c.nome.split(' ')[0]}, tudo bem?\n\n` +
+                  `Estamos entrando em contato para falar sobre sua assinatura.\n\n` +
+                  `🔗 *Link de pagamento:*\n` +
+                  `https://gestorbot.lovable.app/pagar/${c.id}`
+                );
+                await sendMessage(chatId, `👤 <b>${c.nome}</b>\n📅 Vencimento: ${formatBRDate(new Date(c.vencimento + 'T12:00:00'))}`, {
+                  inline_keyboard: [
+                    [
+                      { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
+                      { text: "💬 Mensagem", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }
+                    ],
+                    [{ text: "👁️ Ver Ficha Completa", callback_data: `view_client:${c.nome}` }]
+                  ]
+                });
+              }
             }
             return new Response('OK');
           }
@@ -518,8 +533,23 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 ]
               });
             } else {
-              const buttons = results.map(c => ([{ text: `👤 ${c.nome}`, callback_data: `view_client:${c.nome}` }]));
-              await sendMessage(chatId, `🔍 Resultados para '${termo}':`, { inline_keyboard: buttons });
+              for (const c of results) {
+                const encodedMsg = encodeURIComponent(
+                  `Olá ${c.nome.split(' ')[0]}, tudo bem?\n\n` +
+                  `Estamos entrando em contato para falar sobre sua assinatura.\n\n` +
+                  `🔗 *Link de pagamento:*\n` +
+                  `https://gestorbot.lovable.app/pagar/${c.id}`
+                );
+                await sendMessage(chatId, `👤 <b>${c.nome}</b>\n📅 Vencimento: ${formatBRDate(new Date(c.vencimento + 'T12:00:00'))}`, {
+                  inline_keyboard: [
+                    [
+                      { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
+                      { text: "💬 Mensagem", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }
+                    ],
+                    [{ text: "👁️ Ver Ficha Completa", callback_data: `view_client:${c.nome}` }]
+                  ]
+                });
+              }
             }
             return new Response('OK');
           }
@@ -646,13 +676,50 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               break;
             case '📅 Vencendo Hoje':
               const today = await listClientsExpiringToday();
-              const tMsg = today.map((c: any) => `• ${c.nome}`).join('\n') || 'Ninguém vence hoje.';
-              await sendMessage(chatId, `📅 <b>VENCENDO HOJE:</b>\n${tMsg}`, clientsSubMenu);
+              if (today.length === 0) {
+                await sendMessage(chatId, '📅 Ninguém vence hoje.', clientsSubMenu);
+              } else {
+                await sendMessage(chatId, `📅 <b>VENCENDO HOJE:</b>`, clientsSubMenu);
+                for (const c of today) {
+                  const encodedMsg = encodeURIComponent(
+                    `Olá ${c.nome.split(' ')[0]}, seu plano vence hoje!\n\n` +
+                    `🔗 *Link para renovar:*\n` +
+                    `https://gestorbot.lovable.app/pagar/${c.id}`
+                  );
+                  await sendMessage(chatId, `👤 <b>${c.nome}</b>`, {
+                    inline_keyboard: [
+                      [
+                        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
+                        { text: "💬 Mensagem", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }
+                      ]
+                    ]
+                  });
+                }
+              }
               break;
             case '❌ Vencidos':
               const expired = await listExpiredClients();
-              const eMsg = expired.map((c: any) => `• ${c.nome} (${formatBRDate(new Date(c.vencimento + 'T12:00:00'))})`).join('\n') || 'Nenhum vencido.';
-              await sendMessage(chatId, `❌ <b>VENCIDOS:</b>\n${eMsg}`, clientsSubMenu);
+              if (expired.length === 0) {
+                await sendMessage(chatId, '❌ Nenhum vencido.', clientsSubMenu);
+              } else {
+                await sendMessage(chatId, `❌ <b>VENCIDOS:</b>`, clientsSubMenu);
+                for (const c of expired) {
+                  const br = formatBRDate(new Date((c.vencimento || '') + 'T12:00:00'));
+                  const encodedMsg = encodeURIComponent(
+                    `Olá ${c.nome.split(' ')[0]}, seu plano está vencido!\n\n` +
+                    `🔗 *Link para renovar:*\n` +
+                    `https://gestorbot.lovable.app/pagar/${c.id}`
+                  );
+                  await sendMessage(chatId, `👤 <b>${c.nome}</b> (${br})`, {
+                    inline_keyboard: [
+                      [
+                        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
+                        { text: "💬 Mensagem", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }
+                      ]
+                    ]
+                  });
+                }
+              }
               break;
             case '➕ Novo Cliente':
               userState.set(chatId, { action: 'cadastrar_cliente', step: 1, data: {} });
