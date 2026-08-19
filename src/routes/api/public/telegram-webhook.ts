@@ -91,20 +91,12 @@ async function answerCallbackQuery(callbackQueryId: string, text?: string) {
 }
 
 const mainMenu = {
-  keyboard: [
-    [{ text: '👥 Clientes' }, { text: '🖥️ Servidores' }],
-    [{ text: '📋 Planos' }, { text: '💰 Financeiro' }]
-  ],
-  resize_keyboard: true,
-};
-
-const clientsSubMenu = {
-  keyboard: [
-    [{ text: '📊 Resumo' }, { text: '📅 Vencendo Hoje' }],
-    [{ text: '❌ Vencidos' }, { text: '🔍 Buscar Cliente' }],
-    [{ text: '➕ Novo Cliente' }, { text: '🔙 Voltar' }]
-  ],
-  resize_keyboard: true,
+  inline_keyboard: [
+    [{ text: '⏰ Vencendo Hoje', callback_data: 'vencendo_hoje' }, { text: '⚠️ Vencidos', callback_data: 'vencidos' }],
+    [{ text: '➕ Novo Cliente', callback_data: 'new_client_fast' }, { text: '🔍 Buscar', callback_data: 'search_direct' }],
+    [{ text: '🖥️ Servidores', callback_data: 'list_servers' }, { text: '📋 Planos', callback_data: 'list_plans' }],
+    [{ text: '💰 Financeiro', callback_data: 'financeiro' }]
+  ]
 };
 
 function formatBRDate(date: Date): string {
