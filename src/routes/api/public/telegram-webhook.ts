@@ -692,6 +692,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
               const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
               const encodedCobranca = encodeURIComponent((BOT_TEMPLATES as any).COBRANCA(primeiroNome, brDate, paymentUrl));
+              const encodedConfirmacao = encodeURIComponent((BOT_TEMPLATES as any).CONFIRMACAO(primeiroNome, brDate));
 
               const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
                           `• Nome: ${c.nome}\n` +
