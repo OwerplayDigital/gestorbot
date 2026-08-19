@@ -88,7 +88,7 @@ function Dashboard() {
           vencidosRes
         ] = await Promise.all([
           supabase.from("clientes").select("id, status"),
-          supabase.from("transacoes").select("*"),
+          supabase.from("transacoes").select("*, clientes(nome), servidores_iptv(name)"),
           supabase.from("servidores_iptv").select("id, name"),
           supabase.from("clientes")
             .select("id, nome, vencimento, valor, desconto, servidores_ids, plano_id, plans(price)")
@@ -443,14 +443,17 @@ function Dashboard() {
             {stats && stats.recentTransactions && stats.recentTransactions.length === 0 ? (
                <p className="text-center text-muted-foreground py-4 text-sm">Nenhuma transação este mês.</p>
             ) : (
-              stats?.recentTransactions.map(t => (
+              stats?.recentTransactions.map(t => {
+                const nome = (t as any).clientes?.nome || (t as any).servidores_iptv?.name || "Geral";
+                const label = t.tipo === 'entrada' ? `Renovação - ${nome}` : `Custo Servidor - ${nome}`;
+                return (
                 <div key={t.id} className="bg-card border rounded-2xl p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`h-8 w-8 rounded-full flex items-center justify-center ${t.tipo === 'entrada' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
                       {t.tipo === 'entrada' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-bold">{t.descricao || (t.tipo === 'entrada' ? 'Pagamento' : 'Despesa')}</span>
+                      <span className="text-sm font-bold">{label}</span>
                       <span className="text-[10px] text-muted-foreground">{t.data ? format(parseISO(t.data), "dd/MM/yyyy") : "?"}</span>
                     </div>
                   </div>
@@ -458,7 +461,8 @@ function Dashboard() {
                     {t.tipo === 'entrada' ? '+' : '-'} {formatBRL(t.valor)}
                   </span>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
