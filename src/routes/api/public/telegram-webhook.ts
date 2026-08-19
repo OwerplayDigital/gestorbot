@@ -154,13 +154,12 @@ async function sendClientFicha(chatId: number, c: any) {
   const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome || '', brDate || ''));
   
   const phone = cleanPhone(c.whatsapp || '');
-  const msg = `<b>FICHA DO CLIENTE:</b>\n` +
-              `Nome: ${c.nome}\n` +
+  const msg = `👤 Cliente: ${c.nome}\n` +
+              `📅 Vencimento: ${brDate}\n` +
+              `🖥️ Servidor: ${serverNames}\n` +
               `WhatsApp: ${c.whatsapp || 'N/A'}\n` +
               `Plano: ${planName}\n` +
-              `Servidor: ${serverNames}\n` +
               `Valor: R$ ${valorFinal}\n` +
-              `Vencimento: ${brDate}\n` +
               `Status: ${c.status}`;
   
   await sendMessage(chatId, msg, {
