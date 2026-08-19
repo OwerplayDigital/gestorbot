@@ -224,6 +224,22 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await sendMessage(chatId, "✅ <b>Financeiro Resetado!</b>\nO histórico deste cliente foi limpo com sucesso.");
               }
             }
+            else if (data === 'reset_global_confirm') {
+              await editMessage(chatId, messageId, "⚠️ <b>ATENÇÃO:</b> Deseja realmente resetar e zerar todos os registros e relatórios do financeiro? Essa ação não afetará o cadastro dos seus clientes, mas limpará o histórico financeiro do mês.", {
+                inline_keyboard: [
+                  [{ text: "✅ Sim, Zerar Financeiro", callback_data: "reset_global_exec" }],
+                  [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
+                ]
+              });
+            }
+            else if (data === 'reset_global_exec') {
+              const userId = await getAuthorizedUser(chatId);
+              if (userId) {
+                const { resetGlobalFinancialHistory } = await import('@/lib/telegram.server');
+                await resetGlobalFinancialHistory(userId);
+                await editMessage(chatId, messageId, "✅ Financeiro geral resetado com sucesso!");
+                await sendMessage(chatId, "Menu Principal:", mainMenu);
+              }
             else if (data.startsWith('renew_init:')) {
               const id = data.split(':')[1];
               const { data: c } = await supabaseAdmin.from('clientes').select('vencimento').eq('id', id).single();
@@ -783,7 +799,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               break;
             case '💰 Financeiro':
               const f = await getFinancialSummary();
-              await sendMessage(chatId, `💰 <b>FINANCEIRO:</b>\nEntradas: R$ ${f.entradas.toFixed(2)}\nSaídas: R$ ${f.saidas.toFixed(2)}\nLucro: R$ ${f.lucro.toFixed(2)}`, mainMenu);
+              await sendMessage(chatId, `💰 <b>FINANCEIRO:</b>\nEntradas: R$ ${f.entradas.toFixed(2)}\nSaídas: R$ ${f.saidas.toFixed(2)}\nLucro: R$ ${f.lucro.toFixed(2)}`, {
+                inline_keyboard: [
+                  [{ text: "🔄 Resetar Financeiro", callback_data: "reset_global_confirm" }],
+                  [{ text: "🏠 Menu Principal", callback_data: "back_to_main" }]
+                ]
+              });
               break;
           }
 
