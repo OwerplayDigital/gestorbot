@@ -740,7 +740,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           if (state?.action === 'editar_whatsapp') {
             if (state.data.id) {
               await supabaseAdmin.from('clientes').update({ whatsapp: text }).eq('id', state.data.id);
-              await sendMessage(chatId, "WhatsApp atualizado!", mainMenu);
+              await sendMessage(chatId, "WhatsApp atualizado!", {
+                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
+              });
             }
             userState.delete(chatId);
             return new Response('OK');
