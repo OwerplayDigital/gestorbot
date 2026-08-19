@@ -179,7 +179,6 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   
                   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
                   const encodedCobranca = encodeURIComponent((BOT_TEMPLATES as any).COBRANCA(primeiroNome, brDate, paymentUrl));
-                  const encodedRenovacao = encodeURIComponent((BOT_TEMPLATES as any).RENOVACAO_LINK(primeiroNome, paymentUrl));
                   const encodedConfirmacao = encodeURIComponent((BOT_TEMPLATES as any).CONFIRMACAO(primeiroNome, brDate));
                   
                   const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
@@ -192,15 +191,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                               `• Status: ${c.status}`;
                   await sendMessage(chatId, msg, {
                     inline_keyboard: [
-                      [{ text: "💬 Cobrar (WA)", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` }],
-                      [{ text: "🔄 Enviar Link (WA)", url: `https://wa.me/55${c.whatsapp}?text=${encodedRenovacao}` }],
-                      [{ text: "📱 Confirmar (WA)", url: `https://wa.me/55${c.whatsapp}?text=${encodedConfirmacao}` }],
-                      [{ text: "🔗 Abrir Pagamento", url: paymentUrl }],
-                      [{ text: "🔄 Bot: Renovar", callback_data: `renew_init:${c.id}` }],
+                      [{ text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` }],
+                      [{ text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }],
+                      [{ text: "📱 Confirmar", url: `https://wa.me/55${c.whatsapp}?text=${encodedConfirmacao}` }],
                       [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
                       [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
                       [{ text: "🖥️ Alterar Servidor", callback_data: `edit_serv:${c.id}` }],
-                      [{ text: "🗑️ Resetar Financeiro", callback_data: `reset_fin_confirm:${c.id}` }],
                       [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
                     ]
                   });
@@ -329,7 +325,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               userState.set(chatId, { action: 'editar_servidor', step: 1, data: { id } as any });
               const servers = await listServers();
               const buttons = servers.map(s => ([{ text: s.name, callback_data: `eserv_sel:${s.id}:${s.name}` }]));
-              await sendMessage(chatId, "<b>Alterar Servidor</b>\nSelecione o novo servidor para este cliente:", { inline_keyboard: buttons });
+              await editMessage(chatId, messageId, "<b>Alterar Servidor</b>\nSelecione o novo servidor para este cliente:", { inline_keyboard: buttons });
             }
             else if (state?.action === 'editar_servidor' && data.startsWith('eserv_sel:')) {
               const [_, servId, servName] = data.split(':');
@@ -341,7 +337,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   .select('nome')
                   .single();
                 
-                await sendMessage(chatId, `✅ Servidor atualizado para <b>${servName}</b>!`, clientsSubMenu);
+                await editMessage(chatId, messageId, `✅ Servidor atualizado para <b>${servName}</b>!`, clientsSubMenu);
                 if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
               }
               userState.delete(chatId);
@@ -557,19 +553,13 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               });
             } else {
               for (const c of results) {
-                const encodedMsg = encodeURIComponent(
-                  `Olá ${c.nome.split(' ')[0]}, tudo bem?\n\n` +
-                  `Estamos entrando em contato para falar sobre sua assinatura.\n\n` +
-                  `🔗 *Link de pagamento:*\n` +
-                  `https://gestorbot.lovable.app/pagar/${c.id}`
-                );
-                await sendMessage(chatId, `👤 <b>${c.nome}</b>\n📅 Vencimento: ${formatBRDate(new Date(c.vencimento + 'T12:00:00'))}`, {
+                const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+                await sendMessage(chatId, `👤 <b>${c.nome}</b>\n📅 Vencimento: ${brDate}`, {
                   inline_keyboard: [
                     [
                       { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
-                      { text: "💬 Mensagem", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }
-                    ],
-                    [{ text: "👁️ Ver Ficha Completa", callback_data: `view_client:${c.nome}` }]
+                      { text: "👁️ Ver Ficha", callback_data: `view_client:${c.nome}` }
+                    ]
                   ]
                 });
               }
@@ -596,19 +586,13 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               });
             } else {
               for (const c of results) {
-                const encodedMsg = encodeURIComponent(
-                  `Olá ${c.nome.split(' ')[0]}, tudo bem?\n\n` +
-                  `Estamos entrando em contato para falar sobre sua assinatura.\n\n` +
-                  `🔗 *Link de pagamento:*\n` +
-                  `https://gestorbot.lovable.app/pagar/${c.id}`
-                );
-                await sendMessage(chatId, `👤 <b>${c.nome}</b>\n📅 Vencimento: ${formatBRDate(new Date(c.vencimento + 'T12:00:00'))}`, {
+                const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+                await sendMessage(chatId, `👤 <b>${c.nome}</b>\n📅 Vencimento: ${brDate}`, {
                   inline_keyboard: [
                     [
                       { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
-                      { text: "💬 Mensagem", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }
-                    ],
-                    [{ text: "👁️ Ver Ficha Completa", callback_data: `view_client:${c.nome}` }]
+                      { text: "👁️ Ver Ficha", callback_data: `view_client:${c.nome}` }
+                    ]
                   ]
                 });
               }
