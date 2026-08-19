@@ -175,7 +175,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   const serverNames = servers.map((s: any) => s.name).join(', ') || 'N/A';
                   
                   const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
-                  const primeiroNome = c.nome ? c.nome.trim().split(' ')[0] : 'Cliente';
+                  const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
                   
                   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
                   const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl));
@@ -704,7 +704,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await sendMessage(chatId, `📅 <b>VENCENDO HOJE:</b>`, clientsSubMenu);
                 for (const c of today) {
                   const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
-                  const primeiroNome = c.nome.split(' ')[0];
+                  const primeiroNome = (c.nome || 'Cliente').split(' ')[0];
                   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
                   
                   const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl));
