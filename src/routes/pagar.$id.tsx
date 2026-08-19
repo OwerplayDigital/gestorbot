@@ -11,10 +11,10 @@ export const Route = createFileRoute('/pagar/$id')({
     meta: [
       { property: "og:title", content: "OWERPLAY TV" },
       { property: "og:description", content: "Renove seu acesso de forma rápida e segura." },
-      { property: "og:image", content: "https://gestorbot.lovable.app/og-logo.png" },
+      { property: "og:image", content: "https://gestorbot.lovable.app/og-preview.png" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "https://gestorbot.lovable.app/og-logo.png" },
+      { name: "twitter:image", content: "https://gestorbot.lovable.app/og-preview.png" },
     ],
   }),
   component: RenewPage,
