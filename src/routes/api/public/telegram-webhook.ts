@@ -494,8 +494,23 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 ]
               });
             } else {
-              const buttons = results.map(c => ([{ text: `👤 ${c.nome}`, callback_data: `view_client:${c.nome}` }]));
-              await sendMessage(chatId, `🔍 Resultados para '${termo}':`, { inline_keyboard: buttons });
+              for (const c of results) {
+                const encodedMsg = encodeURIComponent(
+                  `Olá ${c.nome.split(' ')[0]}, tudo bem?\n\n` +
+                  `Estamos entrando em contato para falar sobre sua assinatura.\n\n` +
+                  `🔗 *Link de pagamento:*\n` +
+                  `https://gestorbot.lovable.app/pagar/${c.id}`
+                );
+                await sendMessage(chatId, `👤 <b>${c.nome}</b>\n📅 Vencimento: ${formatBRDate(new Date(c.vencimento + 'T12:00:00'))}`, {
+                  inline_keyboard: [
+                    [
+                      { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
+                      { text: "💬 Mensagem", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }
+                    ],
+                    [{ text: "👁️ Ver Ficha Completa", callback_data: `view_client:${c.nome}` }]
+                  ]
+                });
+              }
             }
             return new Response('OK');
           }
