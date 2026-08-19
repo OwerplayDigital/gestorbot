@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, Check, MessageSquare, Gift } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { toast } from "sonner";
 
 export const Route = createFileRoute('/renovar/$id')({
@@ -54,91 +54,109 @@ function RenewPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-
   if (loading) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white">Carregando...</div>;
   if (!client) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white">Cliente não encontrado.</div>;
 
   const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
   const discount = Number(client.desconto || 0);
   const valorFinal = Math.max(0, planPrice - discount).toFixed(2).replace('.', ',');
-
-  const shareText = encodeURIComponent(
-    `Olá! Gostaria de indicar um amigo para a promoção Indique e Ganhe Mês Grátis!`
-  );
-  const supportNumber = "5582981148560";
-  const whatsappSupportLink = `https://wa.me/${supportNumber}?text=${shareText}`;
+  const brDate = client.vencimento ? new Date(client.vencimento + 'T12:00:00').toLocaleDateString('pt-BR') : '--/--/----';
+  const primeiroNome = client.nome ? client.nome.trim().split(' ')[0] : 'Cliente';
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200 p-4 md:p-8 flex flex-col items-center">
-      <div className="w-full max-w-md space-y-6">
-        <div className="flex flex-col items-center mb-8">
-           <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-blue-500/20">
-              <span className="text-2xl font-bold text-white">OP</span>
+    <div className="min-h-screen bg-[#0f172a] text-slate-200 p-4 md:p-8 flex flex-col items-center selection:bg-blue-500/30">
+      <div className="w-full max-w-md space-y-8">
+        {/* LOGO CENTRALIZADA */}
+        <div className="flex flex-col items-center mt-4">
+           <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-slate-400 rounded-full flex items-center justify-center mb-4 shadow-2xl shadow-blue-500/20 border-2 border-slate-700/50">
+              <span className="text-3xl font-black text-white italic tracking-tighter">OP</span>
            </div>
-           <h1 className="text-2xl font-bold text-white tracking-tight">OWERPLAY TV</h1>
-           <p className="text-slate-400 text-sm">Sua diversão em alta definição</p>
+           <h1 className="text-3xl font-black text-white tracking-[0.2em] italic">OWERPLAY TV</h1>
+           <div className="h-1 w-12 bg-blue-500 rounded-full mt-2 opacity-50"></div>
         </div>
 
-        <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-sm">
-          <CardHeader className="text-center pb-2">
-            <CardTitle className="text-slate-400 text-sm font-medium uppercase tracking-wider">Valor da Renovação</CardTitle>
+        {/* CARD CENTRAL PREMIUM */}
+        <Card className="bg-slate-900/40 border-slate-800/50 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
+          
+          <CardHeader className="text-center pb-0 pt-8">
+            <h2 className="text-blue-400 text-lg font-semibold mb-1">Olá, {primeiroNome}</h2>
+            <p className="text-slate-500 text-xs uppercase tracking-widest">Seu vencimento é em {brDate}</p>
           </CardHeader>
-          <CardContent className="flex flex-col items-center space-y-4">
-            <div className="text-5xl font-extrabold text-white">
-              <span className="text-2xl font-normal text-slate-400 mr-1">R$</span>
-              {valorFinal}
-            </div>
-            
-            <div className="w-full pt-4 space-y-3">
-              <p className="text-center text-sm text-slate-400">Pague via Pix usando a chave abaixo:</p>
-              <div 
-                onClick={copyPix}
-                className="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between cursor-pointer hover:border-blue-500/50 transition-colors group"
-              >
-                <code className="text-blue-400 font-medium">82iptv@gmail.com</code>
-                {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-slate-500 group-hover:text-blue-400" />}
+
+          <CardContent className="flex flex-col items-center space-y-8 p-8">
+            <div className="flex flex-col items-center">
+              <span className="text-slate-500 text-xs font-bold uppercase tracking-tighter mb-1 opacity-50">Valor da Renovação</span>
+              <div className="text-6xl font-black text-white tracking-tighter flex items-start">
+                <span className="text-xl font-medium text-blue-500 mt-2 mr-1">R$</span>
+                {valorFinal}
               </div>
             </div>
+            
+            <div className="w-full space-y-6">
+              <div className="space-y-3">
+                <div className="flex justify-between items-end px-1">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase">Banco</span>
+                    <span className="text-sm font-semibold text-slate-300">Nubank</span>
+                  </div>
+                  <div className="flex flex-col text-right">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase">Favorecido</span>
+                    <span className="text-sm font-semibold text-slate-300">Diego Felix Owerney</span>
+                  </div>
+                </div>
+
+                <div 
+                  onClick={copyPix}
+                  className="w-full bg-slate-950/50 border border-slate-800/80 p-5 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-blue-500/50 hover:bg-slate-900 transition-all active:scale-[0.98] group relative"
+                >
+                  <span className="text-[10px] text-slate-600 font-bold uppercase mb-2 group-hover:text-blue-400/70 transition-colors">Chave Pix (E-mail)</span>
+                  <code className="text-blue-400 font-mono text-lg font-bold">82iptv@gmail.com</code>
+                  <div className="absolute bottom-2 right-4 opacity-30 group-hover:opacity-100 transition-opacity">
+                    {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-slate-500" />}
+                  </div>
+                </div>
+              </div>
+
+              <Button 
+                onClick={copyPix}
+                className={`w-full h-16 rounded-2xl font-black text-lg shadow-xl transition-all ${
+                  copied 
+                  ? 'bg-green-600 hover:bg-green-600 text-white scale-[1.02]' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-blue-500/20'
+                }`}
+              >
+                {copied ? (
+                  <><Check className="mr-2 w-6 h-6" /> ✅ Chave Copiada com Sucesso!</>
+                ) : (
+                  <><Copy className="mr-2 w-5 h-5" /> 📋 Copiar Chave PIX</>
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
-        <div className="text-center space-y-2">
-          <p className="text-sm text-slate-400 px-4">
+        {/* AVISO E PROPAGANDA */}
+        <div className="space-y-6">
+          <p className="text-center text-[11px] text-slate-500 font-medium px-8 leading-relaxed italic">
             Após o pagamento, envie o comprovante no WhatsApp do suporte para ativação imediata.
           </p>
-          <Button 
-            onClick={() => window.open(`https://wa.me/5582981148560?text=${encodeURIComponent(`Comprovante de pagamento: ${client.nome}`)}`, '_blank')}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-12 rounded-xl"
-          >
-            <MessageSquare className="mr-2 w-5 h-5" /> Enviar Comprovante
-          </Button>
+
+          <Card className="bg-blue-600/5 border-blue-500/10 border-dashed relative overflow-hidden">
+            <CardContent className="p-6 text-center">
+              <div className="inline-flex items-center gap-2 mb-3 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
+                <span className="text-[10px] font-black text-blue-400 uppercase tracking-tighter">🎁 GANHE 1 MÊS GRÁTIS!</span>
+              </div>
+              <h3 className="text-white font-bold text-sm mb-2">Indique e Ganhe</h3>
+              <p className="text-slate-400 text-[11px] leading-relaxed max-w-[280px] mx-auto font-medium">
+                Indique um amigo ou parente. Se ele fechar qualquer plano com a gente, sua próxima renovação é 100% por nossa conta!
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Indique e Ganhe Card */}
-        <Card className="bg-blue-600/10 border-blue-500/30 overflow-hidden relative">
-          <div className="absolute top-0 right-0 p-3 opacity-10">
-            <Gift size={80} />
-          </div>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="bg-blue-600 text-[10px] font-bold px-2 py-0.5 rounded text-white uppercase tracking-tighter">🎁 GANHE 1 MÊS GRÁTIS!</span>
-            </div>
-            <h3 className="text-white font-bold text-lg mb-1">Indique e Ganhe</h3>
-            <p className="text-slate-300 text-sm leading-relaxed mb-4">
-              Indique um amigo ou parente. Se ele fechar qualquer plano com a gente, sua próxima renovação é 100% por nossa conta!
-            </p>
-            <Button 
-              onClick={() => window.open(whatsappSupportLink, '_blank')}
-              variant="outline"
-              className="w-full border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 transition-all font-semibold"
-            >
-              <MessageSquare className="mr-2 w-4 h-4" /> 📲 Indicar Amigo no WhatsApp
-            </Button>
-          </CardContent>
-        </Card>
-
-        <footer className="pt-8 pb-4 text-center">
-          <p className="text-slate-600 text-[10px] uppercase tracking-[0.2em]">Owerplay Gestor • Sistema Seguro</p>
+        <footer className="pt-8 pb-8 text-center">
+          <p className="text-slate-700 text-[9px] font-black uppercase tracking-[0.4em] opacity-50">Owerplay Gestor • High Performance</p>
         </footer>
       </div>
     </div>
