@@ -131,13 +131,13 @@ async function sendClientFicha(chatId: number, c: any) {
   
   const phone = cleanPhone(c.whatsapp || '');
   const msg = `<b>FICHA DO CLIENTE:</b>\n` +
-              `• Nome: ${c.nome}\n` +
-              `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
-              `• Plano: ${planName}\n` +
-              `• Servidor: ${serverNames}\n` +
-              `• Valor: R$ ${valorFinal}\n` +
-              `• Vencimento: ${brDate}\n` +
-              `• Status: ${c.status}`;
+              `Nome: ${c.nome}\n` +
+              `WhatsApp: ${c.whatsapp || 'N/A'}\n` +
+              `Plano: ${planName}\n` +
+              `Servidor: ${serverNames}\n` +
+              `Valor: R$ ${valorFinal}\n` +
+              `Vencimento: ${brDate}\n` +
+              `Status: ${c.status}`;
   
   await sendMessage(chatId, msg, {
     inline_keyboard: [
