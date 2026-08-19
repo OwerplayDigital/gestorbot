@@ -73,6 +73,7 @@ function RenewPage() {
              src={logoAsset.url} 
              alt="OWERPLAY TV" 
              className="w-48 h-48 object-contain mb-2 drop-shadow-[0_0_25px_rgba(59,130,246,0.3)] bg-transparent"
+             style={{ mixBlendMode: 'screen' }}
            />
 
            <h1 className="text-3xl font-black text-white tracking-[0.2em] italic">OWERPLAY TV</h1>
