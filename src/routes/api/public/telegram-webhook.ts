@@ -424,8 +424,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 });
 
                 const brDate = formatBRDate(new Date(finalDate + 'T12:00:00'));
-                const { data: plan } = await supabaseAdmin.from('plans').select('price, preco, valor').eq('id', d.plano_id!).single();
-                const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
+                const { data: plan } = await supabaseAdmin.from('plans').select('*').eq('id', d.plano_id!).single();
+                const planAny = plan as any;
+                const planPrice = Number(planAny?.price || planAny?.preco || planAny?.valor || 0);
                 const valorFinal = Math.max(0, planPrice - (d.desconto || 0)).toFixed(2).replace('.', ',');
 
                 const successMsg = `✅ <b>CLIENTE CADASTRADO COM SUCESSO!</b>\n\n` +
