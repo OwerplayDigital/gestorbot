@@ -579,13 +579,15 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 const phone = cleanPhone(c.whatsapp || '');
                 
                 const clientMsg = `👤 <b>${c.nome}</b>\n` +
-                                 `📅 Vencimento: ${currentBrDate}\n\n` +
-                                 `📲 <a href="https://wa.me/${phone}?text=${encodedCobranca}">👉 <b>Clique aqui para Cobrar</b></a>`;
+                                 `📅 Vencimento: ${currentBrDate}`;
 
                 await sendMessage(chatId, clientMsg, {
                   inline_keyboard: [
                     [
-                      { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
+                      { text: "💬 Cobrar", url: `https://wa.me/${phone}?text=${encodedCobranca}` },
+                      { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }
+                    ],
+                    [
                       { text: "👁️ Detalhes", callback_data: `view_client:${c.nome}` }
                     ]
                   ]
