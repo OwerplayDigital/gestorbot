@@ -106,6 +106,12 @@ function formatBRDate(date: Date): string {
   return `${day}/${month}/${year}`;
 }
 
+function cleanPhone(phone: string): string {
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.length === 0) return '';
+  return cleaned.startsWith('55') ? cleaned : `55${cleaned}`;
+}
+
 async function sendClientFicha(chatId: number, c: any) {
   const plan = c.plans;
   const planName = plan?.name || 'N/A';
