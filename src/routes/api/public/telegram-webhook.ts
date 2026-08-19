@@ -306,10 +306,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             }
             else if (data.startsWith('reset_fin_confirm:')) {
               const id = data.split(':')[1];
-              await editMessage(chatId, messageId, "⚠️ <b>CONFIRMAÇÃO CRÍTICA</b>\n\nTem certeza que deseja resetar o financeiro deste cliente? Essa ação não pode ser desfeita e limpará todo o histórico de transações e renovações.", {
+              await editMessage(chatId, messageId, "CONFIRMAÇÃO CRÍTICA\n\nTem certeza que deseja resetar o financeiro deste cliente? Essa ação não pode ser desfeita e limpará todo o histórico de transações e renovações.", {
                 inline_keyboard: [
-                  [{ text: "✅ Sim, Resetar Agora", callback_data: `reset_fin_exec:${id}` }],
-                  [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
+                  [{ text: "Sim, Resetar Agora", callback_data: `reset_fin_exec:${id}` }],
+                  [{ text: "Cancelar", callback_data: "back_to_main" }]
                 ]
               });
             }
