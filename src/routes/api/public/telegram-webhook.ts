@@ -820,8 +820,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   await sendMessage(chatId, `👤 <b>${c.nome}</b> (${br})`, {
                     inline_keyboard: [
                       [
-                        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
-                        { text: "💬 Mensagem", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }
+                        { text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` },
+                        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }
                       ]
                     ]
                   });
