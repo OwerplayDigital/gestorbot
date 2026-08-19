@@ -140,9 +140,19 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             // Responder imediatamente para parar o loading do Telegram
             await answerCallbackQuery(cb.id);
             
-            if (data === 'search_retry') {
+            if (data === 'search_retry' || data === 'new_client_fast') {
+              if (data === 'new_client_fast') {
+                userState.set(chatId, { action: 'cadastrar_cliente', step: 1, data: {} });
+                await sendMessage(chatId, "Nome do cliente:");
+                return new Response('OK');
+              }
               await setUserStep(chatId, 'aguardando_busca');
               await sendMessage(chatId, "🔍 Digite o nome (ou parte do nome) do cliente:");
+              return new Response('OK');
+            }
+
+            if (data === 'back_to_main') {
+              await sendMessage(chatId, "Menu:", mainMenu);
               return new Response('OK');
             }
 
@@ -155,6 +165,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                const c = results[0];
                if (c) {
                   const planName = (c.plans as any)?.name || 'N/A';
+                  const planPrice = Number((c.plans as any)?.price || 0);
+                  const discount = Number(c.desconto || 0);
+                  const valorFinal = (planPrice - discount).toFixed(2).replace('.', ',');
+                  
                   const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
                   const first_name = c.nome.split(' ')[0];
                   const encodedMsg = encodeURIComponent(
@@ -162,7 +176,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                     `Seu plano de TV vence hoje: *(${brDate})*\n` +
                     `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n` +
                     `*DADOS PARA PAGAMENTO:*\n` +
-                    `Valor: *R$ ${(c as any).valor || (c.plans as any)?.price}*\n` +
+                    `Valor: *R$ ${valorFinal}*\n` +
                     `Pix: *82iptv@gmail.com*\n` +
                     `Banco: Nubank\n` +
                     `Nome: Diego Felix Owerney\n` +
@@ -398,17 +412,33 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 const userId = await getAuthorizedUser(chatId);
                 if (!userId) throw new Error("Usuário não autorizado.");
 
-                await createClientWithDetails({
+                const newClient = await createClientWithDetails({
                   user_id: userId,
                   nome: d.nome,
                   whatsapp: d.whatsapp === '0' ? '' : d.whatsapp,
-                  plano_id: d.plano_id,
-                  servidores_ids: d.servidores_ids,
-                  desconto: d.desconto,
+                  plano_id: d.plano_id!,
+                  servidores_ids: d.servidores_ids!,
+                  desconto: d.desconto!,
                   vencimento: finalDate!
                 });
 
-                await editMessage(chatId, messageId, `✅ Cliente <b>${d.nome}</b> cadastrado com sucesso!`, clientsSubMenu);
+                const brDate = formatBRDate(new Date(finalDate + 'T12:00:00'));
+                const { data: plan } = await supabaseAdmin.from('plans').select('price').eq('id', d.plano_id!).single();
+                const valorFinal = ((Number(plan?.price || 0)) - (d.desconto || 0)).toFixed(2).replace('.', ',');
+
+                const successMsg = `✅ <b>CLIENTE CADASTRADO COM SUCESSO!</b>\n\n` +
+                                   `👤 <b>Nome:</b> ${d.nome}\n` +
+                                   `📱 <b>WhatsApp:</b> ${d.whatsapp === '0' ? 'Não informado' : d.whatsapp}\n` +
+                                   `📅 <b>Vencimento:</b> ${brDate}\n` +
+                                   `💰 <b>Valor Final:</b> R$ ${valorFinal}`;
+
+                await editMessage(chatId, messageId, successMsg, {
+                  inline_keyboard: [
+                    [{ text: "👤 Ver Ficha", callback_data: `view_client:${d.nome}` }],
+                    [{ text: "➕ Novo Cliente", callback_data: "new_client_fast" }],
+                    [{ text: "🏠 Menu Principal", callback_data: "back_to_main" }]
+                  ]
+                });
                 userState.delete(chatId);
               } catch (err: any) {
                 console.error("Erro ao cadastrar cliente via Telegram:", err);
