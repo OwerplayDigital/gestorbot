@@ -676,8 +676,26 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               break;
             case '📅 Vencendo Hoje':
               const today = await listClientsExpiringToday();
-              const tMsg = today.map((c: any) => `• ${c.nome}`).join('\n') || 'Ninguém vence hoje.';
-              await sendMessage(chatId, `📅 <b>VENCENDO HOJE:</b>\n${tMsg}`, clientsSubMenu);
+              if (today.length === 0) {
+                await sendMessage(chatId, '📅 Ninguém vence hoje.', clientsSubMenu);
+              } else {
+                await sendMessage(chatId, `📅 <b>VENCENDO HOJE:</b>`, clientsSubMenu);
+                for (const c of today) {
+                  const encodedMsg = encodeURIComponent(
+                    `Olá ${c.nome.split(' ')[0]}, seu plano vence hoje!\n\n` +
+                    `🔗 *Link para renovar:*\n` +
+                    `https://gestorbot.lovable.app/pagar/${c.id}`
+                  );
+                  await sendMessage(chatId, `👤 <b>${c.nome}</b>`, {
+                    inline_keyboard: [
+                      [
+                        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
+                        { text: "💬 Mensagem", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }
+                      ]
+                    ]
+                  });
+                }
+              }
               break;
             case '❌ Vencidos':
               const expired = await listExpiredClients();
