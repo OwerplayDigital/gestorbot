@@ -173,15 +173,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
                   const first_name = c.nome.split(' ')[0];
                   const encodedMsg = encodeURIComponent(
-                    `Olá ${first_name}, bom dia!\n` +
-                    `Seu plano de TV vence hoje: *(${brDate})*\n` +
-                    `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n` +
-                    `*DADOS PARA PAGAMENTO:*\n` +
-                    `Valor: *R$ ${valorFinal}*\n` +
-                    `Pix: *82iptv@gmail.com*\n` +
-                    `Banco: Nubank\n` +
-                    `Nome: Diego Felix Owerney\n` +
-                    `✅ *Favor enviar comprovante*`
+                    `Olá ${first_name}, bom dia!\n\n` +
+                    `Seu plano de TV vence hoje: *(${brDate})*\n\n` +
+                    `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n\n` +
+                    `✅ *Favor enviar comprovante*\n\n` +
+                    `🔗 *Acesse o link seguro para copiar o PIX e renovar:*\n` +
+                    `https://owerplay-gestor.lovable.app/renovar/${c.id}`
                   );
                   const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
                               `• Nome: ${c.nome}\n` +
