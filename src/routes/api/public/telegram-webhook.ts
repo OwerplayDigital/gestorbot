@@ -12,7 +12,8 @@ import {
   getUserStep,
   listExpiredClients,
   listClientsExpiringToday,
-  renewClient
+  renewClient,
+  BOT_TEMPLATES
 } from '@/lib/telegram.server';
 
 
@@ -176,13 +177,11 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
                   const primeiroNome = c.nome ? c.nome.trim().split(' ')[0] : 'Cliente';
                   
-                  const encodedMsg = encodeURIComponent(
-                    `Olá ${primeiroNome}, bom dia!\n\n` +
-                    `Seu plano de TV vence hoje: *(${brDate})*\n\n` +
-                    `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n\n` +
-                    `🔗 *Acesse o link seguro para copiar o PIX e renovar:*\n` +
-                    `https://gestorbot.lovable.app/pagar/${c.id}`
-                  );
+                  const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
+                  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl));
+                  const encodedRenovacao = encodeURIComponent(BOT_TEMPLATES.RENOVACAO_LINK(primeiroNome, paymentUrl));
+                  const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome, brDate));
+                  
                   const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
                               `• Nome: ${c.nome}\n` +
                               `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
@@ -193,12 +192,13 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                               `• Status: ${c.status}`;
                   await sendMessage(chatId, msg, {
                     inline_keyboard: [
-                      [{ text: "📲 Enviar Cobrança WhatsApp", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }],
-                      [{ text: "🔗 Link de Pagamento", url: `https://gestorbot.lovable.app/pagar/${c.id}` }],
-                      [{ text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }],
+                      [{ text: "💬 Cobrar (WA)", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` }],
+                      [{ text: "🔄 Enviar Link (WA)", url: `https://wa.me/55${c.whatsapp}?text=${encodedRenovacao}` }],
+                      [{ text: "📱 Confirmar (WA)", url: `https://wa.me/55${c.whatsapp}?text=${encodedConfirmacao}` }],
+                      [{ text: "🔗 Abrir Pagamento", url: paymentUrl }],
+                      [{ text: "🔄 Bot: Renovar", callback_data: `renew_init:${c.id}` }],
                       [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
                       [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
-                      [{ text: "📱 Alterar WhatsApp", callback_data: `edit_wpp:${c.id}` }],
                       [{ text: "🗑️ Resetar Financeiro", callback_data: `reset_fin_confirm:${c.id}` }],
                       [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
                     ]
@@ -703,16 +703,23 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               } else {
                 await sendMessage(chatId, `📅 <b>VENCENDO HOJE:</b>`, clientsSubMenu);
                 for (const c of today) {
-                  const encodedMsg = encodeURIComponent(
-                    `Olá ${c.nome.split(' ')[0]}, seu plano vence hoje!\n\n` +
-                    `🔗 *Link para renovar:*\n` +
-                    `https://gestorbot.lovable.app/pagar/${c.id}`
-                  );
+                  const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+                  const primeiroNome = c.nome.split(' ')[0];
+                  const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
+                  
+                  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl));
+                  const encodedRenovacao = encodeURIComponent(BOT_TEMPLATES.RENOVACAO_LINK(primeiroNome, paymentUrl));
+                  const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome, brDate));
+
                   await sendMessage(chatId, `👤 <b>${c.nome}</b>`, {
                     inline_keyboard: [
                       [
-                        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
-                        { text: "💬 Mensagem", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }
+                        { text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` },
+                        { text: "🔄 Renovar", url: `https://wa.me/55${c.whatsapp}?text=${encodedRenovacao}` }
+                      ],
+                      [
+                        { text: "📱 Confirmar", url: `https://wa.me/55${c.whatsapp}?text=${encodedConfirmacao}` },
+                        { text: "ℹ️ Detalhes", callback_data: `view_client:${c.nome}` }
                       ]
                     ]
                   });
