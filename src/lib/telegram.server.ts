@@ -178,7 +178,7 @@ export const findClientByName = async (name: string) => {
       desconto,
       plano_id,
       servidores_ids,
-      plans(name)
+      plans:plans(id, name, price)
     `)
     .ilike("nome", `%${name}%`)
     .limit(10);

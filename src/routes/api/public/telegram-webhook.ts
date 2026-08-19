@@ -164,10 +164,11 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                const results = await findClientByName(nome);
                const c = results[0];
                if (c) {
-                  const planName = (c.plans as any)?.name || 'N/A';
-                  const planPrice = Number((c.plans as any)?.price || 0);
+                  const plan = (c as any).plans;
+                  const planName = plan?.name || 'N/A';
+                  const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
                   const discount = Number(c.desconto || 0);
-                  const valorFinal = (planPrice - discount).toFixed(2).replace('.', ',');
+                  const valorFinal = Math.max(0, planPrice - discount).toFixed(2).replace('.', ',');
                   
                   const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
                   const first_name = c.nome.split(' ')[0];
@@ -423,8 +424,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 });
 
                 const brDate = formatBRDate(new Date(finalDate + 'T12:00:00'));
-                const { data: plan } = await supabaseAdmin.from('plans').select('price').eq('id', d.plano_id!).single();
-                const valorFinal = ((Number(plan?.price || 0)) - (d.desconto || 0)).toFixed(2).replace('.', ',');
+                const { data: plan } = await supabaseAdmin.from('plans').select('price, preco, valor').eq('id', d.plano_id!).single();
+                const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
+                const valorFinal = Math.max(0, planPrice - (d.desconto || 0)).toFixed(2).replace('.', ',');
 
                 const successMsg = `✅ <b>CLIENTE CADASTRADO COM SUCESSO!</b>\n\n` +
                                    `👤 <b>Nome:</b> ${d.nome}\n` +
@@ -553,12 +555,18 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             const results = await findClientByName(nome);
             const c = results[0];
             if (c) {
-              const planName = (c.plans as any)?.name || 'N/A';
+              const plan = (c as any).plans;
+              const planName = plan?.name || 'N/A';
+              const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
+              const discount = Number(c.desconto || 0);
+              const valorFinal = Math.max(0, planPrice - discount).toFixed(2).replace('.', ',');
+              
               const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
                           `• Nome: ${c.nome}\n` +
                           `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
                           `• Plano: ${planName}\n` +
                           `• Desconto: R$ ${c.desconto?.toFixed(2)}\n` +
+                          `• Valor Final: R$ ${valorFinal}\n` +
                           `• Vencimento: ${formatBRDate(new Date(c.vencimento + 'T12:00:00'))}\n` +
                           `• Status: ${c.status}`;
               await sendMessage(chatId, msg, {
