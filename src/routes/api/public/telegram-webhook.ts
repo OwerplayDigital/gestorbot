@@ -220,9 +220,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 
                 await sendMessage(chatId, msg, {
                   inline_keyboard: [
-                    [{ text: "📊 Atualizar", callback_data: "financeiro" }],
-                    [{ text: "⚠️ Zerar Financeiro", callback_data: "reset_global_confirm" }],
-                    [{ text: "🏠 Menu Principal", callback_data: "back_to_main" }]
+                    [{ text: "Atualizar", callback_data: "financeiro" }],
+                    [{ text: "Zerar Financeiro", callback_data: "reset_global_confirm" }],
+                    [{ text: "Menu Principal", callback_data: "back_to_main" }]
                   ]
                 });
               }
