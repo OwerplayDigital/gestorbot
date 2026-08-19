@@ -91,20 +91,12 @@ async function answerCallbackQuery(callbackQueryId: string, text?: string) {
 }
 
 const mainMenu = {
-  keyboard: [
-    [{ text: '👥 Clientes' }, { text: '🖥️ Servidores' }],
-    [{ text: '📋 Planos' }, { text: '💰 Financeiro' }]
-  ],
-  resize_keyboard: true,
-};
-
-const clientsSubMenu = {
-  keyboard: [
-    [{ text: '📊 Resumo' }, { text: '📅 Vencendo Hoje' }],
-    [{ text: '❌ Vencidos' }, { text: '🔍 Buscar Cliente' }],
-    [{ text: '➕ Novo Cliente' }, { text: '🔙 Voltar' }]
-  ],
-  resize_keyboard: true,
+  inline_keyboard: [
+    [{ text: '⏰ Vencendo Hoje', callback_data: 'vencendo_hoje' }, { text: '⚠️ Vencidos', callback_data: 'vencidos' }],
+    [{ text: '➕ Novo Cliente', callback_data: 'new_client_fast' }, { text: '🔍 Buscar', callback_data: 'search_direct' }],
+    [{ text: '🖥️ Servidores', callback_data: 'list_servers' }, { text: '📋 Planos', callback_data: 'list_plans' }],
+    [{ text: '💰 Financeiro', callback_data: 'financeiro' }]
+  ]
 };
 
 function formatBRDate(date: Date): string {
@@ -118,6 +110,55 @@ function cleanPhone(phone: string): string {
   const cleaned = phone.replace(/\D/g, '');
   if (cleaned.length === 0) return '';
   return cleaned.startsWith('55') ? cleaned : `55${cleaned}`;
+}
+
+async function sendClientFicha(chatId: number, c: any) {
+  const plan = c.plans;
+  const planName = plan?.name || 'N/A';
+  const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
+  const discount = Number(c.desconto || 0);
+  const valorFinal = Math.max(0, planPrice - discount).toFixed(2).replace('.', ',');
+  
+  const servers = c.servidores || [];
+  const serverNames = servers.map((s: any) => s.name).join(', ') || 'N/A';
+  
+  const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+  const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
+  
+  const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
+  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || ''));
+  const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome || '', brDate || ''));
+  
+  const phone = cleanPhone(c.whatsapp || '');
+  const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
+              `• Nome: ${c.nome}\n` +
+              `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
+              `• Plano: ${planName}\n` +
+              `• Servidor: ${serverNames}\n` +
+              `• Valor: R$ ${valorFinal}\n` +
+              `• Vencimento: ${brDate}\n` +
+              `• Status: ${c.status}`;
+  
+  await sendMessage(chatId, msg, {
+    inline_keyboard: [
+      [
+        { text: "💬 Cobrar", url: `https://wa.me/${phone}?text=${encodedCobranca}` },
+        { text: "📱 Confirmar", url: `https://wa.me/${phone}?text=${encodedConfirmacao}` }
+      ],
+      [
+        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
+        { text: "✏️ Vencimento", callback_data: `edit_venc:${c.id}` }
+      ],
+      [
+        { text: "🖥️ Servidor", callback_data: `edit_serv:${c.id}` },
+        { text: "✏️ Editar", callback_data: `edit_client_full:${c.id}` }
+      ],
+      [
+        { text: "🗑️ Excluir", callback_data: `delete_client_confirm:${c.id}` },
+        { text: "🏠 Menu Principal", callback_data: "back_to_main" }
+      ]
+    ]
+  });
 }
 
 function parseBRDate(brDate: string): string | null {
@@ -147,7 +188,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             // Responder imediatamente para parar o loading do Telegram
             await answerCallbackQuery(cb.id);
             
-            if (data === 'search_retry' || data === 'new_client_fast') {
+            if (data === 'search_retry' || data === 'new_client_fast' || data === 'search_direct') {
               if (data === 'new_client_fast') {
                 userState.set(chatId, { action: 'cadastrar_cliente', step: 1, data: {} });
                 await sendMessage(chatId, "Nome do cliente:");
@@ -163,6 +204,95 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               return new Response('OK');
             }
 
+            if (data === 'financeiro') {
+              const userId = await getAuthorizedUser(chatId);
+              if (userId) {
+                const summary = await getFinancialSummary();
+                const clients = await getClientsSummary();
+                const msg = `💰 <b>FINANCEIRO:</b>\n` +
+                            `📈 Entradas: R$ ${summary.entradas.toFixed(2)}\n` +
+                            `📉 Saídas: R$ ${summary.saidas.toFixed(2)}\n` +
+                            `💵 Lucro: R$ ${summary.lucro.toFixed(2)}\n\n` +
+                            `📊 <b>RESUMO DE CLIENTES:</b>\n` +
+                            `• Total: ${clients.total}\n` +
+                            `• Ativos: ${clients.ativos}\n` +
+                            `• Vencidos: ${clients.vencidos}`;
+                
+                await sendMessage(chatId, msg, {
+                  inline_keyboard: [
+                    [{ text: "📊 Atualizar", callback_data: "financeiro" }],
+                    [{ text: "⚠️ Zerar Financeiro", callback_data: "reset_global_confirm" }],
+                    [{ text: "🏠 Menu Principal", callback_data: "back_to_main" }]
+                  ]
+                });
+              }
+              return new Response('OK');
+            }
+
+            if (data === 'vencendo_hoje') {
+              const today = await listClientsExpiringToday();
+              if (today.length === 0) {
+                await sendMessage(chatId, '📅 Ninguém vence hoje.', mainMenu);
+              } else {
+                for (const c of today) {
+                  const fullClient = await findClientByName(c.nome);
+                  const detailed = fullClient[0];
+                  if (detailed) await sendClientFicha(chatId, detailed);
+                }
+              }
+              return new Response('OK');
+            }
+
+            if (data === 'vencidos') {
+              const expired = await listExpiredClients();
+              if (expired.length === 0) {
+                await sendMessage(chatId, '⚠️ Nenhum cliente vencido.', mainMenu);
+              } else {
+                for (const c of expired) {
+                  const fullClient = await findClientByName(c.nome);
+                  const detailed = fullClient[0];
+                  if (detailed) await sendClientFicha(chatId, detailed);
+                }
+              }
+              return new Response('OK');
+            }
+
+            if (data === 'list_servers') {
+              const servers = await listServers();
+              const sMsg = servers.map(s => `• ${s.name}: R$ ${s.valor}`).join('\n') || 'Nenhum servidor.';
+              await sendMessage(chatId, `🖥️ <b>SERVIDORES:</b>\n${sMsg}`, mainMenu);
+              return new Response('OK');
+            }
+
+            if (data === 'list_plans') {
+              const plans = await listPlans();
+              const pMsg = plans.map(p => `• ${p.name}: R$ ${p.price}`).join('\n') || 'Nenhum plano.';
+              await sendMessage(chatId, `📋 <b>PLANOS:</b>\n${pMsg}`, mainMenu);
+              return new Response('OK');
+            }
+
+            if (data.startsWith('delete_client_confirm:')) {
+              const id = data.split(':')[1];
+              await editMessage(chatId, cb.message.message_id, "⚠️ <b>CONFIRMAÇÃO</b>\n\nDeseja realmente EXCLUIR este cliente? Todos os dados e histórico serão removidos.", {
+                inline_keyboard: [
+                  [{ text: "✅ Sim, Excluir", callback_data: `delete_client_exec:${id}` }],
+                  [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
+                ]
+              });
+              return new Response('OK');
+            }
+
+            if (data.startsWith('delete_client_exec:')) {
+              const id = data.split(':')[1];
+              const userId = await getAuthorizedUser(chatId);
+              if (id && userId) {
+                await supabaseAdmin.from('clientes').delete().eq('id', id).eq('user_id', userId);
+                await sendMessage(chatId, "✅ Cliente excluído com sucesso.");
+                await sendMessage(chatId, "Menu:", mainMenu);
+              }
+              return new Response('OK');
+            }
+
             // Callbacks Globais e Fluxo de Detalhes
 
             if (data.startsWith('view_client:')) {
@@ -171,52 +301,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                const results = await findClientByName(nome);
                const c = results[0];
                if (c) {
-                  const plan = (c as any).plans;
-                  const planName = plan?.name || 'N/A';
-                  const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
-                  const discount = Number(c.desconto || 0);
-                  const valorFinal = Math.max(0, planPrice - discount).toFixed(2).replace('.', ',');
-                  
-                  const servers = (c as any).servidores || [];
-                  const serverNames = servers.map((s: any) => s.name).join(', ') || 'N/A';
-                  
-                  const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
-                  const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
-                  
-                  const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
-                  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || ''));
-                  const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome || '', brDate || ''));
-                  
-                  const phone = cleanPhone(c.whatsapp || '');
-                  const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
-                              `• Nome: ${c.nome}\n` +
-                              `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
-                              `• Plano: ${planName}\n` +
-                              `• Servidor: ${serverNames}\n` +
-                              `• Desconto: R$ ${c.desconto?.toFixed(2)}\n` +
-                              `• Vencimento: ${brDate}\n` +
-                              `• Status: ${c.status}`;
-                  
-                  await sendMessage(chatId, msg, {
-                    inline_keyboard: [
-                      [
-                        { text: "💬 Cobrar", url: `https://wa.me/${phone}?text=${encodedCobranca}` },
-                        { text: "📱 Confirmar", url: `https://wa.me/${phone}?text=${encodedConfirmacao}` }
-                      ],
-                      [
-                        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
-                        { text: "👁️ Detalhes", callback_data: `view_client:${c.nome}` }
-                      ],
-                      [
-                        { text: "✏️ Vencimento", callback_data: `edit_venc:${c.id}` },
-                        { text: "🏷️ Desconto", callback_data: `edit_desc:${c.id}` }
-                      ],
-                      [
-                        { text: "🖥️ Servidor", callback_data: `edit_serv:${c.id}` },
-                        { text: "🔙 Voltar", callback_data: "voltar_clients" }
-                      ]
-                    ]
-                  });
+                  await sendClientFicha(chatId, c);
                }
             }
             else if (data.startsWith('reset_fin_confirm:')) {
@@ -224,7 +309,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               await editMessage(chatId, messageId, "⚠️ <b>CONFIRMAÇÃO CRÍTICA</b>\n\nTem certeza que deseja resetar o financeiro deste cliente? Essa ação não pode ser desfeita e limpará todo o histórico de transações e renovações.", {
                 inline_keyboard: [
                   [{ text: "✅ Sim, Resetar Agora", callback_data: `reset_fin_exec:${id}` }],
-                  [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                  [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
                 ]
               });
             }
@@ -266,7 +351,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
                     [{ text: `📅 Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
-                    [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                    [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
                   ]
                 });
               }
@@ -288,7 +373,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
                     [{ text: `📅 Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
-                    [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                    [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
                   ]
                 });
               } else if (data === 'erenew_confirm') {
@@ -306,13 +391,13 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   );
                   await sendMessage(chatId, `✅ <b>Assinatura Renovada!</b>\nO caixa foi atualizado automaticamente.`, {
                     inline_keyboard: [
-                      [{ text: "📲 Enviar Comprovante", url: `https://wa.me/${phone}?text=${encodedReceipt}` }],
-                      [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
-                    ]
-                  });
-                }
-                userState.delete(chatId);
+                    [{ text: "📲 Enviar Comprovante", url: `https://wa.me/${phone}?text=${encodedReceipt}` }],
+                    [{ text: "🏠 Menu Principal", callback_data: "back_to_main" }]
+                  ]
+                });
               }
+              userState.delete(chatId);
+            }
             }
 
             else if (data.startsWith('edit_venc:')) {
@@ -325,7 +410,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
                     [{ text: `📅 Salvar: ${br}`, callback_data: "evenc_save" }],
-                    [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                    [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
                   ]
                 });
               }
@@ -355,7 +440,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   .select('nome')
                   .single();
                 
-                await editMessage(chatId, messageId, `✅ Servidor atualizado para <b>${servName}</b>!`, clientsSubMenu);
+                await editMessage(chatId, messageId, `✅ Servidor atualizado para <b>${servName}</b>!`, mainMenu);
                 if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
               }
               userState.delete(chatId);
@@ -377,21 +462,21 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
                     [{ text: `📅 Salvar: ${br}`, callback_data: "evenc_save" }],
-                    [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                    [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
                   ]
                 });
               } else if (data === 'evenc_save') {
                 const isoDate = state.data.vencimento_temp?.split('T')[0];
                 if (isoDate && state.data.id) {
                   const { data: updated } = await supabaseAdmin.from('clientes').update({ vencimento: isoDate }).eq('id', state.data.id).select('nome').single();
-                  await sendMessage(chatId, `✅ Vencimento atualizado!`, clientsSubMenu);
+                  await sendMessage(chatId, `✅ Vencimento atualizado!`, mainMenu);
                   if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
                 }
                 userState.delete(chatId);
               }
             }
-            else if (data === 'voltar_clients') {
-               await sendMessage(chatId, "Clientes:", clientsSubMenu);
+            else if (data === 'back_to_main') {
+               await sendMessage(chatId, "Clientes:", mainMenu);
                userState.delete(chatId);
             }
             else if (state && state.action === 'cadastrar_cliente' && state.step === 3 && data.startsWith('plano:')) {
@@ -537,7 +622,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               }
             } else if (data === 'f_no') {
               userState.delete(chatId);
-              await editMessage(chatId, messageId, "❌ Cadastro cancelado.", clientsSubMenu);
+              await editMessage(chatId, messageId, "❌ Cadastro cancelado.", mainMenu);
             }
 
             return new Response('OK');
@@ -567,7 +652,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               await sendMessage(chatId, `❌ Nenhum cliente encontrado com o nome '${termo}'.`, {
                 inline_keyboard: [
                   [{ text: "🔍 Buscar Novamente", callback_data: "search_retry" }],
-                  [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
+                  [{ text: "🔙 Voltar", callback_data: "back_to_main" }]
                 ]
               });
             } else {
@@ -611,7 +696,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               await sendMessage(chatId, `❌ Nenhum cliente encontrado com o nome '${termo}'.`, {
                 inline_keyboard: [
                   [{ text: "🔍 Buscar Novamente", callback_data: "search_retry" }],
-                  [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
+                  [{ text: "🔙 Voltar", callback_data: "back_to_main" }]
                 ]
               });
             } else {
@@ -652,7 +737,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             const val = parseFloat(text.replace(',', '.'));
             if (!isNaN(val) && state.data.id) {
               await supabaseAdmin.from('clientes').update({ desconto: val }).eq('id', state.data.id);
-              await sendMessage(chatId, "✅ Desconto atualizado!", clientsSubMenu);
+              await sendMessage(chatId, "✅ Desconto atualizado!", mainMenu);
             }
             userState.delete(chatId);
             return new Response('OK');
@@ -661,7 +746,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           if (state?.action === 'editar_whatsapp') {
             if (state.data.id) {
               await supabaseAdmin.from('clientes').update({ whatsapp: text }).eq('id', state.data.id);
-              await sendMessage(chatId, "✅ WhatsApp atualizado!", clientsSubMenu);
+              await sendMessage(chatId, "✅ WhatsApp atualizado!", mainMenu);
             }
             userState.delete(chatId);
             return new Response('OK');
@@ -670,7 +755,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           if (state?.action === 'buscar_cliente') {
             const results = await findClientByName(text);
             if (results.length === 0) {
-              await sendMessage(chatId, "Nenhum cliente encontrado.", clientsSubMenu);
+              await sendMessage(chatId, "Nenhum cliente encontrado.", mainMenu);
             } else {
               const buttons = results.map(c => ([{ text: c.nome, callback_data: `view_client:${c.nome}` }]));
               await sendMessage(chatId, "Selecione o cliente:", { inline_keyboard: buttons });
@@ -684,48 +769,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             const results = await findClientByName(nome);
             const c = results[0];
             if (c) {
-              const plan = (c as any).plans;
-              const planName = plan?.name || 'N/A';
-              const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
-              const discount = Number(c.desconto || 0);
-              const valorFinal = Math.max(0, planPrice - discount).toFixed(2).replace('.', ',');
-              
-              const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
-              const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
-               const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
-               const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || ''));
-               const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome || '', brDate || ''));
-
-              const phone = cleanPhone(c.whatsapp || '');
-              const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
-                          `• Nome: ${c.nome}\n` +
-                          `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
-                          `• Plano: ${planName}\n` +
-                          `• Desconto: R$ ${c.desconto?.toFixed(2)}\n` +
-                          `• Valor Final: R$ ${valorFinal}\n` +
-                          `• Vencimento: ${brDate}\n` +
-                          `• Status: ${c.status}`;
-              
-              await sendMessage(chatId, msg, {
-                inline_keyboard: [
-                  [
-                    { text: "💬 Cobrar", url: `https://wa.me/${phone}?text=${encodedCobranca}` },
-                    { text: "📱 Confirmar", url: `https://wa.me/${phone}?text=${encodedConfirmacao}` }
-                  ],
-                  [
-                    { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
-                    { text: "👁️ Detalhes", callback_data: `view_client:${c.nome}` }
-                  ],
-                  [
-                    { text: "✏️ Vencimento", callback_data: `edit_venc:${c.id}` },
-                    { text: "🏷️ Desconto", callback_data: `edit_desc:${c.id}` }
-                  ],
-                  [
-                    { text: "🖥️ Servidor", callback_data: `edit_serv:${c.id}` },
-                    { text: "🔙 Voltar", callback_data: "voltar_clients" }
-                  ]
-                ]
-              });
+              await sendClientFicha(chatId, c);
             }
             return new Response('OK');
           }
@@ -765,98 +809,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             return new Response('OK');
           }
 
-          switch (text) {
-            case '👥 Clientes': await sendMessage(chatId, "Clientes:", clientsSubMenu); break;
-            case '🖥️ Servidores':
-              const servers = await listServers();
-              const sMsg = servers.map(s => `• ${s.name}: R$ ${s.valor}`).join('\n') || 'Nenhum servidor.';
-              await sendMessage(chatId, `🖥️ <b>SERVIDORES:</b>\n${sMsg}`, mainMenu);
-              break;
-            case '📋 Planos':
-              const plans = await listPlans();
-              const pMsg = plans.map(p => `• ${p.name}: R$ ${p.price}`).join('\n') || 'Nenhum plano.';
-              await sendMessage(chatId, `📋 <b>PLANOS:</b>\n${pMsg}`, mainMenu);
-              break;
-            case '📊 Resumo':
-              const summary = await getClientsSummary();
-              await sendMessage(chatId, `📊 <b>RESUMO:</b>\nTotal: ${summary.total}\nAtivos: ${summary.ativos}\nVencidos: ${summary.vencidos}`, clientsSubMenu);
-              break;
-            case '📅 Vencendo Hoje':
-              const today = await listClientsExpiringToday();
-              if (today.length === 0) {
-                await sendMessage(chatId, '📅 Ninguém vence hoje.', clientsSubMenu);
-              } else {
-                await sendMessage(chatId, `📅 <b>VENCENDO HOJE:</b>`, clientsSubMenu);
-                for (const c of today) {
-                  const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
-                  const primeiroNome = (c.nome || 'Cliente').split(' ')[0];
-                  const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
-                  
-                  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || ''));
-                  const encodedRenovacao = encodeURIComponent(BOT_TEMPLATES.RENOVACAO_LINK(primeiroNome || '', paymentUrl || ''));
-                  const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome || '', brDate || ''));
-
-                  const phone = cleanPhone(c.whatsapp || '');
-                  const clientMsg = `👤 <b>${c.nome}</b>\n` +
-                                   `📅 Vencimento: ${brDate}`;
-
-                  await sendMessage(chatId, clientMsg, {
-                    inline_keyboard: [
-                      [
-                        { text: "💬 Cobrar", url: `https://wa.me/${phone}?text=${encodedCobranca}` },
-                        { text: "📱 Confirmar", url: `https://wa.me/${phone}?text=${encodedConfirmacao}` }
-                      ],
-                      [
-                        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
-                        { text: "ℹ️ Detalhes", callback_data: `view_client:${c.nome}` }
-                      ]
-                    ]
-                  });
-                }
-              }
-              break;
-            case '❌ Vencidos':
-              const expired = await listExpiredClients();
-              if (expired.length === 0) {
-                await sendMessage(chatId, '❌ Nenhum vencido.', clientsSubMenu);
-              } else {
-                await sendMessage(chatId, `❌ <b>VENCIDOS:</b>`, clientsSubMenu);
-                for (const c of expired) {
-                  const br = formatBRDate(new Date((c.vencimento || '') + 'T12:00:00'));
-                  const encodedMsg = encodeURIComponent(
-                    `Olá ${c.nome.split(' ')[0]}, seu plano está vencido!\n\n` +
-                    `🔗 *Link para renovar:*\n` +
-                    `https://gestorbot.lovable.app/pagar/${c.id}`
-                  );
-                  await sendMessage(chatId, `👤 <b>${c.nome}</b> (${br})`, {
-                    inline_keyboard: [
-                      [
-                        { text: "💬 Cobrar", url: `https://wa.me/${cleanPhone(c.whatsapp || '')}?text=${encodedMsg}` },
-                        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }
-                      ]
-                    ]
-                  });
-                }
-              }
-              break;
-            case '➕ Novo Cliente':
-              userState.set(chatId, { action: 'cadastrar_cliente', step: 1, data: {} });
-              await sendMessage(chatId, "Nome do cliente:");
-              break;
-            case '🔍 Buscar Cliente':
-              await setUserStep(chatId, 'aguardando_busca');
-              await sendMessage(chatId, "🔍 Digite o nome (ou parte do nome) do cliente:");
-              break;
-            case '💰 Financeiro':
-              const f = await getFinancialSummary();
-              await sendMessage(chatId, `💰 <b>FINANCEIRO:</b>\nEntradas: R$ ${f.entradas.toFixed(2)}\nSaídas: R$ ${f.saidas.toFixed(2)}\nLucro: R$ ${f.lucro.toFixed(2)}`, {
-                inline_keyboard: [
-                  [{ text: "🔄 Resetar Financeiro", callback_data: "reset_global_confirm" }],
-                  [{ text: "🏠 Menu Principal", callback_data: "back_to_main" }]
-                ]
-              });
-              break;
-          }
+          // Comandos de texto legados (Switch) removidos pois foram substituídos por Callback Data no novo Menu Principal
+          return new Response('OK');
 
           return new Response('OK');
         } catch (e) {
