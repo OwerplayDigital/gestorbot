@@ -209,7 +209,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               if (userId) {
                 const summary = await getFinancialSummary();
                 const clients = await getClientsSummary();
-                const msg = `💰 <b>FINANCEIRO:</b>\n` +
+                const msg = `<b>FINANCEIRO:</b>\n` +
                             `📈 Entradas: R$ ${summary.entradas.toFixed(2)}\n` +
                             `📉 Saídas: R$ ${summary.saidas.toFixed(2)}\n` +
                             `💵 Lucro: R$ ${summary.lucro.toFixed(2)}\n\n` +
