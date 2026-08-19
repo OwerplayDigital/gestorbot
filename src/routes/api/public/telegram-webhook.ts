@@ -142,20 +142,20 @@ async function sendClientFicha(chatId: number, c: any) {
   await sendMessage(chatId, msg, {
     inline_keyboard: [
       [
-        { text: "💬 Cobrar", url: `https://wa.me/${phone}?text=${encodedCobranca}` },
-        { text: "📱 Confirmar", url: `https://wa.me/${phone}?text=${encodedConfirmacao}` }
+        { text: "Cobrar", url: `https://wa.me/${phone}?text=${encodedCobranca}` },
+        { text: "Confirmar", url: `https://wa.me/${phone}?text=${encodedConfirmacao}` }
       ],
       [
-        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
-        { text: "✏️ Vencimento", callback_data: `edit_venc:${c.id}` }
+        { text: "Renovar", callback_data: `renew_init:${c.id}` },
+        { text: "Vencimento", callback_data: `edit_venc:${c.id}` }
       ],
       [
-        { text: "🖥️ Servidor", callback_data: `edit_serv:${c.id}` },
-        { text: "✏️ Editar", callback_data: `edit_client_full:${c.id}` }
+        { text: "Servidor", callback_data: `edit_serv:${c.id}` },
+        { text: "Editar", callback_data: `edit_client_full:${c.id}` }
       ],
       [
-        { text: "🗑️ Excluir", callback_data: `delete_client_confirm:${c.id}` },
-        { text: "🏠 Menu Principal", callback_data: "back_to_main" }
+        { text: "Excluir", callback_data: `delete_client_confirm:${c.id}` },
+        { text: "Menu Principal", callback_data: "back_to_main" }
       ]
     ]
   });
