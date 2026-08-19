@@ -56,7 +56,7 @@ export const Route = createFileRoute('/api/public/cron-notifications')({
             .from("clientes")
             .select("id, nome")
             .eq("user_id", user.user_id)
-            .eq("vencimento", today);
+            .eq("vencimento", today as string);
 
           if (clientError || !clientes || clientes.length === 0) continue;
 
