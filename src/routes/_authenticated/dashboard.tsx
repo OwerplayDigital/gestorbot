@@ -408,7 +408,7 @@ function Dashboard() {
                   cursor={{ fill: 'transparent' }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
-                      const data = payload[0].payload;
+                      const data = payload[0].payload as any;
                       return (
                         <div className="bg-background border rounded-lg p-2 shadow-xl text-xs">
                           <p className="font-bold border-b pb-1 mb-1">{data.name}</p>
@@ -434,7 +434,7 @@ function Dashboard() {
             <ArrowRight size={14} className="text-muted-foreground" />
           </div>
           <div className="flex flex-col gap-2">
-            {stats?.recentTransactions.length === 0 ? (
+            {stats && stats.recentTransactions.length === 0 ? (
                <p className="text-center text-muted-foreground py-4 text-sm">Nenhuma transação este mês.</p>
             ) : (
               stats?.recentTransactions.map(t => (
