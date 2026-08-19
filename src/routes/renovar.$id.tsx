@@ -72,7 +72,7 @@ function RenewPage() {
            <img 
              src={logoAsset.url} 
              alt="OWERPLAY TV" 
-             className="w-48 h-48 object-contain mb-2 drop-shadow-[0_0_25px_rgba(59,130,246,0.3)]"
+             className="w-48 h-48 object-contain mb-2 drop-shadow-[0_0_25px_rgba(59,130,246,0.3)] rounded-2xl"
            />
 
            <h1 className="text-3xl font-black text-white tracking-[0.2em] italic">OWERPLAY TV</h1>
@@ -132,9 +132,7 @@ function RenewPage() {
 
         {/* AVISO E PROPAGANDA */}
         <div className="space-y-6">
-          <p className="text-center text-[10px] text-slate-600 font-bold px-8 leading-relaxed italic opacity-80">
-            Após o pagamento, envie o comprovante no WhatsApp do suporte para ativação imediata.
-          </p>
+
 
           <Card className="bg-blue-600/5 border-blue-500/10 border-dashed relative overflow-hidden">
             <CardContent className="p-6 text-center">
