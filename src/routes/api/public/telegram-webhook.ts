@@ -200,7 +200,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             }
 
             if (data === 'back_to_main') {
-              await sendMessage(chatId, "Menu:", mainMenu);
+              await sendMessage(chatId, "Menu", mainMenu);
               return new Response('OK');
             }
 
