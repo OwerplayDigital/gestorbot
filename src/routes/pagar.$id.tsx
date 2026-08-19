@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import logoAsset from "@/assets/logo-owerplay.png.asset.json";
 
-export const Route = createFileRoute('/renovar/$id')({
+export const Route = createFileRoute('/pagar/$id')({
   head: () => ({
     meta: [
       { property: "og:title", content: "OWERPLAY TV" },
