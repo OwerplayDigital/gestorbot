@@ -1,6 +1,26 @@
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+export const BOT_TEMPLATES = {
+  COBRANCA: (nome: string, data: string, url: string) => 
+    `Olá ${nome}, bom dia!\n\n` +
+    `Seu plano de TV vence hoje: *(${data})*\n\n` +
+    `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n\n` +
+    `🔗 *Acesse o link seguro para copiar o PIX e renovar:*\n` +
+    `${url}`,
+
+  RENOVACAO_LINK: (nome: string, url: string) =>
+    `Olá ${nome}!\n\n` +
+    `Aqui está o seu link para renovação da assinatura:\n\n` +
+    `🔗 ${url}\n\n` +
+    `Após o pagamento, sua assinatura será renovada automaticamente.`,
+
+  CONFIRMACAO: (nome: string, data: string) =>
+    `📌 Obrigado pela confiança, ${nome}!\n\n` +
+    `✅ Sua assinatura foi renovada com sucesso!\n\n` +
+    `🗓️ *PRÓXIMO VENCIMENTO:* (${data})`
+};
+
 export const getAuthorizedUser = async (chatId: number) => {
   const allowedId = process.env['TELEGRAM_ALLOWED_USER_ID'];
   
@@ -178,8 +198,7 @@ export const findClientByName = async (name: string) => {
       desconto,
       plano_id,
       servidores_ids,
-      plans:plans(id, name, price),
-      servidores:servidores_iptv!inner(id, name)
+      plans:plans(id, name, price)
     `)
     .ilike("nome", `%${name}%`)
     .limit(10);
