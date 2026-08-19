@@ -254,7 +254,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (data === 'vencendo_hoje') {
               const today = await listClientsExpiringToday();
               if (today.length === 0) {
-                await sendMessage(chatId, 'Ninguém vence hoje.', mainMenu);
+                await sendMessage(chatId, 'Ninguém vence hoje.', {
+                  inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
+                });
               } else {
                 for (const c of today) {
                   const fullClient = await findClientByName(c.nome);
