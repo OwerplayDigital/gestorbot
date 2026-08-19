@@ -170,10 +170,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   const discount = Number(c.desconto || 0);
                   const valorFinal = Math.max(0, planPrice - discount).toFixed(2).replace('.', ',');
                   
+                  const servers = (c as any).servidores || [];
+                  const serverNames = servers.map((s: any) => s.name).join(', ') || 'N/A';
+                  
                   const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
                   const primeiroNome = c.nome ? c.nome.trim().split(' ')[0] : 'Cliente';
                   
-                  // Mensagem com espaçamento duplo para WhatsApp (wa.me)
                   const encodedMsg = encodeURIComponent(
                     `Olá ${primeiroNome}, bom dia!\n\n` +
                     `Seu plano de TV vence hoje: *(${brDate})*\n\n` +
@@ -185,6 +187,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                               `• Nome: ${c.nome}\n` +
                               `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
                               `• Plano: ${planName}\n` +
+                              `• Servidor: ${serverNames}\n` +
                               `• Desconto: R$ ${c.desconto?.toFixed(2)}\n` +
                               `• Vencimento: ${brDate}\n` +
                               `• Status: ${c.status}`;
@@ -196,10 +199,29 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                       [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
                       [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
                       [{ text: "📱 Alterar WhatsApp", callback_data: `edit_wpp:${c.id}` }],
+                      [{ text: "🗑️ Resetar Financeiro", callback_data: `reset_fin_confirm:${c.id}` }],
                       [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
                     ]
                   });
                }
+            }
+            else if (data.startsWith('reset_fin_confirm:')) {
+              const id = data.split(':')[1];
+              await editMessage(chatId, messageId, "⚠️ <b>CONFIRMAÇÃO CRÍTICA</b>\n\nTem certeza que deseja resetar o financeiro deste cliente? Essa ação não pode ser desfeita e limpará todo o histórico de transações e renovações.", {
+                inline_keyboard: [
+                  [{ text: "✅ Sim, Resetar Agora", callback_data: `reset_fin_exec:${id}` }],
+                  [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                ]
+              });
+            }
+            else if (data.startsWith('reset_fin_exec:')) {
+              const id = data.split(':')[1];
+              const userId = await getAuthorizedUser(chatId);
+              if (id && userId) {
+                const { resetFinancialHistory } = await import('@/lib/telegram.server');
+                await resetFinancialHistory(id, userId);
+                await sendMessage(chatId, "✅ <b>Financeiro Resetado!</b>\nO histórico deste cliente foi limpo com sucesso.");
+              }
             }
             else if (data.startsWith('renew_init:')) {
               const id = data.split(':')[1];
