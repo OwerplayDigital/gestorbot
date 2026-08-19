@@ -180,7 +180,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                     `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n\n` +
                     `✅ *Favor enviar comprovante*\n\n` +
                     `🔗 *Acesse o link seguro para copiar o PIX e renovar:*\n` +
-                    `https://owerplay-gestor.lovable.app/renovar/${c.id}`
+                    `https://gestorbot.lovable.app/renovar/${c.id}`
                   );
                   const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
                               `• Nome: ${c.nome}\n` +
@@ -192,7 +192,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   await sendMessage(chatId, msg, {
                     inline_keyboard: [
                       [{ text: "📲 Enviar Cobrança WhatsApp", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }],
-                      [{ text: "🔗 Link de Pagamento", url: `https://owerplay-gestor.lovable.app/renovar/${c.id}` }],
+                      [{ text: "🔗 Link de Pagamento", url: `https://gestorbot.lovable.app/renovar/${c.id}` }],
                       [{ text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }],
                       [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
                       [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
