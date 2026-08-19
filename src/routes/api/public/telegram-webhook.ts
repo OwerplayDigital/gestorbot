@@ -191,9 +191,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                               `• Status: ${c.status}`;
                   await sendMessage(chatId, msg, {
                     inline_keyboard: [
-                      [{ text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` }],
+                      [{ text: "💬 Cobrar", callback_data: `action_cobrar:${c.id}` }],
                       [{ text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }],
-                      [{ text: "📱 Confirmar", url: `https://wa.me/55${c.whatsapp}?text=${encodedConfirmacao}` }],
+                      [{ text: "📱 Confirmar", callback_data: `action_confirmar:${c.id}` }],
                       [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
                       [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
                       [{ text: "🖥️ Alterar Servidor", callback_data: `edit_serv:${c.id}` }],
