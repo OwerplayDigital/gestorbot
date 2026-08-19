@@ -325,12 +325,25 @@ function Dashboard() {
           
           <div className="flex gap-2">
              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-[120px] rounded-xl h-9">
+              <SelectTrigger className="w-[140px] rounded-xl h-9">
                 <SelectValue placeholder="Mês" />
               </SelectTrigger>
               <SelectContent>
-                {["01","02","03","04","05","06","07","08","09","10","11","12"].map(m => (
-                   <SelectItem key={m} value={m}>{m}</SelectItem>
+                {[
+                  { v: "01", l: "Janeiro" },
+                  { v: "02", l: "Fevereiro" },
+                  { v: "03", l: "Março" },
+                  { v: "04", l: "Abril" },
+                  { v: "05", l: "Maio" },
+                  { v: "06", l: "Junho" },
+                  { v: "07", l: "Julho" },
+                  { v: "08", l: "Agosto" },
+                  { v: "09", l: "Setembro" },
+                  { v: "10", l: "Outubro" },
+                  { v: "11", l: "Novembro" },
+                  { v: "12", l: "Dezembro" }
+                ].map(m => (
+                   <SelectItem key={m.v} value={m.v}>{m.l}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
