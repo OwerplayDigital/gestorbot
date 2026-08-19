@@ -579,13 +579,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               });
             } else {
               for (const c of results) {
-                const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
-                const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+                const currentBrDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
                 const primeiroNome = (c.nome || 'Cliente').split(' ')[0];
                 const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
-                const encodedCobranca = encodeURIComponent((BOT_TEMPLATES as any).COBRANCA(primeiroNome, brDate, paymentUrl));
+                const encodedCobranca = encodeURIComponent((BOT_TEMPLATES as any).COBRANCA(primeiroNome, currentBrDate, paymentUrl));
 
-                await sendMessage(chatId, `👤 <b>${c.nome}</b>\n📅 Vencimento: ${brDate}`, {
+                await sendMessage(chatId, `👤 <b>${c.nome}</b>\n📅 Vencimento: ${currentBrDate}`, {
                   inline_keyboard: [
                     [
                       { text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` },
@@ -683,17 +682,24 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const discount = Number(c.desconto || 0);
               const valorFinal = Math.max(0, planPrice - discount).toFixed(2).replace('.', ',');
               
+              const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+              const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
+              const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
+              const encodedCobranca = encodeURIComponent((BOT_TEMPLATES as any).COBRANCA(primeiroNome, brDate, paymentUrl));
+
               const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
                           `• Nome: ${c.nome}\n` +
                           `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
                           `• Plano: ${planName}\n` +
                           `• Desconto: R$ ${c.desconto?.toFixed(2)}\n` +
                           `• Valor Final: R$ ${valorFinal}\n` +
-                          `• Vencimento: ${formatBRDate(new Date(c.vencimento + 'T12:00:00'))}\n` +
+                          `• Vencimento: ${brDate}\n` +
                           `• Status: ${c.status}`;
               await sendMessage(chatId, msg, {
                 inline_keyboard: [
+                  [{ text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` }],
                   [{ text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }],
+                  [{ text: "📱 Confirmar", callback_data: `action_confirmar:${c.id}` }],
                   [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
                   [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
                   [{ text: "🖥️ Alterar Servidor", callback_data: `edit_serv:${c.id}` }],
