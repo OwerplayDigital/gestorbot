@@ -502,7 +502,7 @@ function Dashboard() {
                               variant="ghost" 
                               size="icon" 
                               className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded-full"
-                              disabled={ids.some(id => isDeleting === id)}
+                              disabled={ids.some((id: string) => isDeleting === id)}
                             >
                               <Trash2 size={16} />
                             </Button>
