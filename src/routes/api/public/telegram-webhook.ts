@@ -179,7 +179,6 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   
                   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
                   const encodedCobranca = encodeURIComponent((BOT_TEMPLATES as any).COBRANCA(primeiroNome, brDate, paymentUrl));
-                  const encodedRenovacao = encodeURIComponent((BOT_TEMPLATES as any).RENOVACAO_LINK(primeiroNome, paymentUrl));
                   const encodedConfirmacao = encodeURIComponent((BOT_TEMPLATES as any).CONFIRMACAO(primeiroNome, brDate));
                   
                   const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
@@ -192,15 +191,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                               `• Status: ${c.status}`;
                   await sendMessage(chatId, msg, {
                     inline_keyboard: [
-                      [{ text: "💬 Cobrar (WA)", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` }],
-                      [{ text: "🔄 Enviar Link (WA)", url: `https://wa.me/55${c.whatsapp}?text=${encodedRenovacao}` }],
-                      [{ text: "📱 Confirmar (WA)", url: `https://wa.me/55${c.whatsapp}?text=${encodedConfirmacao}` }],
-                      [{ text: "🔗 Abrir Pagamento", url: paymentUrl }],
-                      [{ text: "🔄 Bot: Renovar", callback_data: `renew_init:${c.id}` }],
+                      [{ text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` }],
+                      [{ text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }],
+                      [{ text: "📱 Confirmar", url: `https://wa.me/55${c.whatsapp}?text=${encodedConfirmacao}` }],
                       [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
                       [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
                       [{ text: "🖥️ Alterar Servidor", callback_data: `edit_serv:${c.id}` }],
-                      [{ text: "🗑️ Resetar Financeiro", callback_data: `reset_fin_confirm:${c.id}` }],
                       [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
                     ]
                   });
