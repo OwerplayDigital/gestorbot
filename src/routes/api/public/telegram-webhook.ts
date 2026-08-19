@@ -106,10 +106,53 @@ function formatBRDate(date: Date): string {
   return `${day}/${month}/${year}`;
 }
 
-function cleanPhone(phone: string): string {
-  const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.length === 0) return '';
-  return cleaned.startsWith('55') ? cleaned : `55${cleaned}`;
+async function sendClientFicha(chatId: number, c: any) {
+  const plan = c.plans;
+  const planName = plan?.name || 'N/A';
+  const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
+  const discount = Number(c.desconto || 0);
+  const valorFinal = Math.max(0, planPrice - discount).toFixed(2).replace('.', ',');
+  
+  const servers = c.servidores || [];
+  const serverNames = servers.map((s: any) => s.name).join(', ') || 'N/A';
+  
+  const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+  const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
+  
+  const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
+  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || ''));
+  const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome || '', brDate || ''));
+  
+  const phone = cleanPhone(c.whatsapp || '');
+  const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
+              `• Nome: ${c.nome}\n` +
+              `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
+              `• Plano: ${planName}\n` +
+              `• Servidor: ${serverNames}\n` +
+              `• Valor: R$ ${valorFinal}\n` +
+              `• Vencimento: ${brDate}\n` +
+              `• Status: ${c.status}`;
+  
+  await sendMessage(chatId, msg, {
+    inline_keyboard: [
+      [
+        { text: "💬 Cobrar", url: `https://wa.me/${phone}?text=${encodedCobranca}` },
+        { text: "📱 Confirmar", url: `https://wa.me/${phone}?text=${encodedConfirmacao}` }
+      ],
+      [
+        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
+        { text: "✏️ Vencimento", callback_data: `edit_venc:${c.id}` }
+      ],
+      [
+        { text: "🖥️ Servidor", callback_data: `edit_serv:${c.id}` },
+        { text: "✏️ Editar", callback_data: `edit_client_full:${c.id}` }
+      ],
+      [
+        { text: "🗑️ Excluir", callback_data: `delete_client_confirm:${c.id}` },
+        { text: "🏠 Menu Principal", callback_data: "back_to_main" }
+      ]
+    ]
+  });
 }
 
 function parseBRDate(brDate: string): string | null {
