@@ -295,7 +295,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (data === 'list_plans') {
               const plans = await listPlans();
               const pMsg = plans.map(p => `• ${p.name}: R$ ${p.price}`).join('\n') || 'Nenhum plano.';
-              await sendMessage(chatId, `<b>PLANOS:</b>\n${pMsg}`, mainMenu);
+              await sendMessage(chatId, `<b>PLANOS:</b>\n${pMsg}`, {
+                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
+              });
               return new Response('OK');
             }
 
