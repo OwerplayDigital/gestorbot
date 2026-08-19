@@ -11,7 +11,8 @@ import {
   setUserStep,
   getUserStep,
   listExpiredClients,
-  listClientsExpiringToday
+  listClientsExpiringToday,
+  renewClient
 } from '@/lib/telegram.server';
 
 
@@ -31,7 +32,7 @@ type ClientRegistrationData = {
 };
 
 type UserState = {
-  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp';
+  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp' | 'renovar_cliente';
   step: number;
   data: Partial<ClientRegistrationData>;
 };
@@ -135,24 +136,98 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                const results = await findClientByName(nome);
                const c = results[0];
                if (c) {
-                 const planName = (c.plans as any)?.name || 'N/A';
-                 const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
-                             `• Nome: ${c.nome}\n` +
-                             `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
-                             `• Plano: ${planName}\n` +
-                             `• Desconto: R$ ${c.desconto?.toFixed(2)}\n` +
-                             `• Vencimento: ${formatBRDate(new Date(c.vencimento + 'T12:00:00'))}\n` +
-                             `• Status: ${c.status}`;
-                 await sendMessage(chatId, msg, {
-                   inline_keyboard: [
-                     [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
-                     [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
-                     [{ text: "📱 Alterar WhatsApp", callback_data: `edit_wpp:${c.id}` }],
-                     [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
-                   ]
-                 });
+                  const planName = (c.plans as any)?.name || 'N/A';
+                  const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+                  const first_name = c.nome.split(' ')[0];
+                  const encodedMsg = encodeURIComponent(
+                    `Olá ${first_name}, bom dia!\n` +
+                    `Seu plano de TV vence hoje: *(${brDate})*\n` +
+                    `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n` +
+                    `*DADOS PARA PAGAMENTO:*\n` +
+                    `Valor: *R$ ${(c as any).valor || (c.plans as any)?.price}*\n` +
+                    `Pix: *82iptv@gmail.com*\n` +
+                    `Banco: Nubank\n` +
+                    `Nome: Diego Felix Owerney\n` +
+                    `✅ *Favor enviar comprovante*`
+                  );
+                  const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
+                              `• Nome: ${c.nome}\n` +
+                              `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
+                              `• Plano: ${planName}\n` +
+                              `• Desconto: R$ ${c.desconto?.toFixed(2)}\n` +
+                              `• Vencimento: ${brDate}\n` +
+                              `• Status: ${c.status}`;
+                  await sendMessage(chatId, msg, {
+                    inline_keyboard: [
+                      [{ text: "📲 Enviar Cobrança WhatsApp", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }],
+                      [{ text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }],
+                      [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
+                      [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
+                      [{ text: "📱 Alterar WhatsApp", callback_data: `edit_wpp:${c.id}` }],
+                      [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
+                    ]
+                  });
                }
             }
+            else if (data.startsWith('renew_init:')) {
+              const id = data.split(':')[1];
+              const { data: c } = await supabaseAdmin.from('clientes').select('vencimento').eq('id', id).single();
+              if (c) {
+                const nextMonth = new Date(c.vencimento + 'T12:00:00');
+                nextMonth.setDate(nextMonth.getDate() + 30);
+                userState.set(chatId, { action: 'renovar_cliente', step: 1, data: { id, vencimento_temp: nextMonth.toISOString() } as any });
+                const br = formatBRDate(nextMonth);
+                await editMessage(chatId, messageId, `<b>Renovação de Assinatura</b>\nSugestão de novo vencimento: <b>${br}</b>`, {
+                  inline_keyboard: [
+                    [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
+                    [{ text: `📅 Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
+                    [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                  ]
+                });
+              }
+            }
+            else if (state?.action === 'renovar_cliente') {
+              const currentIso = state.data.vencimento_temp;
+              if (!currentIso) return new Response('OK');
+              const d = new Date(currentIso);
+              
+              if (data === 'erenew_m5') d.setDate(d.getDate() - 5);
+              else if (data === 'erenew_m1') d.setDate(d.getDate() - 1);
+              else if (data === 'erenew_p1') d.setDate(d.getDate() + 1);
+              else if (data === 'erenew_p5') d.setDate(d.getDate() + 5);
+              
+              if (data.startsWith('erenew_') && data !== 'erenew_confirm') {
+                state.data.vencimento_temp = d.toISOString();
+                const br = formatBRDate(d);
+                await editMessage(chatId, messageId, `<b>Renovação de Assinatura</b>\nNovo vencimento: <b>${br}</b>`, {
+                  inline_keyboard: [
+                    [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
+                    [{ text: `📅 Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
+                    [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                  ]
+                });
+              } else if (data === 'erenew_confirm') {
+                const isoDate = state.data.vencimento_temp?.split('T')[0];
+                const userId = await getAuthorizedUser(chatId);
+                if (isoDate && state.data.id && userId) {
+                  const updated = await renewClient(state.data.id, isoDate, userId);
+                  const br = formatBRDate(new Date(isoDate + 'T12:00:00'));
+                  const encodedReceipt = encodeURIComponent(
+                    `📌 Obrigado pela confiança!\n` +
+                    `✅ Sua assinatura foi renovada com sucesso!\n` +
+                    `🗓️ PRÓXIMO VENCIMENTO:*(${br})*`
+                  );
+                  await sendMessage(chatId, `✅ <b>Assinatura Renovada!</b>\nO caixa foi atualizado automaticamente.`, {
+                    inline_keyboard: [
+                      [{ text: "📲 Enviar Comprovante WhatsApp", url: `https://wa.me/55${updated.whatsapp}?text=${encodedReceipt}` }],
+                      [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
+                    ]
+                  });
+                }
+                userState.delete(chatId);
+              }
+            }
+
             else if (data.startsWith('edit_venc:')) {
               const id = data.split(':')[1];
               const { data: c } = await supabaseAdmin.from('clientes').select('vencimento').eq('id', id).single();

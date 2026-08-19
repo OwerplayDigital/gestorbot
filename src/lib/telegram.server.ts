@@ -255,3 +255,118 @@ export const getFinancialSummary = async () => {
 
   return { entradas, saidas, lucro: entradas - saidas };
 };
+
+export const renewClient = async (
+  clientId: string,
+  newVencimento: string,
+  userId: string
+) => {
+  // 1. Buscar dados atuais do cliente
+  const { data: client, error: fetchError } = await supabaseAdmin
+    .from("clientes")
+    .select("vencimento, plano_id, desconto, servidores_ids")
+    .eq("id", clientId)
+    .single();
+
+  if (fetchError || !client) {
+    console.error("Erro ao buscar cliente para renovação:", fetchError);
+    throw new Error("Cliente não encontrado.");
+  }
+
+  // 2. Buscar valor do plano
+  const { data: plan, error: planError } = await supabaseAdmin
+    .from("plans")
+    .select("price")
+    .eq("id", client.plano_id || "")
+    .single();
+
+  if (planError || !plan) {
+    console.error("Erro ao buscar plano para renovação:", planError);
+    throw new Error("Plano não encontrado.");
+  }
+
+  // 3. Buscar custo dos servidores
+  let totalCusto = 0;
+  if (client.servidores_ids && client.servidores_ids.length > 0) {
+    const { data: servers, error: serverError } = await supabaseAdmin
+      .from("servidores_iptv")
+      .select("valor")
+      .in("id", client.servidores_ids);
+    
+    if (!serverError && servers) {
+      totalCusto = servers.reduce((sum, s) => sum + Number(s.valor), 0);
+    }
+  }
+
+  const valorEntrada = Number(plan.price) - Number(client.desconto || 0);
+  const vencimentoAnterior = client.vencimento;
+
+  // 4. Executar transação de renovação
+  // Nota: Idealmente isso seria uma RPC/Database Function para atomicidade, 
+  // mas faremos via chamadas sequenciais com supabaseAdmin.
+
+  // a) Registrar a renovação
+  const { error: renewRecordError } = await supabaseAdmin
+    .from("renovacoes")
+    .insert({
+      user_id: userId,
+      cliente_id: clientId,
+      plano_id: client.plano_id,
+      valor: valorEntrada,
+      desconto: client.desconto,
+      vencimento_anterior: vencimentoAnterior,
+      novo_vencimento: newVencimento,
+      data_renovacao: new Date().toISOString(),
+    });
+
+  if (renewRecordError) {
+    console.error("Erro ao registrar renovação:", renewRecordError);
+    throw renewRecordError;
+  }
+
+  // b) Registrar entrada no caixa (Receita)
+  const { error: transEntradaError } = await supabaseAdmin
+    .from("transacoes")
+    .insert({
+      user_id: userId,
+      cliente_id: clientId,
+      tipo: 'entrada',
+      valor: valorEntrada,
+      data: new Date().toISOString().split('T')[0] ?? null,
+      descricao: `Renovação cliente ${clientId}`,
+    });
+
+  if (transEntradaError) console.error("Erro ao registrar entrada:", transEntradaError);
+
+  // c) Registrar saída no caixa (Custo Servidor)
+  if (totalCusto > 0) {
+    const { error: transSaidaError } = await supabaseAdmin
+      .from("transacoes")
+      .insert({
+        user_id: userId,
+        tipo: 'saida',
+        valor: totalCusto,
+        data: new Date().toISOString().split('T')[0] ?? null,
+        descricao: `Custo servidor renovação cliente ${clientId}`,
+      });
+    if (transSaidaError) console.error("Erro ao registrar saída:", transSaidaError);
+  }
+
+  // d) Atualizar vencimento e status do cliente
+  const { data: updatedClient, error: updateError } = await supabaseAdmin
+    .from("clientes")
+    .update({
+      vencimento: newVencimento,
+      status: 'ativo'
+    })
+    .eq("id", clientId)
+    .select()
+    .single();
+
+  if (updateError) {
+    console.error("Erro ao atualizar cliente após renovação:", updateError);
+    throw updateError;
+  }
+
+  return updatedClient;
+};
