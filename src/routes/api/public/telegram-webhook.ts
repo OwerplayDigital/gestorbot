@@ -358,7 +358,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 const { resetGlobalFinancialHistory } = await import('@/lib/telegram.server');
                 await resetGlobalFinancialHistory(userId);
                 await editMessage(chatId, messageId, "Financeiro geral resetado com sucesso!");
-                await sendMessage(chatId, "Menu Principal:", mainMenu);
+                await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
               }
             }
             else if (data.startsWith('renew_init:')) {
