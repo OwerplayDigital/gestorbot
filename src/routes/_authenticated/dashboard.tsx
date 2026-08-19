@@ -484,24 +484,24 @@ function Dashboard() {
                 const id = t.id;
 
                   return (
-                    <div key={id} className="bg-card border rounded-2xl p-4 flex flex-col gap-3 relative">
-                      <div className="absolute top-4 right-4">
+                    <div key={id} className="bg-card border rounded-2xl p-3 flex flex-col gap-2 relative">
+                      <div className="absolute top-2 right-2">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded-full"
+                              className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded-full"
                               disabled={isDeleting === id}
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={14} />
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Excluir lançamento?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Tem certeza que deseja excluir esta transação? Isso removerá tanto a entrada quanto os custos associados.
+                                Tem certeza que deseja excluir esta transação?
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -510,7 +510,6 @@ function Dashboard() {
                                 onClick={async () => {
                                     await handleDeleteTransaction(id);
                                 }}
-
                                 className="bg-rose-500 hover:bg-rose-600"
                               >
                                 Excluir
@@ -521,24 +520,24 @@ function Dashboard() {
                       </div>
 
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold pr-8">Renovação - {t.clientes?.nome || "Geral"}</span>
-                        <span className="text-[10px] text-muted-foreground">{t.data ? format(parseISO(t.data), "dd/MM/yyyy") : "?"}</span>
+                        <span className="text-xs font-bold pr-8 truncate">Renovação - {t.clientes?.nome || "Geral"}</span>
+                        <span className="text-[9px] text-muted-foreground">{t.data ? format(parseISO(t.data), "dd/MM/yyyy") : "?"}</span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-dashed">
-                        <div className="flex flex-col">
-                          <span className="text-[10px] text-muted-foreground uppercase font-bold">Entrada</span>
-                          <span className="text-emerald-500 font-bold text-sm">{formatBRL(entrada)}</span>
+                      <div className="flex items-center gap-3 pt-1 border-t border-dashed overflow-x-auto no-scrollbar">
+                        <div className="flex items-center gap-1 whitespace-nowrap">
+                          <span className="text-[9px] text-muted-foreground uppercase font-bold">E:</span>
+                          <span className="text-emerald-500 font-bold text-[11px]">+{formatBRL(entrada)}</span>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-[10px] text-muted-foreground uppercase font-bold">Custo</span>
-                          <span className="text-rose-500 font-bold text-sm">{formatBRL(saida)}</span>
+                        <div className="flex items-center gap-1 whitespace-nowrap">
+                          <span className="text-[9px] text-muted-foreground uppercase font-bold">C:</span>
+                          <span className="text-rose-500 font-bold text-[11px] flex items-center">-{formatBRL(saida)}</span>
                         </div>
-                      </div>
-
-                      <div className="flex flex-col pt-2 border-t">
-                        <span className="text-[10px] text-muted-foreground uppercase font-bold">Lucro Líquido</span>
-                        <span className="text-owerplay-cyan font-black text-lg">{formatBRL(lucro)}</span>
+                        <div className="flex items-center gap-1 whitespace-nowrap ml-auto">
+                          <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-owerplay-cyan/10 border-owerplay-cyan/30 text-owerplay-cyan font-black">
+                            LUCRO: {formatBRL(lucro)}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                   );
