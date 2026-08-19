@@ -139,7 +139,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             // Responder imediatamente para parar o loading do Telegram
             await answerCallbackQuery(cb.id);
             
-            if (data === 'search_retry' || data === 'new_client_fast') {
+            if (data === 'search_retry' || data === 'new_client_fast' || data === 'search_direct') {
               if (data === 'new_client_fast') {
                 userState.set(chatId, { action: 'cadastrar_cliente', step: 1, data: {} });
                 await sendMessage(chatId, "Nome do cliente:");
@@ -152,6 +152,95 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
             if (data === 'back_to_main') {
               await sendMessage(chatId, "Menu:", mainMenu);
+              return new Response('OK');
+            }
+
+            if (data === 'financeiro') {
+              const userId = await getAuthorizedUser(chatId);
+              if (userId) {
+                const summary = await getFinancialSummary();
+                const clients = await getClientsSummary();
+                const msg = `💰 <b>FINANCEIRO:</b>\n` +
+                            `📈 Entradas: R$ ${summary.entradas.toFixed(2)}\n` +
+                            `📉 Saídas: R$ ${summary.saidas.toFixed(2)}\n` +
+                            `💵 Lucro: R$ ${summary.lucro.toFixed(2)}\n\n` +
+                            `📊 <b>RESUMO DE CLIENTES:</b>\n` +
+                            `• Total: ${clients.total}\n` +
+                            `• Ativos: ${clients.ativos}\n` +
+                            `• Vencidos: ${clients.vencidos}`;
+                
+                await sendMessage(chatId, msg, {
+                  inline_keyboard: [
+                    [{ text: "📊 Atualizar", callback_data: "financeiro" }],
+                    [{ text: "⚠️ Zerar Financeiro", callback_data: "reset_global_confirm" }],
+                    [{ text: "🏠 Menu Principal", callback_data: "back_to_main" }]
+                  ]
+                });
+              }
+              return new Response('OK');
+            }
+
+            if (data === 'vencendo_hoje') {
+              const today = await listClientsExpiringToday();
+              if (today.length === 0) {
+                await sendMessage(chatId, '📅 Ninguém vence hoje.', mainMenu);
+              } else {
+                for (const c of today) {
+                  const fullClient = await findClientByName(c.nome);
+                  const detailed = fullClient[0];
+                  if (detailed) await sendClientFicha(chatId, detailed);
+                }
+              }
+              return new Response('OK');
+            }
+
+            if (data === 'vencidos') {
+              const expired = await listExpiredClients();
+              if (expired.length === 0) {
+                await sendMessage(chatId, '⚠️ Nenhum cliente vencido.', mainMenu);
+              } else {
+                for (const c of expired) {
+                  const fullClient = await findClientByName(c.nome);
+                  const detailed = fullClient[0];
+                  if (detailed) await sendClientFicha(chatId, detailed);
+                }
+              }
+              return new Response('OK');
+            }
+
+            if (data === 'list_servers') {
+              const servers = await listServers();
+              const sMsg = servers.map(s => `• ${s.name}: R$ ${s.valor}`).join('\n') || 'Nenhum servidor.';
+              await sendMessage(chatId, `🖥️ <b>SERVIDORES:</b>\n${sMsg}`, mainMenu);
+              return new Response('OK');
+            }
+
+            if (data === 'list_plans') {
+              const plans = await listPlans();
+              const pMsg = plans.map(p => `• ${p.name}: R$ ${p.price}`).join('\n') || 'Nenhum plano.';
+              await sendMessage(chatId, `📋 <b>PLANOS:</b>\n${pMsg}`, mainMenu);
+              return new Response('OK');
+            }
+
+            if (data.startsWith('delete_client_confirm:')) {
+              const id = data.split(':')[1];
+              await editMessage(chatId, cb.message.message_id, "⚠️ <b>CONFIRMAÇÃO</b>\n\nDeseja realmente EXCLUIR este cliente? Todos os dados e histórico serão removidos.", {
+                inline_keyboard: [
+                  [{ text: "✅ Sim, Excluir", callback_data: `delete_client_exec:${id}` }],
+                  [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
+                ]
+              });
+              return new Response('OK');
+            }
+
+            if (data.startsWith('delete_client_exec:')) {
+              const id = data.split(':')[1];
+              const userId = await getAuthorizedUser(chatId);
+              if (id && userId) {
+                await supabaseAdmin.from('clientes').delete().eq('id', id).eq('user_id', userId);
+                await sendMessage(chatId, "✅ Cliente excluído com sucesso.");
+                await sendMessage(chatId, "Menu:", mainMenu);
+              }
               return new Response('OK');
             }
 
