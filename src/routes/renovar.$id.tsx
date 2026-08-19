@@ -72,7 +72,7 @@ function RenewPage() {
            <img 
              src={logoAsset.url} 
              alt="OWERPLAY TV" 
-             className="w-48 h-48 object-contain mb-2 drop-shadow-[0_0_25px_rgba(59,130,246,0.3)] rounded-2xl"
+             className="w-48 h-48 object-contain mb-2 drop-shadow-[0_0_25px_rgba(59,130,246,0.3)] bg-transparent"
            />
 
            <h1 className="text-3xl font-black text-white tracking-[0.2em] italic">OWERPLAY TV</h1>
@@ -140,7 +140,7 @@ function RenewPage() {
                 <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">🎁 GANHE 1 MÊS GRÁTIS!</span>
               </div>
               <h3 className="text-white font-bold text-sm mb-2 italic">Indique e Ganhe</h3>
-              <p className="text-slate-500 text-[10px] leading-relaxed max-w-[280px] mx-auto font-bold uppercase tracking-tighter opacity-70">
+              <p className="text-white text-[10px] leading-relaxed max-w-[280px] mx-auto font-bold uppercase tracking-tighter">
                 Indique um amigo ou parente. Se ele fechar qualquer plano com a gente, sua próxima renovação é 100% por nossa conta!
               </p>
             </CardContent>
@@ -148,7 +148,7 @@ function RenewPage() {
         </div>
 
         <footer className="pt-8 pb-12 text-center">
-          <p className="text-slate-800 text-[9px] font-black uppercase tracking-[0.5em] opacity-40">Owerplay Gestor • High Performance</p>
+          
         </footer>
       </div>
     </div>
