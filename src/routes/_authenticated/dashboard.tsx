@@ -15,14 +15,17 @@ import {
   History,
   Activity,
   User,
-  Calendar
+  Calendar,
+  Trash2
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Dialog, 
@@ -31,6 +34,17 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -72,8 +86,9 @@ function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "MM"));
   const [selectedYear, setSelectedYear] = useState(format(new Date(), "yyyy"));
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
-  const { data: stats, isLoading } = useQuery<DashboardStats>({
+  const { data: stats, isLoading, refetch } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats-detailed", selectedMonth, selectedYear],
     queryFn: async () => {
       try {
@@ -173,6 +188,26 @@ function Dashboard() {
       }
     },
   });
+
+  const handleDeleteTransaction = async (id: string) => {
+    try {
+      setIsDeleting(id);
+      const { error } = await supabase
+        .from("transacoes")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("Lançamento excluído com sucesso");
+      refetch();
+    } catch (error: any) {
+      console.error("Delete error:", error);
+      toast.error("Erro ao excluir lançamento");
+    } finally {
+      setIsDeleting(null);
+    }
+  };
 
   const filteredExpiring = useMemo(() => {
     if (!stats?.expiringToday) return [];
@@ -447,7 +482,7 @@ function Dashboard() {
                 const nome = (t as any).clientes?.nome || (t as any).servidores_iptv?.name || "Geral";
                 const label = t.tipo === 'entrada' ? `Renovação - ${nome}` : `Custo Servidor - ${nome}`;
                 return (
-                <div key={t.id} className="bg-card border rounded-2xl p-4 flex items-center justify-between">
+                <div key={t.id} className="bg-card border rounded-2xl p-4 flex items-center justify-between group">
                   <div className="flex items-center gap-3">
                     <div className={`h-8 w-8 rounded-full flex items-center justify-center ${t.tipo === 'entrada' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
                       {t.tipo === 'entrada' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
@@ -457,9 +492,41 @@ function Dashboard() {
                       <span className="text-[10px] text-muted-foreground">{t.data ? format(parseISO(t.data), "dd/MM/yyyy") : "?"}</span>
                     </div>
                   </div>
-                  <span className={`text-sm font-black ${t.tipo === 'entrada' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {t.tipo === 'entrada' ? '+' : '-'} {formatBRL(t.valor)}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-sm font-black ${t.tipo === 'entrada' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                      {t.tipo === 'entrada' ? '+' : '-'} {formatBRL(t.valor)}
+                    </span>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-muted-foreground hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+                          disabled={isDeleting === t.id}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir lançamento?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja excluir este lançamento financeiro? Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => handleDeleteTransaction(t.id)}
+                            className="bg-rose-500 hover:bg-rose-600"
+                          >
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
                 );
               })
