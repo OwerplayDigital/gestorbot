@@ -543,7 +543,6 @@ function Dashboard() {
                     </div>
                   );
                 })
-              )()
             )}
 
           </div>
