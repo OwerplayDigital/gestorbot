@@ -109,6 +109,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const isCheckoutPage = router.state.location.pathname.startsWith('/pagar/');
+
   return (
     <html lang="pt-BR" className="dark">
       <head>
@@ -116,37 +119,38 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body className="antialiased">
         <div className="flex flex-col min-h-screen">
-          {/* Header Mobile-First */}
-          <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container flex h-14 items-center justify-between px-4">
-              <div className="flex items-center gap-2">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="md:hidden">
-                      <Menu className="h-5 w-5" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="w-[280px]">
-                    <SheetHeader>
-                      <SheetTitle className="text-left flex items-center gap-2">
-                         <img src="/favicon.png" alt="Logo" className="h-6 w-6" />
-                         Owerplay Gestor
-                      </SheetTitle>
-                    </SheetHeader>
-                    <nav className="flex flex-col gap-4 mt-8">
-                      <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Dashboard</Link>
-                      <Link to="/" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Sair</Link>
-                    </nav>
-                  </SheetContent>
-                </Sheet>
-                <Link to="/dashboard" className="flex items-center gap-2 font-bold tracking-tighter text-lg">
-                  <img src="/favicon.png" alt="Logo" className="h-7 w-7" />
-                  <span className="hidden xs:inline-block">Owerplay Gestor</span>
-                </Link>
+          {/* Header Mobile-First - Hidden on Checkout Page */}
+          {!isCheckoutPage && (
+            <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <div className="container flex h-14 items-center justify-between px-4">
+                <div className="flex items-center gap-2">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="icon" className="md:hidden">
+                        <Menu className="h-5 w-5" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-[280px]">
+                      <SheetHeader>
+                        <SheetTitle className="text-left flex items-center gap-2">
+                           <img src="/favicon.png" alt="Logo" className="h-6 w-6" />
+                           Owerplay Gestor
+                        </SheetTitle>
+                      </SheetHeader>
+                      <nav className="flex flex-col gap-4 mt-8">
+                        <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Dashboard</Link>
+                        <Link to="/" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Sair</Link>
+                      </nav>
+                    </SheetContent>
+                  </Sheet>
+                  <Link to="/dashboard" className="flex items-center gap-2 font-bold tracking-tighter text-lg">
+                    <img src="/favicon.png" alt="Logo" className="h-7 w-7" />
+                    <span className="hidden xs:inline-block">Owerplay Gestor</span>
+                  </Link>
+                </div>
               </div>
-
-            </div>
-          </header>
+            </header>
+          )}
 
           <main className="flex-1 overflow-x-hidden">
             {children}
