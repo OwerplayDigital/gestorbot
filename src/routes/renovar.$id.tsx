@@ -7,6 +7,15 @@ import { Copy, Check, MessageSquare, Gift } from 'lucide-react';
 import { toast } from "sonner";
 
 export const Route = createFileRoute('/renovar/$id')({
+  head: () => ({
+    meta: [
+      { property: "og:title", content: "OWERPLAY TV" },
+      { property: "og:description", content: "Renove seu acesso de forma rápida e segura." },
+      { property: "og:image", content: "https://i.imgur.com/3YpX9ZT.png" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: RenewPage,
 });
 
@@ -45,10 +54,6 @@ function RenewPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const shareReferral = () => {
-    const text = encodeURIComponent("Olá, quero indicar um amigo para a promoção Indique e Ganhe!");
-    window.open(`https://wa.me/5582981148560?text=${text}`, '_blank');
-  };
 
   if (loading) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white">Carregando...</div>;
   if (!client) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white">Cliente não encontrado.</div>;
@@ -117,7 +122,10 @@ function RenewPage() {
               Indique um amigo ou parente. Se ele fechar qualquer plano com a gente, sua próxima renovação é 100% por nossa conta!
             </p>
             <Button 
-              onClick={shareReferral}
+              onClick={() => {
+                const text = encodeURIComponent("Olá! Gostaria de indicar um amigo para a promoção Indique e Ganhe Mês Grátis!");
+                window.open(`https://wa.me/5582981148560?text=${text}`, '_blank');
+              }}
               variant="outline"
               className="w-full border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 transition-all font-semibold"
             >
