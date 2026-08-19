@@ -4,17 +4,17 @@ import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import logoAsset from "@/assets/logo-owerplay.png.asset.json";
+import logoAsset from "@/assets/logo-owerplay-transparent.png.asset.json";
 
 export const Route = createFileRoute('/pagar/$id')({
   head: () => ({
     meta: [
       { property: "og:title", content: "OWERPLAY TV" },
       { property: "og:description", content: "Renove seu acesso de forma rápida e segura." },
-      { property: "og:image", content: logoAsset.url },
+      { property: "og:image", content: "https://gestorbot.lovable.app/og-logo.png" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: logoAsset.url },
+      { name: "twitter:image", content: "https://gestorbot.lovable.app/og-logo.png" },
     ],
   }),
   component: RenewPage,
