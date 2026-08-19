@@ -609,10 +609,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
                 await editMessage(chatId, messageId, successMsg, {
                   inline_keyboard: [
-                    [{ text: "📲 Cobrar Cliente", url: `https://wa.me/${phone}?text=${encodedMsg}` }],
-                    [{ text: "👤 Ver Ficha", callback_data: `view_client:${d.nome}` }],
-                    [{ text: "➕ Novo Cliente", callback_data: "new_client_fast" }],
-                    [{ text: "🏠 Menu Principal", callback_data: "back_to_main" }]
+                    [{ text: "Cobrar Cliente", url: `https://wa.me/${phone}?text=${encodedMsg}` }],
+                    [{ text: "Ver Ficha", callback_data: `view_client:${d.nome}` }],
+                    [{ text: "Novo Cliente", callback_data: "new_client_fast" }],
+                    [{ text: "Menu Principal", callback_data: "back_to_main" }]
                   ]
                 });
                 userState.delete(chatId);
