@@ -393,7 +393,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 }
 
                 // Conversão de formato de data (DD/MM/AAAA ou ISO -> YYYY-MM-DD)
-                // O estado armazena em vencimento (ISO string parcial) ou vencimento_temp (ISO string completa)
+                const finalDate = d.vencimento.includes('T') ? d.vencimento.split('T')[0] : d.vencimento;
+
                 const userId = await getAuthorizedUser(chatId);
                 if (!userId) throw new Error("Usuário não autorizado.");
 
