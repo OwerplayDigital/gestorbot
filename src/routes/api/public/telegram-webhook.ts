@@ -191,7 +191,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                               `• Status: ${c.status}`;
                   await sendMessage(chatId, msg, {
                     inline_keyboard: [
-                      [{ text: "💬 Cobrar", callback_data: `action_cobrar:${c.id}` }],
+                      [{ text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` }],
                       [{ text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }],
                       [{ text: "📱 Confirmar", callback_data: `action_confirmar:${c.id}` }],
                       [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
@@ -203,6 +203,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                }
             }
             else if (data.startsWith('action_cobrar:')) {
+              // Este handler não é mais necessário para o card, mas mantemos por segurança caso seja chamado via callback direto
               const id = data.split(':')[1];
               const { data: c } = await supabaseAdmin.from('clientes').select('nome, whatsapp, vencimento').eq('id', id).single();
               if (c) {
@@ -222,7 +223,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
                 const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
                 const encodedConfirmacao = encodeURIComponent((BOT_TEMPLATES as any).CONFIRMACAO(primeiroNome, brDate));
-                await sendMessage(chatId, `📲 <b>Link de Confirmação:</b>`, {
+                await sendMessage(chatId, `📲 <b>Confirmar via WhatsApp:</b>`, {
                   inline_keyboard: [[{ text: "Enviar via WhatsApp", url: `https://wa.me/55${c.whatsapp}?text=${encodedConfirmacao}` }]]
                 });
               }
