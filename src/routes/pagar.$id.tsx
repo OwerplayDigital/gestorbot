@@ -17,8 +17,6 @@ export const Route = createFileRoute('/pagar/$id')({
       { name: "twitter:image", content: "https://gestorbot.lovable.app/og-preview.png" },
     ],
   }),
-  // Use a custom layout for this route to avoid inheriting the shell with navigation
-  wrapInShell: false,
   component: RenewPage,
 });
 
