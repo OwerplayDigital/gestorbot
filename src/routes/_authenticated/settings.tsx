@@ -17,7 +17,7 @@ function SettingsPage() {
     setIsTesting(true);
     try {
       // Chamada direta para a nova rota de cron que criamos
-      const response = await fetch('/api/public/cron-notifications');
+      const response = await fetch('/api/public/cron-notifications?test=true');
       const data = await response.json();
       
       if (data.success) {
@@ -54,7 +54,7 @@ function SettingsPage() {
           <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-border/50">
               <div className="space-y-1">
-                <p className="text-sm font-bold">Resumo Matinal (09:00 BRT)</p>
+                <p className="text-sm font-bold">Resumo Matinal (08:30 BRT)</p>
                 <p className="text-xs text-muted-foreground">Envia a lista de clientes que vencem no dia atual.</p>
               </div>
               <Button 
