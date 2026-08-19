@@ -518,10 +518,11 @@ function Dashboard() {
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
                               <AlertDialogAction 
                                 onClick={async () => {
-                                  for (const id of ids) {
+                                  for (const id of ids as string[]) {
                                     await handleDeleteTransaction(id);
                                   }
                                 }}
+
                                 className="bg-rose-500 hover:bg-rose-600"
                               >
                                 Excluir
