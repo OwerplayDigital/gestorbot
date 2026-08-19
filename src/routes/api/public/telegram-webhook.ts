@@ -325,7 +325,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               userState.set(chatId, { action: 'editar_servidor', step: 1, data: { id } as any });
               const servers = await listServers();
               const buttons = servers.map(s => ([{ text: s.name, callback_data: `eserv_sel:${s.id}:${s.name}` }]));
-              await sendMessage(chatId, "<b>Alterar Servidor</b>\nSelecione o novo servidor para este cliente:", { inline_keyboard: buttons });
+              await editMessage(chatId, messageId, "<b>Alterar Servidor</b>\nSelecione o novo servidor para este cliente:", { inline_keyboard: buttons });
             }
             else if (state?.action === 'editar_servidor' && data.startsWith('eserv_sel:')) {
               const [_, servId, servName] = data.split(':');
