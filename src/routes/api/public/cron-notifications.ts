@@ -33,12 +33,36 @@ function formatBRDate(date: Date): string {
 export const Route = createFileRoute('/api/public/cron-notifications')({
   server: {
     handlers: {
-      GET: async () => {
+      GET: async ({ request }) => {
+        // Validação de segurança: bloquear disparos manuais inesperados (exceto se for localhost para desenvolvimento/dashboard ou tiver um header específico que o cron enviaria, se configurado)
+        // No Lovable Cloud, o cron job chama via HTTP. 
+        // Para simplificar a validação conforme pedido ("não dispare o resumo fora desse horário"),
+        // vamos checar se a hora atual está na janela permitida (08:30 às 08:35 BRT).
+        
+        const now = new Date();
+        const brTime = new Date(now.getTime() - (3 * 60 * 60 * 1000));
+        const hour = brTime.getUTCHours();
+        const minutes = brTime.getUTCMinutes();
+        
+        // Checar se a requisição vem do botão de teste (usando um query param)
+        const url = new URL(request.url);
+        const isTest = url.searchParams.get('test') === 'true';
+
+        // Se não for teste e não estiver na janela de 08:30-08:35, bloquear.
+        if (!isTest) {
+          const isCorrectTime = (hour === 8 && minutes >= 30 && minutes <= 35);
+          if (!isCorrectTime) {
+            console.warn(`Tentativa de disparo fora do horário agendado: ${hour}:${minutes} BRT`);
+            return new Response(JSON.stringify({ 
+              error: "Fora do horário agendado (08:30 BRT)", 
+              currentTime: `${hour}:${minutes}` 
+            }), { status: 403 });
+          }
+        }
+
         console.log("Executando rotina de notificações via Cron...");
         
         // Data atual em Brasília para o filtro de vencimento
-        const now = new Date();
-        const brTime = new Date(now.getTime() - (3 * 60 * 60 * 1000));
         const today = brTime.toISOString().split('T')[0];
         
         const { data: authUsers, error: authError } = await supabaseAdmin
