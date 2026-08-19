@@ -310,7 +310,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               if (id && userId) {
                 await supabaseAdmin.from('clientes').delete().eq('id', id).eq('user_id', userId);
                 await sendMessage(chatId, "✅ Cliente excluído com sucesso.");
-                await sendMessage(chatId, "Menu:", mainMenu);
+                await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
               }
               return new Response('OK');
             }
