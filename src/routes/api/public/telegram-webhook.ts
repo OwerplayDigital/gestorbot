@@ -309,7 +309,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               await editMessage(chatId, messageId, "⚠️ <b>CONFIRMAÇÃO CRÍTICA</b>\n\nTem certeza que deseja resetar o financeiro deste cliente? Essa ação não pode ser desfeita e limpará todo o histórico de transações e renovações.", {
                 inline_keyboard: [
                   [{ text: "✅ Sim, Resetar Agora", callback_data: `reset_fin_exec:${id}` }],
-                  [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                  [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
                 ]
               });
             }
@@ -351,7 +351,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
                     [{ text: `📅 Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
-                    [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                    [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
                   ]
                 });
               }
@@ -373,7 +373,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
                     [{ text: `📅 Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
-                    [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                    [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
                   ]
                 });
               } else if (data === 'erenew_confirm') {
@@ -410,7 +410,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
                     [{ text: `📅 Salvar: ${br}`, callback_data: "evenc_save" }],
-                    [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                    [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
                   ]
                 });
               }
@@ -440,7 +440,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   .select('nome')
                   .single();
                 
-                await editMessage(chatId, messageId, `✅ Servidor atualizado para <b>${servName}</b>!`, clientsSubMenu);
+                await editMessage(chatId, messageId, `✅ Servidor atualizado para <b>${servName}</b>!`, mainMenu);
                 if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
               }
               userState.delete(chatId);
@@ -462,21 +462,21 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
                     [{ text: `📅 Salvar: ${br}`, callback_data: "evenc_save" }],
-                    [{ text: "❌ Cancelar", callback_data: "voltar_clients" }]
+                    [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
                   ]
                 });
               } else if (data === 'evenc_save') {
                 const isoDate = state.data.vencimento_temp?.split('T')[0];
                 if (isoDate && state.data.id) {
                   const { data: updated } = await supabaseAdmin.from('clientes').update({ vencimento: isoDate }).eq('id', state.data.id).select('nome').single();
-                  await sendMessage(chatId, `✅ Vencimento atualizado!`, clientsSubMenu);
+                  await sendMessage(chatId, `✅ Vencimento atualizado!`, mainMenu);
                   if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
                 }
                 userState.delete(chatId);
               }
             }
-            else if (data === 'voltar_clients') {
-               await sendMessage(chatId, "Clientes:", clientsSubMenu);
+            else if (data === 'back_to_main') {
+               await sendMessage(chatId, "Clientes:", mainMenu);
                userState.delete(chatId);
             }
             else if (state && state.action === 'cadastrar_cliente' && state.step === 3 && data.startsWith('plano:')) {
@@ -622,7 +622,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               }
             } else if (data === 'f_no') {
               userState.delete(chatId);
-              await editMessage(chatId, messageId, "❌ Cadastro cancelado.", clientsSubMenu);
+              await editMessage(chatId, messageId, "❌ Cadastro cancelado.", mainMenu);
             }
 
             return new Response('OK');
@@ -652,7 +652,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               await sendMessage(chatId, `❌ Nenhum cliente encontrado com o nome '${termo}'.`, {
                 inline_keyboard: [
                   [{ text: "🔍 Buscar Novamente", callback_data: "search_retry" }],
-                  [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
+                  [{ text: "🔙 Voltar", callback_data: "back_to_main" }]
                 ]
               });
             } else {
@@ -696,7 +696,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               await sendMessage(chatId, `❌ Nenhum cliente encontrado com o nome '${termo}'.`, {
                 inline_keyboard: [
                   [{ text: "🔍 Buscar Novamente", callback_data: "search_retry" }],
-                  [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
+                  [{ text: "🔙 Voltar", callback_data: "back_to_main" }]
                 ]
               });
             } else {
@@ -737,7 +737,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             const val = parseFloat(text.replace(',', '.'));
             if (!isNaN(val) && state.data.id) {
               await supabaseAdmin.from('clientes').update({ desconto: val }).eq('id', state.data.id);
-              await sendMessage(chatId, "✅ Desconto atualizado!", clientsSubMenu);
+              await sendMessage(chatId, "✅ Desconto atualizado!", mainMenu);
             }
             userState.delete(chatId);
             return new Response('OK');
@@ -746,7 +746,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           if (state?.action === 'editar_whatsapp') {
             if (state.data.id) {
               await supabaseAdmin.from('clientes').update({ whatsapp: text }).eq('id', state.data.id);
-              await sendMessage(chatId, "✅ WhatsApp atualizado!", clientsSubMenu);
+              await sendMessage(chatId, "✅ WhatsApp atualizado!", mainMenu);
             }
             userState.delete(chatId);
             return new Response('OK');
@@ -755,7 +755,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           if (state?.action === 'buscar_cliente') {
             const results = await findClientByName(text);
             if (results.length === 0) {
-              await sendMessage(chatId, "Nenhum cliente encontrado.", clientsSubMenu);
+              await sendMessage(chatId, "Nenhum cliente encontrado.", mainMenu);
             } else {
               const buttons = results.map(c => ([{ text: c.nome, callback_data: `view_client:${c.nome}` }]));
               await sendMessage(chatId, "Selecione o cliente:", { inline_keyboard: buttons });
@@ -807,7 +807,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   ],
                   [
                     { text: "🖥️ Servidor", callback_data: `edit_serv:${c.id}` },
-                    { text: "🔙 Voltar", callback_data: "voltar_clients" }
+                    { text: "🔙 Voltar", callback_data: "back_to_main" }
                   ]
                 ]
               });
@@ -851,7 +851,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           }
 
           switch (text) {
-            case '👥 Clientes': await sendMessage(chatId, "Clientes:", clientsSubMenu); break;
+            case '👥 Clientes': await sendMessage(chatId, "Clientes:", mainMenu); break;
             case '🖥️ Servidores':
               const servers = await listServers();
               const sMsg = servers.map(s => `• ${s.name}: R$ ${s.valor}`).join('\n') || 'Nenhum servidor.';
@@ -864,14 +864,14 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               break;
             case '📊 Resumo':
               const summary = await getClientsSummary();
-              await sendMessage(chatId, `📊 <b>RESUMO:</b>\nTotal: ${summary.total}\nAtivos: ${summary.ativos}\nVencidos: ${summary.vencidos}`, clientsSubMenu);
+              await sendMessage(chatId, `📊 <b>RESUMO:</b>\nTotal: ${summary.total}\nAtivos: ${summary.ativos}\nVencidos: ${summary.vencidos}`, mainMenu);
               break;
             case '📅 Vencendo Hoje':
               const today = await listClientsExpiringToday();
               if (today.length === 0) {
-                await sendMessage(chatId, '📅 Ninguém vence hoje.', clientsSubMenu);
+                await sendMessage(chatId, '📅 Ninguém vence hoje.', mainMenu);
               } else {
-                await sendMessage(chatId, `📅 <b>VENCENDO HOJE:</b>`, clientsSubMenu);
+                await sendMessage(chatId, `📅 <b>VENCENDO HOJE:</b>`, mainMenu);
                 for (const c of today) {
                   const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
                   const primeiroNome = (c.nome || 'Cliente').split(' ')[0];
@@ -903,9 +903,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             case '❌ Vencidos':
               const expired = await listExpiredClients();
               if (expired.length === 0) {
-                await sendMessage(chatId, '❌ Nenhum vencido.', clientsSubMenu);
+                await sendMessage(chatId, '❌ Nenhum vencido.', mainMenu);
               } else {
-                await sendMessage(chatId, `❌ <b>VENCIDOS:</b>`, clientsSubMenu);
+                await sendMessage(chatId, `❌ <b>VENCIDOS:</b>`, mainMenu);
                 for (const c of expired) {
                   const br = formatBRDate(new Date((c.vencimento || '') + 'T12:00:00'));
                   const encodedMsg = encodeURIComponent(
