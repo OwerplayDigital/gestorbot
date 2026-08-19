@@ -178,9 +178,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
                   
                   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
-                  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl));
-                  const encodedRenovacao = encodeURIComponent(BOT_TEMPLATES.RENOVACAO_LINK(primeiroNome, paymentUrl));
-                  const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome, brDate));
+                  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl) || '');
+                  const encodedRenovacao = encodeURIComponent(BOT_TEMPLATES.RENOVACAO_LINK(primeiroNome, paymentUrl) || '');
+                  const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome, brDate) || '');
                   
                   const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
                               `• Nome: ${c.nome}\n` +
@@ -707,9 +707,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   const primeiroNome = (c.nome || 'Cliente').split(' ')[0];
                   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
                   
-                  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl));
-                  const encodedRenovacao = encodeURIComponent(BOT_TEMPLATES.RENOVACAO_LINK(primeiroNome, paymentUrl));
-                  const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome, brDate));
+                  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl) || '');
+                  const encodedRenovacao = encodeURIComponent(BOT_TEMPLATES.RENOVACAO_LINK(primeiroNome, paymentUrl) || '');
+                  const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome, brDate) || '');
 
                   await sendMessage(chatId, `👤 <b>${c.nome}</b>`, {
                     inline_keyboard: [
