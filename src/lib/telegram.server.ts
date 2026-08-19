@@ -178,7 +178,8 @@ export const findClientByName = async (name: string) => {
       desconto,
       plano_id,
       servidores_ids,
-      plans:plans(id, name, price)
+      plans:plans(id, name, price),
+      servidores:servidores_iptv!inner(id, name)
     `)
     .ilike("nome", `%${name}%`)
     .limit(10);
@@ -371,4 +372,32 @@ export const renewClient = async (
   }
 
   return updatedClient;
+};
+
+export const resetFinancialHistory = async (clientId: string, userId: string) => {
+  // Deletar transações associadas ao cliente
+  const { error: transError } = await supabaseAdmin
+    .from("transacoes")
+    .delete()
+    .eq("cliente_id", clientId)
+    .eq("user_id", userId);
+
+  if (transError) {
+    console.error("Erro ao resetar transações:", transError);
+    throw transError;
+  }
+
+  // Deletar renovações associadas ao cliente
+  const { error: renewError } = await supabaseAdmin
+    .from("renovacoes")
+    .delete()
+    .eq("cliente_id", clientId)
+    .eq("user_id", userId);
+
+  if (renewError) {
+    console.error("Erro ao resetar renovações:", renewError);
+    throw renewError;
+  }
+
+  return { success: true };
 };
