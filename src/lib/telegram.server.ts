@@ -156,7 +156,7 @@ export const listClientsExpiringToday = async () => {
   const today = new Date().toISOString().split('T')[0];
   const { data, error } = await supabaseAdmin
     .from("clientes")
-    .select("id, nome, vencimento")
+    .select("id, nome, vencimento, whatsapp")
     .eq("vencimento", today as string);
 
   if (error) {
