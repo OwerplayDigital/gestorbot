@@ -260,7 +260,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (data === 'list_servers') {
               const servers = await listServers();
               const sMsg = servers.map(s => `• ${s.name}: R$ ${s.valor}`).join('\n') || 'Nenhum servidor.';
-              await sendMessage(chatId, `🖥️ <b>SERVIDORES:</b>\n${sMsg}`, mainMenu);
+              await sendMessage(chatId, `<b>SERVIDORES:</b>\n${sMsg}`, mainMenu);
               return new Response('OK');
             }
 
