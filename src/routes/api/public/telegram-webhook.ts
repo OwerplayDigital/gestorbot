@@ -214,9 +214,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                             `Saídas: R$ ${summary.saidas.toFixed(2)}\n` +
                             `Lucro: R$ ${summary.lucro.toFixed(2)}\n\n` +
                             `<b>RESUMO DE CLIENTES:</b>\n` +
-                            `• Total: ${clients.total}\n` +
-                            `• Ativos: ${clients.ativos}\n` +
-                            `• Vencidos: ${clients.vencidos}`;
+                            `Total: ${clients.total}\n` +
+                            `Ativos: ${clients.ativos}\n` +
+                            `Vencidos: ${clients.vencidos}`;
                 
                 await sendMessage(chatId, msg, {
                   inline_keyboard: [
