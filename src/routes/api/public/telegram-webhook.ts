@@ -259,7 +259,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 for (const c of today) {
                   const fullClient = await findClientByName(c.nome);
                   const detailed = fullClient[0];
-                  if (detailed) await sendClientFicha(chatId, detailed);
+                  if (detailed) await sendClientCompact(chatId, detailed);
                 }
               }
               return new Response('OK');
@@ -273,7 +273,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 for (const c of expired) {
                   const fullClient = await findClientByName(c.nome);
                   const detailed = fullClient[0];
-                  if (detailed) await sendClientFicha(chatId, detailed);
+                  if (detailed) await sendClientCompact(chatId, detailed);
                 }
               }
               return new Response('OK');
