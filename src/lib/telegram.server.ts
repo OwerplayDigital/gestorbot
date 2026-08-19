@@ -208,7 +208,21 @@ export const findClientByName = async (name: string) => {
     console.error("Erro Supabase (findClientByName):", error);
     throw error;
   }
-  return data;
+  
+  // Buscar nomes dos servidores separadamente se houver IDs
+  const result = await Promise.all(data.map(async (c) => {
+    let servidores: any[] = [];
+    if (c.servidores_ids && c.servidores_ids.length > 0) {
+      const { data: sData } = await supabaseAdmin
+        .from('servidores_iptv')
+        .select('id, name')
+        .in('id', c.servidores_ids);
+      servidores = sData || [];
+    }
+    return { ...c, servidores };
+  }));
+
+  return result;
 };
 
 export const updateClient = async (id: string, updates: any) => {
