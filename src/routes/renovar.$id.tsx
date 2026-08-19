@@ -3,17 +3,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, Check } from 'lucide-react';
 import { toast } from "sonner";
+import logoAsset from "@/assets/logo-owerplay.png.asset.json";
 
 export const Route = createFileRoute('/renovar/$id')({
   head: () => ({
     meta: [
       { property: "og:title", content: "OWERPLAY TV" },
       { property: "og:description", content: "Renove seu acesso de forma rápida e segura." },
-      { property: "og:image", content: "https://i.imgur.com/3YpX9ZT.png" },
+      { property: "og:image", content: logoAsset.url },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: logoAsset.url },
     ],
   }),
   component: RenewPage,
@@ -69,9 +70,9 @@ function RenewPage() {
         {/* LOGO CENTRALIZADA */}
         <div className="flex flex-col items-center mt-6">
            <img 
-             src="https://i.imgur.com/3YpX9ZT.png" 
+             src={logoAsset.url} 
              alt="OWERPLAY TV" 
-             className="w-32 h-32 object-contain mb-2 drop-shadow-2xl"
+             className="w-48 h-48 object-contain mb-2 drop-shadow-[0_0_25px_rgba(59,130,246,0.3)]"
            />
 
            <h1 className="text-3xl font-black text-white tracking-[0.2em] italic">OWERPLAY TV</h1>
