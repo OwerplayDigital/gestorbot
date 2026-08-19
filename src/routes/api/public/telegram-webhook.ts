@@ -703,12 +703,18 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                           `• Status: ${c.status}`;
               await sendMessage(chatId, msg, {
                 inline_keyboard: [
-                  [{ text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` }],
-                  [{ text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }],
-                  [{ text: "📱 Confirmar", callback_data: `action_confirmar:${c.id}` }],
-                  [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
-                  [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
-                  [{ text: "🖥️ Alterar Servidor", callback_data: `edit_serv:${c.id}` }],
+                  [
+                    { text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` },
+                    { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }
+                  ],
+                  [
+                    { text: "📱 Confirmar", url: `https://wa.me/55${c.whatsapp}?text=${encodedConfirmacao}` },
+                    { text: "✏️ Vencimento", callback_data: `edit_venc:${c.id}` }
+                  ],
+                  [
+                    { text: "🏷️ Desconto", callback_data: `edit_desc:${c.id}` },
+                    { text: "🖥️ Servidor", callback_data: `edit_serv:${c.id}` }
+                  ],
                   [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
                 ]
               });
