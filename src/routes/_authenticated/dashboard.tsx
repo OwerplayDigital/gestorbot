@@ -434,7 +434,7 @@ function Dashboard() {
             <ArrowRight size={14} className="text-muted-foreground" />
           </div>
           <div className="flex flex-col gap-2">
-            {stats && stats.recentTransactions.length === 0 ? (
+            {stats && stats.recentTransactions && stats.recentTransactions.length === 0 ? (
                <p className="text-center text-muted-foreground py-4 text-sm">Nenhuma transação este mês.</p>
             ) : (
               stats?.recentTransactions.map(t => (
