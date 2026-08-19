@@ -17,7 +17,7 @@ import {
   User,
   Calendar
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -53,19 +53,32 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
+type DashboardStats = {
+  totalClients: number;
+  activeClients: number;
+  totalVencidos: number;
+  expiringTodayCount: number;
+  entradas: number;
+  saidas: number;
+  lucro: number;
+  expiringToday: any[];
+  vencidos: any[];
+  chartData: any[];
+  recentTransactions: any[];
+};
+
 function Dashboard() {
   const [showValues, setShowValues] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "MM"));
   const [selectedYear, setSelectedYear] = useState(format(new Date(), "yyyy"));
 
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats-detailed", selectedMonth, selectedYear],
     queryFn: async () => {
       try {
         const today = new Date().toISOString().split('T')[0];
         
-        // Parallel fetching
         const [
           clientsRes, 
           transactionsRes, 
@@ -92,37 +105,36 @@ function Dashboard() {
         const expiringToday = expiringTodayRes.data ?? [];
         const vencidos = vencidosRes.data ?? [];
 
-        // Totals
         const totalClients = clients.length;
         const activeClients = clients.filter(c => c.status === "ativo").length;
         const totalVencidos = clients.filter(c => c.status === "vencido").length;
 
-        // Financial calculations (Current Month)
         const currentMonthTransactions = transactions.filter(t => {
-          const tDate = new Date(t.data);
+          if (!t.data) return false;
+          const tDate = parseISO(t.data);
           return format(tDate, "MM") === selectedMonth && format(tDate, "yyyy") === selectedYear;
         });
 
         const entradas = currentMonthTransactions
           .filter(t => t.tipo === "entrada")
-          .reduce((acc, t) => acc + Number(t.valor), 0);
+          .reduce((acc, t) => acc + Number(t.valor ?? 0), 0);
         
         const saidas = currentMonthTransactions
           .filter(t => t.tipo === "saida")
-          .reduce((acc, t) => acc + Number(t.valor), 0);
+          .reduce((acc, t) => acc + Number(t.valor ?? 0), 0);
 
         const lucro = entradas - saidas;
 
-        // Monthly data for chart
         const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
         const chartData = months.map((m, idx) => {
           const monthStr = (idx + 1).toString().padStart(2, '0');
           const monthTrans = transactions.filter(t => {
-            const d = new Date(t.data);
+            if (!t.data) return false;
+            const d = parseISO(t.data);
             return format(d, "MM") === monthStr && format(d, "yyyy") === selectedYear;
           });
-          const ent = monthTrans.filter(t => t.tipo === "entrada").reduce((a, b) => a + Number(b.valor), 0);
-          const sai = monthTrans.filter(t => t.tipo === "saida").reduce((a, b) => a + Number(b.valor), 0);
+          const ent = monthTrans.filter(t => t.tipo === "entrada").reduce((a, b) => a + Number(b.valor ?? 0), 0);
+          const sai = monthTrans.filter(t => t.tipo === "saida").reduce((a, b) => a + Number(b.valor ?? 0), 0);
           return {
             name: m,
             entradas: ent,
@@ -131,7 +143,6 @@ function Dashboard() {
           };
         });
 
-        // Map server names to expiring today
         const expiringWithServers = expiringToday.map(c => ({
           ...c,
           serverName: servers.find(s => c.servidores_ids?.includes(s.id))?.name || "N/A"
@@ -160,7 +171,7 @@ function Dashboard() {
   const filteredExpiring = useMemo(() => {
     if (!stats?.expiringToday) return [];
     return stats.expiringToday.filter(c => 
-      c.nome.toLowerCase().includes(searchTerm.toLowerCase())
+      (c.nome || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [stats?.expiringToday, searchTerm]);
 
@@ -175,8 +186,9 @@ function Dashboard() {
     );
   }
 
-  const formatBRL = (val: number) => {
-    return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const formatBRL = (val: number | string | null) => {
+    const num = Number(val ?? 0);
+    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
 
   return (
@@ -206,7 +218,6 @@ function Dashboard() {
               )}
             </div>
           </div>
-          {/* Decorative background element */}
           <div className="absolute -right-12 -bottom-12 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
           <div className="absolute -left-12 -top-12 h-32 w-32 rounded-full bg-black/5 blur-2xl" />
         </div>
@@ -263,9 +274,9 @@ function Dashboard() {
                   <div key={c.id} className="flex items-center justify-between p-3 border rounded-xl">
                     <div className="flex flex-col">
                       <span className="font-bold">{c.nome}</span>
-                      <span className="text-xs text-muted-foreground">Venceu em {format(new Date(c.vencimento), "dd/MM/yyyy")}</span>
+                      <span className="text-xs text-muted-foreground">Venceu em {c.vencimento ? format(parseISO(c.vencimento), "dd/MM/yyyy") : "?"}</span>
                     </div>
-                    <Badge variant="destructive">R$ {c.valor}</Badge>
+                    <Badge variant="destructive">{formatBRL(c.valor)}</Badge>
                   </div>
                 ))
               )}
@@ -302,7 +313,7 @@ function Dashboard() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-owerplay-cyan/10 flex items-center justify-center text-owerplay-cyan font-black">
-                      {client.nome.charAt(0).toUpperCase()}
+                      {(client.nome || "C").charAt(0).toUpperCase()}
                     </div>
                     <div className="flex flex-col">
                       <span className="font-bold tracking-tight">{client.nome}</span>
@@ -313,7 +324,7 @@ function Dashboard() {
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-black text-owerplay-cyan">
-                      {formatBRL(Number(client.valor) - Number(client.desconto || 0))}
+                      {formatBRL(Number(client.valor ?? 0) - Number(client.desconto || 0))}
                     </div>
                     <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">A pagar</div>
                   </div>
@@ -390,18 +401,19 @@ function Dashboard() {
           <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-6">Comparativo Mensal</h3>
           <div className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats?.chartData}>
+              <BarChart data={stats?.chartData ?? []}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="opacity-10" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
                 <Tooltip 
                   cursor={{ fill: 'transparent' }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
+                      const data = payload[0].payload;
                       return (
                         <div className="bg-background border rounded-lg p-2 shadow-xl text-xs">
-                          <p className="font-bold border-b pb-1 mb-1">{payload[0].payload.name}</p>
-                          <p className="text-emerald-500">↑ {formatBRL(Number(payload[0].value))}</p>
-                          <p className="text-rose-500">↓ {formatBRL(Number(payload[1].value))}</p>
+                          <p className="font-bold border-b pb-1 mb-1">{data.name}</p>
+                          <p className="text-emerald-500">↑ {formatBRL(data.entradas)}</p>
+                          <p className="text-rose-500">↓ {formatBRL(data.saidas)}</p>
                         </div>
                       );
                     }
@@ -433,11 +445,11 @@ function Dashboard() {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-bold">{t.descricao || (t.tipo === 'entrada' ? 'Pagamento' : 'Despesa')}</span>
-                      <span className="text-[10px] text-muted-foreground">{format(new Date(t.data), "dd/MM/yyyy")}</span>
+                      <span className="text-[10px] text-muted-foreground">{t.data ? format(parseISO(t.data), "dd/MM/yyyy") : "?"}</span>
                     </div>
                   </div>
                   <span className={`text-sm font-black ${t.tipo === 'entrada' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {t.tipo === 'entrada' ? '+' : '-'} {formatBRL(Number(t.valor))}
+                    {t.tipo === 'entrada' ? '+' : '-'} {formatBRL(t.valor)}
                   </span>
                 </div>
               ))
