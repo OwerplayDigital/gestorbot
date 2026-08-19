@@ -699,8 +699,27 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               break;
             case '❌ Vencidos':
               const expired = await listExpiredClients();
-              const eMsg = expired.map((c: any) => `• ${c.nome} (${formatBRDate(new Date(c.vencimento + 'T12:00:00'))})`).join('\n') || 'Nenhum vencido.';
-              await sendMessage(chatId, `❌ <b>VENCIDOS:</b>\n${eMsg}`, clientsSubMenu);
+              if (expired.length === 0) {
+                await sendMessage(chatId, '❌ Nenhum vencido.', clientsSubMenu);
+              } else {
+                await sendMessage(chatId, `❌ <b>VENCIDOS:</b>`, clientsSubMenu);
+                for (const c of expired) {
+                  const br = formatBRDate(new Date((c.vencimento || '') + 'T12:00:00'));
+                  const encodedMsg = encodeURIComponent(
+                    `Olá ${c.nome.split(' ')[0]}, seu plano está vencido!\n\n` +
+                    `🔗 *Link para renovar:*\n` +
+                    `https://gestorbot.lovable.app/pagar/${c.id}`
+                  );
+                  await sendMessage(chatId, `👤 <b>${c.nome}</b> (${br})`, {
+                    inline_keyboard: [
+                      [
+                        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
+                        { text: "💬 Mensagem", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }
+                      ]
+                    ]
+                  });
+                }
+              }
               break;
             case '➕ Novo Cliente':
               userState.set(chatId, { action: 'cadastrar_cliente', step: 1, data: {} });
