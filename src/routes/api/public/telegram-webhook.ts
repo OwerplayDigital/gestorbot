@@ -301,52 +301,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                const results = await findClientByName(nome);
                const c = results[0];
                if (c) {
-                  const plan = (c as any).plans;
-                  const planName = plan?.name || 'N/A';
-                  const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
-                  const discount = Number(c.desconto || 0);
-                  const valorFinal = Math.max(0, planPrice - discount).toFixed(2).replace('.', ',');
-                  
-                  const servers = (c as any).servidores || [];
-                  const serverNames = servers.map((s: any) => s.name).join(', ') || 'N/A';
-                  
-                  const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
-                  const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
-                  
-                  const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
-                  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || ''));
-                  const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome || '', brDate || ''));
-                  
-                  const phone = cleanPhone(c.whatsapp || '');
-                  const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
-                              `• Nome: ${c.nome}\n` +
-                              `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
-                              `• Plano: ${planName}\n` +
-                              `• Servidor: ${serverNames}\n` +
-                              `• Desconto: R$ ${c.desconto?.toFixed(2)}\n` +
-                              `• Vencimento: ${brDate}\n` +
-                              `• Status: ${c.status}`;
-                  
-                  await sendMessage(chatId, msg, {
-                    inline_keyboard: [
-                      [
-                        { text: "💬 Cobrar", url: `https://wa.me/${phone}?text=${encodedCobranca}` },
-                        { text: "📱 Confirmar", url: `https://wa.me/${phone}?text=${encodedConfirmacao}` }
-                      ],
-                      [
-                        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
-                        { text: "👁️ Detalhes", callback_data: `view_client:${c.nome}` }
-                      ],
-                      [
-                        { text: "✏️ Vencimento", callback_data: `edit_venc:${c.id}` },
-                        { text: "🏷️ Desconto", callback_data: `edit_desc:${c.id}` }
-                      ],
-                      [
-                        { text: "🖥️ Servidor", callback_data: `edit_serv:${c.id}` },
-                        { text: "🔙 Voltar", callback_data: "voltar_clients" }
-                      ]
-                    ]
-                  });
+                  await sendClientFicha(chatId, c);
                }
             }
             else if (data.startsWith('reset_fin_confirm:')) {
