@@ -112,6 +112,28 @@ function cleanPhone(phone: string): string {
   return cleaned.startsWith('55') ? cleaned : `55${cleaned}`;
 }
 
+async function sendClientCompact(chatId: number, c: any) {
+  const plan = c.plans;
+  const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
+  const discount = Number(c.desconto || 0);
+  const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+  const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
+  const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
+  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || ''));
+  const phone = cleanPhone(c.whatsapp || '');
+  
+  const msg = `<b>${c.nome}</b>`;
+  
+  await sendMessage(chatId, msg, {
+    inline_keyboard: [
+      [
+        { text: "Cobrar", url: `https://wa.me/${phone}?text=${encodedCobranca}` },
+        { text: "Renovar", callback_data: `renew_init:${c.id}` }
+      ]
+    ]
+  });
+}
+
 async function sendClientFicha(chatId: number, c: any) {
   const plan = c.plans;
   const planName = plan?.name || 'N/A';
