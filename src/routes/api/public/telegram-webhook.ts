@@ -173,15 +173,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
                   const first_name = c.nome.split(' ')[0];
                   const encodedMsg = encodeURIComponent(
-                    `Olá ${first_name}, bom dia!\n` +
-                    `Seu plano de TV vence hoje: *(${brDate})*\n` +
-                    `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n` +
-                    `*DADOS PARA PAGAMENTO:*\n` +
-                    `Valor: *R$ ${valorFinal}*\n` +
-                    `Pix: *82iptv@gmail.com*\n` +
-                    `Banco: Nubank\n` +
-                    `Nome: Diego Felix Owerney\n` +
-                    `✅ *Favor enviar comprovante*`
+                    `Olá ${first_name}, bom dia!\n\n` +
+                    `Seu plano de TV vence hoje: *(${brDate})*\n\n` +
+                    `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n\n` +
+                    `✅ *Favor enviar comprovante*\n\n` +
+                    `🔗 *Acesse o link seguro para copiar o PIX e renovar:*\n` +
+                    `https://owerplay-gestor.lovable.app/renovar/${c.id}`
                   );
                   const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
                               `• Nome: ${c.nome}\n` +
@@ -193,6 +190,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   await sendMessage(chatId, msg, {
                     inline_keyboard: [
                       [{ text: "📲 Enviar Cobrança WhatsApp", url: `https://wa.me/55${c.whatsapp}?text=${encodedMsg}` }],
+                      [{ text: "🔗 Link de Pagamento", url: `https://owerplay-gestor.lovable.app/renovar/${c.id}` }],
                       [{ text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }],
                       [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
                       [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
@@ -429,6 +427,16 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 const planPrice = Number(planAny?.price || planAny?.preco || planAny?.valor || 0);
                 const valorFinal = Math.max(0, planPrice - (d.desconto || 0)).toFixed(2).replace('.', ',');
 
+                const first_name = d.nome.split(' ')[0];
+                const encodedMsg = encodeURIComponent(
+                  `Olá ${first_name}, bom dia!\n\n` +
+                  `Seu plano de TV vence hoje: *(${brDate})*\n\n` +
+                  `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n\n` +
+                  `✅ *Favor enviar comprovante*\n\n` +
+                  `🔗 *Acesse o link seguro para copiar o PIX e renovar:*\n` +
+                  `https://owerplay-gestor.lovable.app/renovar/${newClient.id}`
+                );
+
                 const successMsg = `✅ <b>CLIENTE CADASTRADO COM SUCESSO!</b>\n\n` +
                                    `👤 <b>Nome:</b> ${d.nome}\n` +
                                    `📱 <b>WhatsApp:</b> ${d.whatsapp === '0' ? 'Não informado' : d.whatsapp}\n` +
@@ -437,6 +445,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
                 await editMessage(chatId, messageId, successMsg, {
                   inline_keyboard: [
+                    [{ text: "📲 Enviar Cobrança WhatsApp", url: `https://wa.me/55${d.whatsapp === '0' ? '' : d.whatsapp}?text=${encodedMsg}` }],
                     [{ text: "👤 Ver Ficha", callback_data: `view_client:${d.nome}` }],
                     [{ text: "➕ Novo Cliente", callback_data: "new_client_fast" }],
                     [{ text: "🏠 Menu Principal", callback_data: "back_to_main" }]

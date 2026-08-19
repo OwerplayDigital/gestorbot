@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as RenovarIdRouteImport } from './routes/renovar.$id'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram-webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -28,6 +29,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const RenovarIdRoute = RenovarIdRouteImport.update({
+  id: '/renovar/$id',
+  path: '/renovar/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTelegramWebhookRoute =
   ApiPublicTelegramWebhookRouteImport.update({
     id: '/api/public/telegram-webhook',
@@ -38,11 +44,13 @@ const ApiPublicTelegramWebhookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/renovar/$id': typeof RenovarIdRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/renovar/$id': typeof RenovarIdRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
@@ -50,24 +58,28 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/renovar/$id': typeof RenovarIdRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/api/public/telegram-webhook'
+  fullPaths:
+    '/' | '/dashboard' | '/renovar/$id' | '/api/public/telegram-webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/api/public/telegram-webhook'
+  to: '/' | '/dashboard' | '/renovar/$id' | '/api/public/telegram-webhook'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_authenticated/dashboard'
+    | '/renovar/$id'
     | '/api/public/telegram-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  RenovarIdRoute: typeof RenovarIdRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
@@ -94,6 +106,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/renovar/$id': {
+      id: '/renovar/$id'
+      path: '/renovar/$id'
+      fullPath: '/renovar/$id'
+      preLoaderRoute: typeof RenovarIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/telegram-webhook': {
       id: '/api/public/telegram-webhook'
       path: '/api/public/telegram-webhook'
@@ -118,6 +137,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  RenovarIdRoute: RenovarIdRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
