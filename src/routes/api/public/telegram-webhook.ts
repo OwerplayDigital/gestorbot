@@ -782,14 +782,16 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   const encodedRenovacao = encodeURIComponent(BOT_TEMPLATES.RENOVACAO_LINK(primeiroNome || '', paymentUrl || ''));
                   const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome || '', brDate || ''));
 
-                  await sendMessage(chatId, `👤 <b>${c.nome}</b>`, {
+                  const phone = cleanPhone(c.whatsapp || '');
+                  const clientMsg = `👤 <b>${c.nome}</b>\n` +
+                                   `📅 Vencimento: ${brDate}\n\n` +
+                                   `📲 <a href="https://wa.me/${phone}?text=${encodedCobranca}">👉 <b>Clique aqui para Cobrar</b></a>\n` +
+                                   `📱 <a href="https://wa.me/${phone}?text=${encodedConfirmacao}">👉 <b>Clique aqui para Confirmar</b></a>`;
+
+                  await sendMessage(chatId, clientMsg, {
                     inline_keyboard: [
                       [
-                        { text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` },
-                        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }
-                      ],
-                      [
-                        { text: "📱 Confirmar", url: `https://wa.me/55${c.whatsapp}?text=${encodedConfirmacao}` },
+                        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
                         { text: "ℹ️ Detalhes", callback_data: `view_client:${c.nome}` }
                       ]
                     ]
