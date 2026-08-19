@@ -140,8 +140,8 @@ function RenewPage() {
               <div className="inline-flex items-center gap-2 mb-3 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
                 <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">🎁 GANHE 1 MÊS GRÁTIS!</span>
               </div>
-              <h3 className="text-white font-bold text-sm mb-2 italic" style={{ color: '#FFFFFF' }}>Indique e Ganhe</h3>
-              <p className="text-white text-[10px] leading-relaxed max-w-[280px] mx-auto font-bold uppercase tracking-tighter" style={{ color: '#FFFFFF', opacity: 0.9 }}>
+              <h3 className="font-bold text-sm mb-2 italic" style={{ color: '#FFFFFF' }}>Indique e Ganhe</h3>
+              <p className="text-[10px] leading-relaxed max-w-[280px] mx-auto font-bold uppercase tracking-tighter" style={{ color: '#FFFFFF', opacity: 0.9 }}>
                 Indique um amigo ou parente. Se ele fechar qualquer plano com a gente, sua próxima renovação é 100% por nossa conta!
               </p>
             </CardContent>
