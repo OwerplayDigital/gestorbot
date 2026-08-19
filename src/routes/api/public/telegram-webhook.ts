@@ -172,6 +172,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   
                   const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
                   const first_name = c.nome.split(' ')[0];
+                  
+                  // Mensagem com espaçamento duplo para WhatsApp (wa.me)
                   const encodedMsg = encodeURIComponent(
                     `Olá ${first_name}, bom dia!\n\n` +
                     `Seu plano de TV vence hoje: *(${brDate})*\n\n` +
@@ -244,9 +246,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   const updated = await renewClient(state.data.id, isoDate, userId);
                   const br = formatBRDate(new Date(isoDate + 'T12:00:00'));
                   const encodedReceipt = encodeURIComponent(
-                    `📌 Obrigado pela confiança!\n` +
-                    `✅ Sua assinatura foi renovada com sucesso!\n` +
-                    `🗓️ PRÓXIMO VENCIMENTO:*(${br})*`
+                    `📌 Obrigado pela confiança!\n\n` +
+                    `✅ Sua assinatura foi renovada com sucesso!\n\n` +
+                    `🗓️ *PRÓXIMO VENCIMENTO:* (${br})`
                   );
                   await sendMessage(chatId, `✅ <b>Assinatura Renovada!</b>\nO caixa foi atualizado automaticamente.`, {
                     inline_keyboard: [

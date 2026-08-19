@@ -7,6 +7,15 @@ import { Copy, Check, MessageSquare, Gift } from 'lucide-react';
 import { toast } from "sonner";
 
 export const Route = createFileRoute('/renovar/$id')({
+  head: () => ({
+    meta: [
+      { property: "og:title", content: "OWERPLAY TV" },
+      { property: "og:description", content: "Renove seu acesso de forma rápida e segura." },
+      { property: "og:image", content: "https://i.imgur.com/3YpX9ZT.png" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: RenewPage,
 });
 
