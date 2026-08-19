@@ -122,7 +122,9 @@ async function sendClientCompact(chatId: number, c: any) {
   const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || ''));
   const phone = cleanPhone(c.whatsapp || '');
   
-  const msg = `<b>${c.nome}</b>`;
+  const msg = `👤 Cliente: ${c.nome}\n` +
+              `📅 Vencimento: ${brDate}\n` +
+              `🖥️ Servidor: ${c.servidores?.[0]?.name || 'N/A'}`;
   
   await sendMessage(chatId, msg, {
     inline_keyboard: [
