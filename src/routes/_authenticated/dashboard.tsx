@@ -236,30 +236,19 @@ function Dashboard() {
       
       {/* Hero Card Financeiro */}
       <section>
-        <div className="relative overflow-hidden rounded-3xl bg-owerplay-cyan p-6 text-background shadow-lg shadow-owerplay-cyan/20">
-          <div className="relative z-10 flex flex-col gap-1">
-            <div className="flex items-center justify-between opacity-80">
-              <span className="text-sm font-semibold tracking-wider uppercase">Lucro do Mês</span>
-              <button onClick={() => setShowValues(!showValues)} className="p-1 hover:bg-black/10 rounded-full transition-colors">
-                {showValues ? <Eye size={18} /> : <EyeOff size={18} />}
-              </button>
-            </div>
-            <div className="text-4xl font-black tracking-tighter">
-              {showValues ? formatBRL(stats?.lucro ?? 0) : "••••••"}
-            </div>
-            <div className="flex items-center gap-2 mt-2 text-xs font-bold">
-              <span className="bg-background/20 px-2 py-0.5 rounded-full">
-                {selectedMonth}/{selectedYear}
-              </span>
-              {stats && stats.lucro > 0 && (
-                <span className="flex items-center gap-0.5 text-emerald-900">
-                  <TrendingUp size={12} /> Em alta
-                </span>
-              )}
-            </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-2xl bg-owerplay-cyan p-3 text-background shadow-lg shadow-owerplay-cyan/20">
+            <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">Entradas</span>
+            <div className="text-sm font-black truncate">{showValues ? formatBRL(stats?.entradas ?? 0) : "•••••"}</div>
           </div>
-          <div className="absolute -right-12 -bottom-12 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute -left-12 -top-12 h-32 w-32 rounded-full bg-black/5 blur-2xl" />
+          <div className="rounded-2xl bg-rose-500 p-3 text-white shadow-lg shadow-rose-500/20">
+            <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">Saídas</span>
+            <div className="text-sm font-black truncate">{showValues ? formatBRL(stats?.saidas ?? 0) : "•••••"}</div>
+          </div>
+          <div className="rounded-2xl bg-emerald-500 p-3 text-white shadow-lg shadow-emerald-500/20">
+            <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">Lucro</span>
+            <div className="text-sm font-black truncate">{showValues ? formatBRL(stats?.lucro ?? 0) : "•••••"}</div>
+          </div>
         </div>
       </section>
 
@@ -408,37 +397,13 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
-          <div className="bg-card border rounded-2xl p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                <TrendingUp size={20} />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-muted-foreground uppercase">Entradas</span>
-                <span className="font-black">{formatBRL(stats?.entradas || 0)}</span>
-              </div>
-            </div>
-            <div className="text-[10px] text-emerald-500 font-bold bg-emerald-500/5 px-2 py-1 rounded-full">+ Pix</div>
-          </div>
-
-          <div className="bg-card border rounded-2xl p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500">
-                <TrendingDown size={20} />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-muted-foreground uppercase">Saídas</span>
-                <span className="font-black">{formatBRL(stats?.saidas || 0)}</span>
-              </div>
-            </div>
-            <div className="text-[10px] text-rose-500 font-bold bg-rose-500/5 px-2 py-1 rounded-full">- Infra</div>
-          </div>
-        </div>
 
         {/* Gráfico de Barras */}
         <div className="bg-card border rounded-3xl p-6">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-6">Comparativo Mensal</h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Gráfico financeiro</h3>
+            <Badge variant="secondary" className="text-[10px] bg-owerplay-cyan/10">VS MÊS ANTERIOR (+12%)</Badge>
+          </div>
           <div className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats?.chartData ?? []}>
@@ -460,8 +425,9 @@ function Dashboard() {
                     return null;
                   }}
                 />
-                <Bar dataKey="entradas" fill="var(--color-owerplay-cyan)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="saidas" fill="var(--color-destructive)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="entradas" fill="#0EA5E9" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="saidas" fill="#F43F5E" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="lucro" fill="#10B981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -526,12 +492,12 @@ function Dashboard() {
 
                       <div className="flex items-center gap-3 pt-1 border-t border-dashed overflow-x-auto no-scrollbar">
                         <div className="flex items-center gap-1 whitespace-nowrap">
-                          <span className="text-[9px] text-muted-foreground uppercase font-bold">E:</span>
-                          <span className="text-emerald-500 font-bold text-[11px]">+{formatBRL(entrada)}</span>
+                          <span className="text-[9px] text-muted-foreground uppercase font-bold">Entrada:</span>
+                          <span className="text-emerald-500 font-bold text-[11px]">{formatBRL(entrada)}</span>
                         </div>
                         <div className="flex items-center gap-1 whitespace-nowrap">
-                          <span className="text-[9px] text-muted-foreground uppercase font-bold">C:</span>
-                          <span className="text-rose-500 font-bold text-[11px] flex items-center">-{formatBRL(saida)}</span>
+                          <span className="text-[9px] text-muted-foreground uppercase font-bold">Custo:</span>
+                          <span className="text-rose-500 font-bold text-[11px] flex items-center">{formatBRL(saida)}</span>
                         </div>
                         <div className="flex items-center gap-1 whitespace-nowrap ml-auto">
                           <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-owerplay-cyan/10 border-owerplay-cyan/30 text-owerplay-cyan font-black">
