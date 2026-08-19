@@ -226,6 +226,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 }
                 userState.delete(chatId);
               }
+            }
+
             else if (data.startsWith('edit_venc:')) {
               const id = data.split(':')[1];
               const { data: c } = await supabaseAdmin.from('clientes').select('vencimento').eq('id', id).single();
