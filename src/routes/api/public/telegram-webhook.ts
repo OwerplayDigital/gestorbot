@@ -543,12 +543,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 state.step = 7;
                 const brDate = formatBRDate(new Date((state.data.vencimento || '') + 'T12:00:00'));
                 const resumo = `<b>RESUMO DO CADASTRO:</b>\n` +
-                  `• Nome: ${state.data.nome}\n` +
-                  `• WhatsApp: ${state.data.whatsapp === '0' ? 'Não informado' : state.data.whatsapp}\n` +
-                  `• Plano: ${state.data.plano_name}\n` +
-                  `• Servidores: ${state.data.servidores_names?.join(', ')}\n` +
-                  `• Desconto: R$ ${state.data.desconto?.toFixed(2)}\n` +
-                  `• Vencimento: ${brDate}\n\n` +
+                  `Nome: ${state.data.nome}\n` +
+                  `WhatsApp: ${state.data.whatsapp === '0' ? 'Não informado' : state.data.whatsapp}\n` +
+                  `Plano: ${state.data.plano_name}\n` +
+                  `Servidores: ${state.data.servidores_names?.join(', ')}\n` +
+                  `Desconto: R$ ${state.data.desconto?.toFixed(2)}\n` +
+                  `Vencimento: ${brDate}\n\n` +
                   `Deseja confirmar o cadastro?`;
                 
                 await sendMessage(chatId, resumo, {
