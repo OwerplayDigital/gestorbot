@@ -180,7 +180,7 @@ function Dashboard() {
           expiringToday: expiringWithServers,
           vencidos,
           chartData,
-          recentTransactions: currentMonthTransactions.slice(0, 5)
+          recentTransactions: currentMonthTransactions
         };
       } catch (error) {
         console.error("Dashboard error:", error);
@@ -478,63 +478,86 @@ function Dashboard() {
             {stats && stats.recentTransactions && stats.recentTransactions.length === 0 ? (
                <p className="text-center text-muted-foreground py-4 text-sm">Nenhuma transação este mês.</p>
             ) : (
-              stats?.recentTransactions.map(t => {
-                const nome = (t as any).clientes?.nome || (t as any).servidores_iptv?.name || "Geral";
-                const label = t.tipo === 'entrada' ? `Renovação - ${nome}` : `Custo Servidor - ${nome}`;
-                return (
-                <div key={t.id} className="bg-card border rounded-2xl p-4 flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-8 w-8 rounded-full flex items-center justify-center ${t.tipo === 'entrada' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                        {t.tipo === 'entrada' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+              (() => {
+                const grouped = stats?.recentTransactions.reduce((acc: any, t) => {
+                  const key = t.cliente_id || `other-${t.id}`;
+                  if (!acc[key]) acc[key] = { items: [], date: t.data, cliente: t.clientes?.nome || "Geral" };
+                  acc[key].items.push(t);
+                  return acc;
+                }, {});
+
+                return Object.entries(grouped || {}).map(([key, group]: [string, any]) => {
+                  const items = group.items;
+                  const entrada = items.find((i: any) => i.tipo === 'entrada')?.valor || 0;
+                  const saida = items.filter((i: any) => i.tipo === 'saida').reduce((acc: number, i: any) => acc + Number(i.valor), 0);
+                  const lucro = entrada - saida;
+                  const ids = items.map((i: any) => i.id);
+
+                  return (
+                    <div key={key} className="bg-card border rounded-2xl p-4 flex flex-col gap-3 relative">
+                      <div className="absolute top-4 right-4">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded-full"
+                              disabled={ids.some((id: string) => isDeleting === id)}
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir lançamento?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir esta transação? Isso removerá tanto a entrada quanto os custos associados.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={async () => {
+                                  for (const id of ids as string[]) {
+                                    await handleDeleteTransaction(id);
+                                  }
+                                }}
+
+                                className="bg-rose-500 hover:bg-rose-600"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
+
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold">{label}</span>
-                        <span className="text-[10px] text-muted-foreground">{t.data ? format(parseISO(t.data), "dd/MM/yyyy") : "?"}</span>
+                        <span className="text-sm font-bold pr-8">Renovação - {group.cliente}</span>
+                        <span className="text-[10px] text-muted-foreground">{group.date ? format(parseISO(group.date), "dd/MM/yyyy") : "?"}</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-dashed">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-muted-foreground uppercase font-bold">Entrada</span>
+                          <span className="text-emerald-500 font-bold text-sm">{formatBRL(entrada)}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-muted-foreground uppercase font-bold">Custo</span>
+                          <span className="text-rose-500 font-bold text-sm">{formatBRL(saida)}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col pt-2 border-t">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold">Lucro Líquido</span>
+                        <span className="text-owerplay-cyan font-black text-lg">{formatBRL(lucro)}</span>
                       </div>
                     </div>
-                    <span className={`text-sm font-black ${t.tipo === 'entrada' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                      {t.tipo === 'entrada' ? '+' : '-'} {formatBRL(t.valor)}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between pt-2 border-t border-dashed">
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Ações</span>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="destructive" 
-                          size="sm" 
-                          className="h-8 gap-2 rounded-xl px-4"
-                          disabled={isDeleting === t.id}
-                        >
-                          <Trash2 size={14} />
-                          <span className="text-xs font-bold">Excluir Lançamento</span>
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Excluir lançamento?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tem certeza que deseja excluir este lançamento financeiro? Esta ação não pode ser desfeita.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => handleDeleteTransaction(t.id)}
-                            className="bg-rose-500 hover:bg-rose-600"
-                          >
-                            Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-                );
-              })
+                  );
+                });
+              })()
             )}
+
           </div>
         </div>
       </section>
