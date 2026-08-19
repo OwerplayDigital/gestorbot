@@ -191,9 +191,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                               `• Status: ${c.status}`;
                   await sendMessage(chatId, msg, {
                     inline_keyboard: [
-                      [{ text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` }],
+                      [{ text: "💬 Cobrar", callback_data: `action_cobrar:${c.id}` }],
                       [{ text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }],
-                      [{ text: "📱 Confirmar", url: `https://wa.me/55${c.whatsapp}?text=${encodedConfirmacao}` }],
+                      [{ text: "📱 Confirmar", callback_data: `action_confirmar:${c.id}` }],
                       [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
                       [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
                       [{ text: "🖥️ Alterar Servidor", callback_data: `edit_serv:${c.id}` }],
@@ -201,6 +201,31 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                     ]
                   });
                }
+            }
+            else if (data.startsWith('action_cobrar:')) {
+              const id = data.split(':')[1];
+              const { data: c } = await supabaseAdmin.from('clientes').select('nome, whatsapp, vencimento').eq('id', id).single();
+              if (c) {
+                const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+                const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
+                const paymentUrl = `https://gestorbot.lovable.app/pagar/${id}`;
+                const encodedCobranca = encodeURIComponent((BOT_TEMPLATES as any).COBRANCA(primeiroNome, brDate, paymentUrl));
+                await sendMessage(chatId, `📲 <b>Link de Cobrança:</b>`, {
+                  inline_keyboard: [[{ text: "Enviar via WhatsApp", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` }]]
+                });
+              }
+            }
+            else if (data.startsWith('action_confirmar:')) {
+              const id = data.split(':')[1];
+              const { data: c } = await supabaseAdmin.from('clientes').select('nome, whatsapp, vencimento').eq('id', id).single();
+              if (c) {
+                const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+                const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
+                const encodedConfirmacao = encodeURIComponent((BOT_TEMPLATES as any).CONFIRMACAO(primeiroNome, brDate));
+                await sendMessage(chatId, `📲 <b>Link de Confirmação:</b>`, {
+                  inline_keyboard: [[{ text: "Enviar via WhatsApp", url: `https://wa.me/55${c.whatsapp}?text=${encodedConfirmacao}` }]]
+                });
+              }
             }
             else if (data.startsWith('reset_fin_confirm:')) {
               const id = data.split(':')[1];
@@ -558,7 +583,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   inline_keyboard: [
                     [
                       { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
-                      { text: "👁️ Ver Ficha", callback_data: `view_client:${c.nome}` }
+                      { text: "👁️ Detalhes", callback_data: `view_client:${c.nome}` }
                     ]
                   ]
                 });
@@ -591,7 +616,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   inline_keyboard: [
                     [
                       { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
-                      { text: "👁️ Ver Ficha", callback_data: `view_client:${c.nome}` }
+                      { text: "👁️ Detalhes", callback_data: `view_client:${c.nome}` }
                     ]
                   ]
                 });
@@ -659,9 +684,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                           `• Status: ${c.status}`;
               await sendMessage(chatId, msg, {
                 inline_keyboard: [
+                  [{ text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }],
                   [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
                   [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
-                  [{ text: "📱 Alterar WhatsApp", callback_data: `edit_wpp:${c.id}` }],
+                  [{ text: "🖥️ Alterar Servidor", callback_data: `edit_serv:${c.id}` }],
                   [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
                 ]
               });
