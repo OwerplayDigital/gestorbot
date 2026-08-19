@@ -207,6 +207,7 @@ export const updateClient = async (id: string, updates: any) => {
 };
 
 export const createClientWithDetails = async (clientData: { 
+  user_id: string;
   nome: string; 
   whatsapp: string; 
   plano_id: string; 
@@ -217,6 +218,7 @@ export const createClientWithDetails = async (clientData: {
   const { data, error } = await supabaseAdmin
     .from("clientes")
     .insert({
+      user_id: clientData.user_id,
       nome: clientData.nome,
       whatsapp: clientData.whatsapp,
       plano_id: clientData.plano_id,
