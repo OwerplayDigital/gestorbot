@@ -62,6 +62,12 @@ function RenewPage() {
   const discount = Number(client.desconto || 0);
   const valorFinal = Math.max(0, planPrice - discount).toFixed(2).replace('.', ',');
 
+  const shareText = encodeURIComponent(
+    `Olá! Gostaria de indicar um amigo para a promoção Indique e Ganhe Mês Grátis!`
+  );
+  const supportNumber = "5582981148560";
+  const whatsappSupportLink = `https://wa.me/${supportNumber}?text=${shareText}`;
+
   return (
     <div className="min-h-screen bg-[#0f172a] text-slate-200 p-4 md:p-8 flex flex-col items-center">
       <div className="w-full max-w-md space-y-6">
@@ -101,7 +107,7 @@ function RenewPage() {
             Após o pagamento, envie o comprovante no WhatsApp do suporte para ativação imediata.
           </p>
           <Button 
-            onClick={() => window.open(`https://wa.me/5582981148560?text=Comprovante de pagamento: ${client.nome}`, '_blank')}
+            onClick={() => window.open(`https://wa.me/5582981148560?text=${encodeURIComponent(`Comprovante de pagamento: ${client.nome}`)}`, '_blank')}
             className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-12 rounded-xl"
           >
             <MessageSquare className="mr-2 w-5 h-5" /> Enviar Comprovante
@@ -122,10 +128,7 @@ function RenewPage() {
               Indique um amigo ou parente. Se ele fechar qualquer plano com a gente, sua próxima renovação é 100% por nossa conta!
             </p>
             <Button 
-              onClick={() => {
-                const text = encodeURIComponent("Olá! Gostaria de indicar um amigo para a promoção Indique e Ganhe Mês Grátis!");
-                window.open(`https://wa.me/5582981148560?text=${text}`, '_blank');
-              }}
+              onClick={() => window.open(whatsappSupportLink, '_blank')}
               variant="outline"
               className="w-full border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 transition-all font-semibold"
             >
