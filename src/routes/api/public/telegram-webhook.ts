@@ -719,8 +719,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (results.length === 0) {
               await sendMessage(chatId, "Nenhum cliente encontrado.", mainMenu);
             } else {
-              const buttons = results.map(c => ([{ text: c.nome, callback_data: `view_client:${c.nome}` }]));
-              await sendMessage(chatId, "Selecione o cliente:", { inline_keyboard: buttons });
+              for (const c of results) {
+                await sendClientFicha(chatId, c);
+              }
             }
             userState.delete(chatId);
             return new Response('OK');
