@@ -69,12 +69,11 @@ function RenewPage() {
       <div className="w-full max-w-md space-y-8">
         {/* LOGO CENTRALIZADA */}
         <div className="flex flex-col items-center mt-6">
-           <img 
-             src={logoAsset.url} 
-             alt="OWERPLAY TV" 
-             className="w-48 h-48 object-contain mb-2 drop-shadow-[0_0_25px_rgba(59,130,246,0.3)] bg-transparent"
-             style={{ mixBlendMode: 'screen' }}
-           />
+            <img 
+              src={logoAsset.url} 
+              alt="OWERPLAY TV" 
+              className="w-48 h-48 object-contain mb-2 drop-shadow-[0_0_25px_rgba(59,130,246,0.3)] bg-transparent"
+            />
 
            <h1 className="text-3xl font-black text-white tracking-[0.2em] italic">OWERPLAY TV</h1>
            <div className="h-1 w-12 bg-blue-500 rounded-full mt-2 opacity-50"></div>
