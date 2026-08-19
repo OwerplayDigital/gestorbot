@@ -601,7 +601,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 );
 
                  const phone = cleanPhone(d.whatsapp === '0' ? '' : (d.whatsapp || ''));
-                 const successMsg = `✅ <b>CLIENTE CADASTRADO COM SUCESSO!</b>\n\n` +
+                 const successMsg = `<b>CLIENTE CADASTRADO COM SUCESSO!</b>\n\n` +
                                     `👤 <b>Nome:</b> ${d.nome}\n` +
                                     `📱 <b>WhatsApp:</b> ${d.whatsapp === '0' ? 'Não informado' : d.whatsapp}\n` +
                                     `📅 <b>Vencimento:</b> ${brDate}\n` +
