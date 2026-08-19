@@ -222,7 +222,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             }
 
             if (data === 'back_to_main') {
-              await sendMessage(chatId, "Menu", mainMenu);
+              await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
               return new Response('OK');
             }
 
@@ -254,7 +254,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (data === 'vencendo_hoje') {
               const today = await listClientsExpiringToday();
               if (today.length === 0) {
-                await sendMessage(chatId, 'Ninguém vence hoje.', mainMenu);
+                await sendMessage(chatId, 'Ninguém vence hoje.', {
+                  inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
+                });
               } else {
                 for (const c of today) {
                   const fullClient = await findClientByName(c.nome);
@@ -268,7 +270,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (data === 'vencidos') {
               const expired = await listExpiredClients();
               if (expired.length === 0) {
-                await sendMessage(chatId, 'Nenhum cliente vencido.', mainMenu);
+                await sendMessage(chatId, 'Nenhum cliente vencido.', {
+                  inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
+                });
               } else {
                 for (const c of expired) {
                   const fullClient = await findClientByName(c.nome);
@@ -282,14 +286,18 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (data === 'list_servers') {
               const servers = await listServers();
               const sMsg = servers.map(s => `• ${s.name}: R$ ${s.valor}`).join('\n') || 'Nenhum servidor.';
-              await sendMessage(chatId, `<b>SERVIDORES:</b>\n${sMsg}`, mainMenu);
+              await sendMessage(chatId, `<b>SERVIDORES:</b>\n${sMsg}`, {
+                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
+              });
               return new Response('OK');
             }
 
             if (data === 'list_plans') {
               const plans = await listPlans();
               const pMsg = plans.map(p => `• ${p.name}: R$ ${p.price}`).join('\n') || 'Nenhum plano.';
-              await sendMessage(chatId, `<b>PLANOS:</b>\n${pMsg}`, mainMenu);
+              await sendMessage(chatId, `<b>PLANOS:</b>\n${pMsg}`, {
+                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
+              });
               return new Response('OK');
             }
 
@@ -310,7 +318,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               if (id && userId) {
                 await supabaseAdmin.from('clientes').delete().eq('id', id).eq('user_id', userId);
                 await sendMessage(chatId, "✅ Cliente excluído com sucesso.");
-                await sendMessage(chatId, "Menu:", mainMenu);
+                await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
               }
               return new Response('OK');
             }
@@ -358,7 +366,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 const { resetGlobalFinancialHistory } = await import('@/lib/telegram.server');
                 await resetGlobalFinancialHistory(userId);
                 await editMessage(chatId, messageId, "Financeiro geral resetado com sucesso!");
-                await sendMessage(chatId, "Menu Principal:", mainMenu);
+                await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
               }
             }
             else if (data.startsWith('renew_init:')) {
@@ -713,7 +721,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
           if (text === '/start' || text === 'Voltar') {
             userState.delete(chatId);
-            await sendMessage(chatId, "Menu", mainMenu);
+            await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
             return new Response('OK');
           }
 
@@ -721,7 +729,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             const val = parseFloat(text.replace(',', '.'));
             if (!isNaN(val) && state.data.id) {
               await supabaseAdmin.from('clientes').update({ desconto: val }).eq('id', state.data.id);
-              await sendMessage(chatId, "Desconto atualizado!", mainMenu);
+              await sendMessage(chatId, "Desconto atualizado!", {
+                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
+              });
             }
             userState.delete(chatId);
             return new Response('OK');
@@ -730,7 +740,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           if (state?.action === 'editar_whatsapp') {
             if (state.data.id) {
               await supabaseAdmin.from('clientes').update({ whatsapp: text }).eq('id', state.data.id);
-              await sendMessage(chatId, "WhatsApp atualizado!", mainMenu);
+              await sendMessage(chatId, "WhatsApp atualizado!", {
+                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
+              });
             }
             userState.delete(chatId);
             return new Response('OK');
@@ -739,7 +751,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           if (state?.action === 'buscar_cliente') {
             const results = await findClientByName(text);
             if (results.length === 0) {
-              await sendMessage(chatId, "Nenhum cliente encontrado.", mainMenu);
+              await sendMessage(chatId, "Nenhum cliente encontrado.", {
+                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
+              });
             } else {
               for (const c of results) {
                 await sendClientFicha(chatId, c);
