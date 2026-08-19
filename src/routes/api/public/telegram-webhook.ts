@@ -530,8 +530,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await editMessage(chatId, messageId, `<b>Passo 6: Seleção de Vencimento</b>\nVencimento: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "venc_m5" }, { text: "-1d", callback_data: "venc_m1" }, { text: "+1d", callback_data: "venc_p1" }, { text: "+5d", callback_data: "venc_p5" }],
-                    [{ text: `📅 Confirmar Data: ${br}`, callback_data: "venc_confirm" }],
-                    [{ text: "✏️ Digitar Outra Data", callback_data: "venc_edit" }]
+                    [{ text: `Confirmar Data: ${br}`, callback_data: "venc_confirm" }],
+                    [{ text: "Digitar Outra Data", callback_data: "venc_edit" }]
                   ]
                 });
               } else if (data === 'venc_confirm') {
