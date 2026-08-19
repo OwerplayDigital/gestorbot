@@ -277,7 +277,7 @@ export const renewClient = async (
   const { data: plan, error: planError } = await supabaseAdmin
     .from("plans")
     .select("price")
-    .eq("id", client.plano_id)
+    .eq("id", client.plano_id || "")
     .single();
 
   if (planError || !plan) {
@@ -332,7 +332,7 @@ export const renewClient = async (
       cliente_id: clientId,
       tipo: 'entrada',
       valor: valorEntrada,
-      data: new Date().toISOString().split('T')[0],
+      data: new Date().toISOString().split('T')[0] ?? null,
       descricao: `Renovação cliente ${clientId}`,
     });
 
@@ -346,7 +346,7 @@ export const renewClient = async (
         user_id: userId,
         tipo: 'saida',
         valor: totalCusto,
-        data: new Date().toISOString().split('T')[0],
+        data: new Date().toISOString().split('T')[0] ?? null,
         descricao: `Custo servidor renovação cliente ${clientId}`,
       });
     if (transSaidaError) console.error("Erro ao registrar saída:", transSaidaError);
