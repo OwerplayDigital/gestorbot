@@ -553,8 +553,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 
                 await sendMessage(chatId, resumo, {
                   inline_keyboard: [
-                    [{ text: "✅ Confirmar e Cadastrar", callback_data: "f_ok" }],
-                    [{ text: "❌ Cancelar", callback_data: "f_no" }]
+                    [{ text: "Confirmar e Cadastrar", callback_data: "f_ok" }],
+                    [{ text: "Cancelar", callback_data: "f_no" }]
                   ]
                 });
               } else if (data === 'venc_edit') {
