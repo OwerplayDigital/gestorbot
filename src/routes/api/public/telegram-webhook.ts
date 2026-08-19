@@ -689,9 +689,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           }
 
 
-          if (text === '/start' || text === '🔙 Voltar') {
+          if (text === '/start' || text === 'Voltar') {
             userState.delete(chatId);
-            await sendMessage(chatId, "Menu:", mainMenu);
+            await sendMessage(chatId, "Menu", mainMenu);
             return new Response('OK');
           }
 
