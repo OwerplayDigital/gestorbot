@@ -314,55 +314,6 @@ function Dashboard() {
         </Dialog>
       </section>
 
-      {/* Feed Principal: Vencendo Hoje */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-black tracking-tighter">VENCENDO HOJE</h2>
-          <Badge variant="secondary" className="rounded-full">{stats?.expiringTodayCount}</Badge>
-        </div>
-
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input 
-            placeholder="Buscar por nome..." 
-            className="pl-10 rounded-xl bg-card border-none ring-1 ring-border"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {filteredExpiring.length === 0 ? (
-            <div className="bg-card border-dashed border-2 rounded-2xl p-8 text-center text-muted-foreground">
-              Nenhum vencimento para hoje {searchTerm && "com este nome"}.
-            </div>
-          ) : (
-            filteredExpiring.map(client => (
-              <div key={client.id} className="bg-card border rounded-2xl p-4 shadow-sm transition-all active:scale-[0.98]">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-owerplay-cyan/10 flex items-center justify-center text-owerplay-cyan font-black">
-                      {(client.nome || "C").charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-bold tracking-tight">{client.nome}</span>
-                      <Badge variant="outline" className="w-fit text-[10px] h-4 bg-owerplay-silver/10 border-owerplay-silver/30">
-                        {client.serverName}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-black text-owerplay-cyan">
-                      {formatBRL(Number((client as any).valorFinal ?? 0))}
-                    </div>
-                    <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">A pagar</div>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
 
       {/* Financeiro Detalhado & Histórico */}
       <section className="space-y-6 pt-4 border-t">
@@ -374,12 +325,25 @@ function Dashboard() {
           
           <div className="flex gap-2">
              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-[120px] rounded-xl h-9">
+              <SelectTrigger className="w-[140px] rounded-xl h-9">
                 <SelectValue placeholder="Mês" />
               </SelectTrigger>
               <SelectContent>
-                {["01","02","03","04","05","06","07","08","09","10","11","12"].map(m => (
-                   <SelectItem key={m} value={m}>{m}</SelectItem>
+                {[
+                  { v: "01", l: "Janeiro" },
+                  { v: "02", l: "Fevereiro" },
+                  { v: "03", l: "Março" },
+                  { v: "04", l: "Abril" },
+                  { v: "05", l: "Maio" },
+                  { v: "06", l: "Junho" },
+                  { v: "07", l: "Julho" },
+                  { v: "08", l: "Agosto" },
+                  { v: "09", l: "Setembro" },
+                  { v: "10", l: "Outubro" },
+                  { v: "11", l: "Novembro" },
+                  { v: "12", l: "Dezembro" }
+                ].map(m => (
+                   <SelectItem key={m.v} value={m.v}>{m.l}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
