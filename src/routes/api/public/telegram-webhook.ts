@@ -387,7 +387,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   const encodedReceipt = encodeURIComponent(
                     `📌 Obrigado pela confiança, ${primeiroNome}!\n\n` +
                     `✅ Sua assinatura foi renovada com sucesso!\n\n` +
-                    `🗓️ *PRÓXIMO VENCIMENTO:* (${br})`
+                    `PRÓXIMO VENCIMENTO: (${br})`
                   );
                   await sendMessage(chatId, `<b>Assinatura Renovada!</b>\nO caixa foi atualizado automaticamente.`, {
                     inline_keyboard: [
