@@ -1,255 +1,451 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Users, 
-  TrendingUp, 
   Clock, 
   AlertCircle,
-  ArrowUpCircle,
-  ArrowDownCircle,
-  Wallet,
-  Activity
+  Eye,
+  EyeOff,
+  Search,
+  TrendingUp,
+  TrendingDown,
+  ChevronRight,
+  ArrowRight,
+  History,
+  Activity,
+  User,
+  Calendar
 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell
+} from "recharts";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
 function Dashboard() {
+  const [showValues, setShowValues] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "MM"));
+  const [selectedYear, setSelectedYear] = useState(format(new Date(), "yyyy"));
+
   const { data: stats, isLoading } = useQuery({
-    queryKey: ["dashboard-stats-detailed"],
+    queryKey: ["dashboard-stats-detailed", selectedMonth, selectedYear],
     queryFn: async () => {
       try {
-        const [clients, transactions, expiredClientsList] = await Promise.all([
-          supabase.from("clientes").select("status"),
-          supabase.from("transacoes").select("valor, tipo"),
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Parallel fetching
+        const [
+          clientsRes, 
+          transactionsRes, 
+          serversRes, 
+          expiringTodayRes,
+          vencidosRes
+        ] = await Promise.all([
+          supabase.from("clientes").select("id, status"),
+          supabase.from("transacoes").select("*"),
+          supabase.from("servidores_iptv").select("id, name"),
           supabase.from("clientes")
-            .select("nome, vencimento, servers:servidores_ids")
+            .select("id, nome, vencimento, valor, desconto, servidores_ids")
+            .eq("vencimento", today)
+            .order("nome"),
+          supabase.from("clientes")
+            .select("id, nome, vencimento, valor, status")
             .eq("status", "vencido")
             .order("vencimento", { ascending: false })
-            .limit(10),
         ]);
 
-        const totalClients = clients.data?.length ?? 0;
-        const activeClients = clients.data?.filter(c => c?.status === "ativo").length ?? 0;
-        const expiredClients = clients.data?.filter(c => c?.status === "vencido").length ?? 0;
+        const clients = clientsRes.data ?? [];
+        const transactions = transactionsRes.data ?? [];
+        const servers = serversRes.data ?? [];
+        const expiringToday = expiringTodayRes.data ?? [];
+        const vencidos = vencidosRes.data ?? [];
 
-        const entradas = transactions.data
-          ?.filter((t) => t?.tipo === "entrada")
-          .reduce((acc, t) => acc + Number(t?.valor ?? 0), 0) ?? 0;
+        // Totals
+        const totalClients = clients.length;
+        const activeClients = clients.filter(c => c.status === "ativo").length;
+        const totalVencidos = clients.filter(c => c.status === "vencido").length;
+
+        // Financial calculations (Current Month)
+        const currentMonthTransactions = transactions.filter(t => {
+          const tDate = new Date(t.data);
+          return format(tDate, "MM") === selectedMonth && format(tDate, "yyyy") === selectedYear;
+        });
+
+        const entradas = currentMonthTransactions
+          .filter(t => t.tipo === "entrada")
+          .reduce((acc, t) => acc + Number(t.valor), 0);
         
-        const saidas = transactions.data
-          ?.filter((t) => t?.tipo === "saida")
-          .reduce((acc, t) => acc + Number(t?.valor ?? 0), 0) ?? 0;
+        const saidas = currentMonthTransactions
+          .filter(t => t.tipo === "saida")
+          .reduce((acc, t) => acc + Number(t.valor), 0);
 
         const lucro = entradas - saidas;
-        const costPercentage = entradas > 0 ? (saidas / entradas) * 100 : 0;
-        const profitPercentage = entradas > 0 ? (lucro / entradas) * 100 : 0;
+
+        // Monthly data for chart
+        const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        const chartData = months.map((m, idx) => {
+          const monthStr = (idx + 1).toString().padStart(2, '0');
+          const monthTrans = transactions.filter(t => {
+            const d = new Date(t.data);
+            return format(d, "MM") === monthStr && format(d, "yyyy") === selectedYear;
+          });
+          const ent = monthTrans.filter(t => t.tipo === "entrada").reduce((a, b) => a + Number(b.valor), 0);
+          const sai = monthTrans.filter(t => t.tipo === "saida").reduce((a, b) => a + Number(b.valor), 0);
+          return {
+            name: m,
+            entradas: ent,
+            saidas: sai,
+            lucro: ent - sai
+          };
+        });
+
+        // Map server names to expiring today
+        const expiringWithServers = expiringToday.map(c => ({
+          ...c,
+          serverName: servers.find(s => c.servidores_ids?.includes(s.id))?.name || "N/A"
+        }));
 
         return {
           totalClients,
           activeClients,
-          expiredClients,
-          faturamento: entradas,
-          custos: saidas,
+          totalVencidos,
+          expiringTodayCount: expiringToday.length,
+          entradas,
+          saidas,
           lucro,
-          costPercentage,
-          profitPercentage,
-          expiredClientsList: expiredClientsList.data ?? [],
+          expiringToday: expiringWithServers,
+          vencidos,
+          chartData,
+          recentTransactions: currentMonthTransactions.slice(0, 5)
         };
       } catch (error) {
-        console.error("Erro no dashboard:", error);
-        return {
-          totalClients: 0,
-          activeClients: 0,
-          expiredClients: 0,
-          faturamento: 0,
-          custos: 0,
-          lucro: 0,
-          costPercentage: 0,
-          profitPercentage: 0,
-          expiredClientsList: [],
-        };
+        console.error("Dashboard error:", error);
+        throw error;
       }
     },
   });
 
-  if (isLoading) return (
-    <div className="flex items-center justify-center min-h-[400px] bg-[#0f172a]">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-    </div>
-  );
+  const filteredExpiring = useMemo(() => {
+    if (!stats?.expiringToday) return [];
+    return stats.expiringToday.filter(c => 
+      c.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [stats?.expiringToday, searchTerm]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
+        <div className="flex flex-col items-center gap-2">
+          <Activity className="h-10 w-10 text-primary animate-pulse" />
+          <span className="text-sm font-medium animate-pulse text-muted-foreground">Carregando painel...</span>
+        </div>
+      </div>
+    );
+  }
+
+  const formatBRL = (val: number) => {
+    return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-100 p-4 md:p-8 space-y-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <div className="flex flex-col gap-1 border-b border-slate-800 pb-6">
-          <h1 className="text-2xl font-semibold tracking-tight text-white flex items-center gap-2">
-            <Activity className="h-6 w-6 text-blue-500" />
-            Executive Command Center
-          </h1>
-          <p className="text-slate-400 text-sm">Monitoramento em tempo real da operação IPTV.</p>
+    <div className="flex flex-col gap-6 p-4 pb-12 max-w-lg mx-auto md:max-w-4xl">
+      
+      {/* Hero Card Financeiro */}
+      <section>
+        <div className="relative overflow-hidden rounded-3xl bg-owerplay-cyan p-6 text-background shadow-lg shadow-owerplay-cyan/20">
+          <div className="relative z-10 flex flex-col gap-1">
+            <div className="flex items-center justify-between opacity-80">
+              <span className="text-sm font-semibold tracking-wider uppercase">Lucro do Mês</span>
+              <button onClick={() => setShowValues(!showValues)} className="p-1 hover:bg-black/10 rounded-full transition-colors">
+                {showValues ? <Eye size={18} /> : <EyeOff size={18} />}
+              </button>
+            </div>
+            <div className="text-4xl font-black tracking-tighter">
+              {showValues ? formatBRL(stats?.lucro || 0) : "••••••"}
+            </div>
+            <div className="flex items-center gap-2 mt-2 text-xs font-bold">
+              <span className="bg-background/20 px-2 py-0.5 rounded-full">
+                {selectedMonth}/{selectedYear}
+              </span>
+              {stats?.lucro && stats.lucro > 0 && (
+                <span className="flex items-center gap-0.5 text-emerald-900">
+                  <TrendingUp size={12} /> Em alta
+                </span>
+              )}
+            </div>
+          </div>
+          {/* Decorative background element */}
+          <div className="absolute -right-12 -bottom-12 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute -left-12 -top-12 h-32 w-32 rounded-full bg-black/5 blur-2xl" />
+        </div>
+      </section>
+
+      {/* Quick Stats Grid */}
+      <section className="grid grid-cols-2 gap-4">
+        <div className="bg-card border rounded-2xl p-4 flex flex-col gap-1">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Users size={16} />
+            <span className="text-xs font-bold uppercase tracking-tight">Ativos</span>
+          </div>
+          <span className="text-2xl font-bold">{stats?.activeClients}</span>
         </div>
         
-        {/* KPI Row */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-[#1e293b] border-slate-700 shadow-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium uppercase text-slate-400 tracking-wider">Base de Assinantes</CardTitle>
-              <Users className="h-4 w-4 text-blue-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{stats?.totalClients} Clientes</div>
-              <p className="text-xs text-slate-500 mt-1">
-                <span className="text-emerald-400 font-medium">{stats?.activeClients} Ativos</span>
-                {" | "}
-                <span className="text-rose-400 font-medium">{stats?.expiredClients} Vencidos</span>
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#1e293b] border-slate-700 shadow-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium uppercase text-slate-400 tracking-wider">Faturamento (Entradas)</CardTitle>
-              <ArrowUpCircle className="h-4 w-4 text-emerald-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                R$ {stats?.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">Volume total de recebimentos</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#1e293b] border-slate-700 shadow-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium uppercase text-slate-400 tracking-wider">Custo Operacional</CardTitle>
-              <ArrowDownCircle className="h-4 w-4 text-rose-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                R$ {stats?.custos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">Infraestrutura e Servidores</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#1e293b] border-slate-700 shadow-xl border-l-4 border-l-blue-500">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium uppercase text-slate-400 tracking-wider">Lucro Líquido</CardTitle>
-              <Wallet className="h-4 w-4 text-blue-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">
-                R$ {stats?.lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">Resultado final da operação</p>
-            </CardContent>
-          </Card>
+        <div className="bg-card border rounded-2xl p-4 flex flex-col gap-1">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Clock size={16} />
+            <span className="text-xs font-bold uppercase tracking-tight">Vencendo</span>
+          </div>
+          <span className="text-2xl font-bold">{stats?.expiringTodayCount}</span>
         </div>
 
-        {/* Financial Highlights */}
-        <Card className="bg-[#1e293b] border-slate-700 shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-blue-500" />
-              Balanço da Operação
-            </CardTitle>
-            <CardDescription className="text-slate-400">Distribuição financeira proporcional</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-300">Total Faturado</span>
-                <span className="text-emerald-400 font-semibold">100%</span>
-              </div>
-              <Progress value={100} className="h-2 bg-slate-800" />
-              <div className="bg-emerald-500 h-full w-full" style={{ display: 'none' }} /> {/* Forced color for indicator via theme if needed, but progress uses bg-primary */}
-            </div>
+        <div className="bg-card border rounded-2xl p-4 flex flex-col gap-1">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Activity size={16} />
+            <span className="text-xs font-bold uppercase tracking-tight">Total</span>
+          </div>
+          <span className="text-2xl font-bold">{stats?.totalClients}</span>
+        </div>
 
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-300">Custo de Servidores</span>
-                <span className="text-rose-400 font-semibold">{stats?.costPercentage.toFixed(1)}%</span>
+        <Dialog>
+          <DialogTrigger asChild>
+            <button className="bg-card border rounded-2xl p-4 flex flex-col gap-1 text-left hover:bg-accent transition-colors">
+              <div className="flex items-center gap-2 text-rose-500">
+                <AlertCircle size={16} />
+                <span className="text-xs font-bold uppercase tracking-tight">Vencidos</span>
               </div>
-              <Progress value={stats?.costPercentage} className="h-2 bg-slate-800" />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-300">Lucro Real</span>
-                <span className="text-blue-400 font-semibold">{stats?.profitPercentage.toFixed(1)}%</span>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-rose-500">{stats?.totalVencidos}</span>
+                <ChevronRight size={16} className="text-muted-foreground" />
               </div>
-              <Progress value={stats?.profitPercentage} className="h-2 bg-slate-800" />
+            </button>
+          </DialogTrigger>
+          <DialogContent className="max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Clientes Vencidos</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-2 mt-4">
+              {stats?.vencidos.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">Nenhum inadimplente encontrado.</p>
+              ) : (
+                stats?.vencidos.map(c => (
+                  <div key={c.id} className="flex items-center justify-between p-3 border rounded-xl">
+                    <div className="flex flex-col">
+                      <span className="font-bold">{c.nome}</span>
+                      <span className="text-xs text-muted-foreground">Venceu em {format(new Date(c.vencimento), "dd/MM/yyyy")}</span>
+                    </div>
+                    <Badge variant="destructive">R$ {c.valor}</Badge>
+                  </div>
+                ))
+              )}
             </div>
-          </CardContent>
-        </Card>
+          </DialogContent>
+        </Dialog>
+      </section>
 
-        {/* Expired Table */}
-        <Card className="bg-[#1e293b] border-slate-700 shadow-xl overflow-hidden">
-          <CardHeader className="bg-slate-800/50 border-b border-slate-700">
-            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-              <Clock className="h-5 w-5 text-rose-500" />
-              Monitoramento de Inadimplência
-            </CardTitle>
-            <CardDescription className="text-slate-400">Clientes com status 'vencido'</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader className="bg-slate-900/50">
-                <TableRow className="border-slate-700 hover:bg-transparent">
-                  <TableHead className="text-slate-400 font-medium pl-6">Cliente</TableHead>
-                  <TableHead className="text-slate-400 font-medium">Vencimento</TableHead>
-                  <TableHead className="text-slate-400 font-medium">Servidor</TableHead>
-                  <TableHead className="text-slate-400 font-medium text-right pr-6">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stats?.expiredClientsList.length === 0 ? (
-                  <TableRow className="border-slate-800">
-                    <TableCell colSpan={4} className="h-24 text-center text-slate-500">
-                      Nenhum cliente vencido encontrado.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  stats?.expiredClientsList.map((client, idx) => (
-                    <TableRow key={idx} className="border-slate-800 hover:bg-slate-800/30 transition-colors">
-                      <TableCell className="pl-6 font-medium text-slate-200">{client.nome}</TableCell>
-                      <TableCell className="text-slate-400">
-                        {client.vencimento ? format(new Date(client.vencimento), "dd/MM/yyyy", { locale: ptBR }) : "N/A"}
-                      </TableCell>
-                      <TableCell className="text-slate-400">
-                        <Badge variant="outline" className="bg-slate-800 border-slate-700 text-slate-300 font-normal">
-                          {client.servers && client.servers.length > 0 ? "IPTV Ativo" : "N/A"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right pr-6">
-                        <Badge className="bg-rose-500/10 text-rose-500 border-rose-500/20 px-3 py-1 font-semibold uppercase tracking-tighter text-[10px]">
-                          VENCIDO
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Feed Principal: Vencendo Hoje */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-black tracking-tighter">VENCENDO HOJE</h2>
+          <Badge variant="secondary" className="rounded-full">{stats?.expiringTodayCount}</Badge>
+        </div>
+
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input 
+            placeholder="Buscar por nome..." 
+            className="pl-10 rounded-xl bg-card border-none ring-1 ring-border"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {filteredExpiring.length === 0 ? (
+            <div className="bg-card border-dashed border-2 rounded-2xl p-8 text-center text-muted-foreground">
+              Nenhum vencimento para hoje {searchTerm && "com este nome"}.
+            </div>
+          ) : (
+            filteredExpiring.map(client => (
+              <div key={client.id} className="bg-card border rounded-2xl p-4 shadow-sm transition-all active:scale-[0.98]">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-owerplay-cyan/10 flex items-center justify-center text-owerplay-cyan font-black">
+                      {client.nome.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-bold tracking-tight">{client.nome}</span>
+                      <Badge variant="outline" className="w-fit text-[10px] h-4 bg-owerplay-silver/10 border-owerplay-silver/30">
+                        {client.serverName}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-black text-owerplay-cyan">
+                      {formatBRL(Number(client.valor) - Number(client.desconto || 0))}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">A pagar</div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* Financeiro Detalhado & Histórico */}
+      <section className="space-y-6 pt-4 border-t">
+        <div className="flex flex-col gap-2">
+           <h2 className="text-xl font-black tracking-tighter flex items-center gap-2">
+            <History className="h-5 w-5 text-owerplay-cyan" />
+            FINANCEIRO
+          </h2>
+          
+          <div className="flex gap-2">
+             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-[120px] rounded-xl h-9">
+                <SelectValue placeholder="Mês" />
+              </SelectTrigger>
+              <SelectContent>
+                {["01","02","03","04","05","06","07","08","09","10","11","12"].map(m => (
+                   <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-[100px] rounded-xl h-9">
+                <SelectValue placeholder="Ano" />
+              </SelectTrigger>
+              <SelectContent>
+                {["2024", "2025", "2026"].map(y => (
+                   <SelectItem key={y} value={y}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4">
+          <div className="bg-card border rounded-2xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                <TrendingUp size={20} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-muted-foreground uppercase">Entradas</span>
+                <span className="font-black">{formatBRL(stats?.entradas || 0)}</span>
+              </div>
+            </div>
+            <div className="text-[10px] text-emerald-500 font-bold bg-emerald-500/5 px-2 py-1 rounded-full">+ Pix</div>
+          </div>
+
+          <div className="bg-card border rounded-2xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500">
+                <TrendingDown size={20} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-muted-foreground uppercase">Saídas</span>
+                <span className="font-black">{formatBRL(stats?.saidas || 0)}</span>
+              </div>
+            </div>
+            <div className="text-[10px] text-rose-500 font-bold bg-rose-500/5 px-2 py-1 rounded-full">- Infra</div>
+          </div>
+        </div>
+
+        {/* Gráfico de Barras */}
+        <div className="bg-card border rounded-3xl p-6">
+          <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-6">Comparativo Mensal</h3>
+          <div className="h-[200px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats?.chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="opacity-10" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
+                <Tooltip 
+                  cursor={{ fill: 'transparent' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-background border rounded-lg p-2 shadow-xl text-xs">
+                          <p className="font-bold border-b pb-1 mb-1">{payload[0].payload.name}</p>
+                          <p className="text-emerald-500">↑ {formatBRL(Number(payload[0].value))}</p>
+                          <p className="text-rose-500">↓ {formatBRL(Number(payload[1].value))}</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="entradas" fill="var(--color-owerplay-cyan)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="saidas" fill="var(--color-destructive)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Extrato Recente */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-sm font-black uppercase tracking-widest">Extrato Recente</h3>
+            <ArrowRight size={14} className="text-muted-foreground" />
+          </div>
+          <div className="flex flex-col gap-2">
+            {stats?.recentTransactions.length === 0 ? (
+               <p className="text-center text-muted-foreground py-4 text-sm">Nenhuma transação este mês.</p>
+            ) : (
+              stats?.recentTransactions.map(t => (
+                <div key={t.id} className="bg-card border rounded-2xl p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center ${t.tipo === 'entrada' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                      {t.tipo === 'entrada' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold">{t.descricao || (t.tipo === 'entrada' ? 'Pagamento' : 'Despesa')}</span>
+                      <span className="text-[10px] text-muted-foreground">{format(new Date(t.data), "dd/MM/yyyy")}</span>
+                    </div>
+                  </div>
+                  <span className={`text-sm font-black ${t.tipo === 'entrada' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                    {t.tipo === 'entrada' ? '+' : '-'} {formatBRL(Number(t.valor))}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 }
