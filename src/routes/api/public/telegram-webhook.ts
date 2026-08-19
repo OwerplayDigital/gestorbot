@@ -469,7 +469,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 const isoDate = state.data.vencimento_temp?.split('T')[0];
                 if (isoDate && state.data.id) {
                   const { data: updated } = await supabaseAdmin.from('clientes').update({ vencimento: isoDate }).eq('id', state.data.id).select('nome').single();
-                  await sendMessage(chatId, `✅ Vencimento atualizado!`, mainMenu);
+                  await sendMessage(chatId, `Vencimento atualizado!`, mainMenu);
                   if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
                 }
                 userState.delete(chatId);
