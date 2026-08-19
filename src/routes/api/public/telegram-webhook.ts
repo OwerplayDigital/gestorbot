@@ -74,6 +74,21 @@ async function editMessage(chatId: number, messageId: number, text: string, repl
   }
 }
 
+async function answerCallbackQuery(callbackQueryId: string, text?: string) {
+  try {
+    await fetch(`${TELEGRAM_API}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        callback_query_id: callbackQueryId,
+        text: text,
+      }),
+    });
+  } catch (err) {
+    console.error("Erro ao responder callback query:", err);
+  }
+}
+
 const mainMenu = {
   keyboard: [
     [{ text: '👥 Clientes' }, { text: '🖥️ Servidores' }],
@@ -121,6 +136,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             const messageId = cb.message.message_id;
             const data = cb.data;
             const state = userState.get(chatId);
+            
+            // Responder imediatamente para parar o loading do Telegram
+            await answerCallbackQuery(cb.id);
             
             if (data === 'search_retry') {
               await setUserStep(chatId, 'aguardando_busca');
@@ -369,18 +387,33 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             }
             else if (data === 'f_ok' && state && state.action === 'cadastrar_cliente') {
               const d = state.data;
-              if (d.nome && d.whatsapp && d.plano_id && d.servidores_ids && d.desconto !== undefined && d.vencimento) {
+              try {
+                if (!d.nome || !d.whatsapp || !d.plano_id || !d.servidores_ids || d.desconto === undefined || !d.vencimento) {
+                  throw new Error("Dados incompletos no estado da conversa.");
+                }
+
+                // Conversão de formato de data (DD/MM/AAAA ou ISO -> YYYY-MM-DD)
+                // O estado armazena em vencimento (ISO string parcial) ou vencimento_temp (ISO string completa)
+                const finalDate = d.vencimento.includes('T') ? d.vencimento.split('T')[0] : d.vencimento;
+
                 await createClientWithDetails({
-                  nome: d.nome, whatsapp: d.whatsapp === '0' ? '' : d.whatsapp,
-                  plano_id: d.plano_id, servidores_ids: d.servidores_ids,
-                  desconto: d.desconto, vencimento: d.vencimento
+                  nome: d.nome,
+                  whatsapp: d.whatsapp === '0' ? '' : d.whatsapp,
+                  plano_id: d.plano_id,
+                  servidores_ids: d.servidores_ids,
+                  desconto: d.desconto,
+                  vencimento: finalDate!
                 });
-                await sendMessage(chatId, "✅ <b>Sucesso!</b>", clientsSubMenu);
+
+                await editMessage(chatId, messageId, `✅ Cliente <b>${d.nome}</b> cadastrado com sucesso!`, clientsSubMenu);
                 userState.delete(chatId);
+              } catch (err: any) {
+                console.error("Erro ao cadastrar cliente via Telegram:", err);
+                await sendMessage(chatId, `❌ <b>Erro ao cadastrar:</b>\n${err.message || 'Erro desconhecido'}`);
               }
             } else if (data === 'f_no') {
               userState.delete(chatId);
-              await sendMessage(chatId, "❌ Cancelado.", clientsSubMenu);
+              await editMessage(chatId, messageId, "❌ Cadastro cancelado.", clientsSubMenu);
             }
 
             return new Response('OK');
