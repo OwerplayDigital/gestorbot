@@ -212,9 +212,12 @@ export type Database = {
         Row: {
           cliente_id: string | null
           created_at: string | null
+          custo: number | null
           data: string | null
           descricao: string | null
+          entrada: number | null
           id: string
+          lucro_liquido: number | null
           serv_id: string | null
           tipo: string
           user_id: string
@@ -223,9 +226,12 @@ export type Database = {
         Insert: {
           cliente_id?: string | null
           created_at?: string | null
+          custo?: number | null
           data?: string | null
           descricao?: string | null
+          entrada?: number | null
           id?: string
+          lucro_liquido?: number | null
           serv_id?: string | null
           tipo: string
           user_id?: string
@@ -234,9 +240,12 @@ export type Database = {
         Update: {
           cliente_id?: string | null
           created_at?: string | null
+          custo?: number | null
           data?: string | null
           descricao?: string | null
+          entrada?: number | null
           id?: string
+          lucro_liquido?: number | null
           serv_id?: string | null
           tipo?: string
           user_id?: string

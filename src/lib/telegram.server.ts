@@ -360,32 +360,22 @@ export const renewClient = async (
     throw renewRecordError;
   }
 
-  // b) Registrar entrada no caixa (Receita)
-  const { error: transEntradaError } = await supabaseAdmin
+  // b) Registrar transação ÚNICA (Entrada, Custo e Lucro)
+  const { error: transError } = await supabaseAdmin
     .from("transacoes")
     .insert({
       user_id: userId,
       cliente_id: clientId,
-      tipo: 'entrada',
-      valor: valorEntrada,
+      tipo: 'entrada', // Mantemos tipo para compatibilidade se necessário, mas o foco é o registro único
+      entrada: valorEntrada,
+      custo: totalCusto,
+      valor: valorEntrada - totalCusto, // 'valor' agora representa o lucro líquido para compatibilidade legada
       data: new Date().toISOString().split('T')[0] ?? null,
       descricao: `Renovação cliente ${clientId}`,
     });
 
-  if (transEntradaError) console.error("Erro ao registrar entrada:", transEntradaError);
-
-  // c) Registrar saída no caixa (Custo Servidor)
-  if (totalCusto > 0) {
-    const { error: transSaidaError } = await supabaseAdmin
-      .from("transacoes")
-      .insert({
-        user_id: userId,
-        tipo: 'saida',
-        valor: totalCusto,
-        data: new Date().toISOString().split('T')[0] ?? null,
-        descricao: `Custo servidor renovação cliente ${clientId}`,
-      });
-    if (transSaidaError) console.error("Erro ao registrar saída:", transSaidaError);
+  if (transError) {
+    console.error("Erro ao registrar transação unificada:", transError);
   }
 
   // d) Atualizar vencimento e status do cliente
