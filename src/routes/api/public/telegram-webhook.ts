@@ -191,7 +191,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                               `• Status: ${c.status}`;
                   await sendMessage(chatId, msg, {
                     inline_keyboard: [
-                      [{ text: "💬 Cobrar", callback_data: `action_cobrar:${c.id}` }],
+                      [{ text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` }],
                       [{ text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }],
                       [{ text: "📱 Confirmar", callback_data: `action_confirmar:${c.id}` }],
                       [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
@@ -203,6 +203,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                }
             }
             else if (data.startsWith('action_cobrar:')) {
+              // Este handler não é mais necessário para o card, mas mantemos por segurança caso seja chamado via callback direto
               const id = data.split(':')[1];
               const { data: c } = await supabaseAdmin.from('clientes').select('nome, whatsapp, vencimento').eq('id', id).single();
               if (c) {
@@ -222,7 +223,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
                 const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
                 const encodedConfirmacao = encodeURIComponent((BOT_TEMPLATES as any).CONFIRMACAO(primeiroNome, brDate));
-                await sendMessage(chatId, `📲 <b>Link de Confirmação:</b>`, {
+                await sendMessage(chatId, `📲 <b>Confirmar via WhatsApp:</b>`, {
                   inline_keyboard: [[{ text: "Enviar via WhatsApp", url: `https://wa.me/55${c.whatsapp}?text=${encodedConfirmacao}` }]]
                 });
               }
@@ -578,11 +579,18 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               });
             } else {
               for (const c of results) {
-                const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
-                await sendMessage(chatId, `👤 <b>${c.nome}</b>\n📅 Vencimento: ${brDate}`, {
+                const currentBrDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+                const primeiroNome = (c.nome || 'Cliente').split(' ')[0];
+                const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
+                const encodedCobranca = encodeURIComponent((BOT_TEMPLATES as any).COBRANCA(primeiroNome, currentBrDate, paymentUrl));
+
+                await sendMessage(chatId, `👤 <b>${c.nome}</b>\n📅 Vencimento: ${currentBrDate}`, {
                   inline_keyboard: [
                     [
-                      { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
+                      { text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` },
+                      { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }
+                    ],
+                    [
                       { text: "👁️ Detalhes", callback_data: `view_client:${c.nome}` }
                     ]
                   ]
@@ -674,17 +682,24 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const discount = Number(c.desconto || 0);
               const valorFinal = Math.max(0, planPrice - discount).toFixed(2).replace('.', ',');
               
+              const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+              const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
+              const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
+              const encodedCobranca = encodeURIComponent((BOT_TEMPLATES as any).COBRANCA(primeiroNome, brDate, paymentUrl));
+
               const msg = `👤 <b>FICHA DO CLIENTE:</b>\n` +
                           `• Nome: ${c.nome}\n` +
                           `• WhatsApp: ${c.whatsapp || 'N/A'}\n` +
                           `• Plano: ${planName}\n` +
                           `• Desconto: R$ ${c.desconto?.toFixed(2)}\n` +
                           `• Valor Final: R$ ${valorFinal}\n` +
-                          `• Vencimento: ${formatBRDate(new Date(c.vencimento + 'T12:00:00'))}\n` +
+                          `• Vencimento: ${brDate}\n` +
                           `• Status: ${c.status}`;
               await sendMessage(chatId, msg, {
                 inline_keyboard: [
+                  [{ text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` }],
                   [{ text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }],
+                  [{ text: "📱 Confirmar", callback_data: `action_confirmar:${c.id}` }],
                   [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
                   [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
                   [{ text: "🖥️ Alterar Servidor", callback_data: `edit_serv:${c.id}` }],
@@ -765,10 +780,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                     inline_keyboard: [
                       [
                         { text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` },
-                        { text: "🔄 Renovar", url: `https://wa.me/55${c.whatsapp}?text=${encodedRenovacao}` }
+                        { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }
                       ],
                       [
-                        { text: "📱 Confirmar", url: `https://wa.me/55${c.whatsapp}?text=${encodedConfirmacao}` },
+                        { text: "📱 Confirmar", callback_data: `action_confirmar:${c.id}` },
                         { text: "ℹ️ Detalhes", callback_data: `view_client:${c.nome}` }
                       ]
                     ]
