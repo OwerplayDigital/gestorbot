@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
 
 async function sendMessage(chatId: number, text: string, replyMarkup?: any) {
-  const TELEGRAM_TOKEN = process.env['TELEGRAM_BOT_TOKEN'];
+  const TELEGRAM_TOKEN = process.env['TELEGRAM_BOT_TOKEN'] || '';
   const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
   
   try {
