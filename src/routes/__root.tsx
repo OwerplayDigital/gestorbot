@@ -7,8 +7,8 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
-import { Menu, Sun, Moon, X } from "lucide-react";
+import { useEffect, type ReactNode } from "react";
+import { Menu } from "lucide-react";
 
 import { Toaster } from "@/components/ui/sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -145,16 +145,6 @@ function RootShell({ children }: { children: ReactNode }) {
                 </Link>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setIsDark(!isDark)}
-                  className="rounded-full"
-                >
-                  {isDark ? <Sun className="h-5 w-5 text-yellow-500" /> : <Moon className="h-5 w-5" />}
-                </Button>
-              </div>
             </div>
           </header>
 
