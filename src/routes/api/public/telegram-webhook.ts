@@ -430,14 +430,14 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 const planPrice = Number(planAny?.price || planAny?.preco || planAny?.valor || 0);
                 const valorFinal = Math.max(0, planPrice - (d.desconto || 0)).toFixed(2).replace('.', ',');
 
-                const first_name = d.nome.split(' ')[0];
+                const primeiroNome = d.nome ? d.nome.trim().split(' ')[0] : 'Cliente';
                 const encodedMsg = encodeURIComponent(
-                  `Olá ${first_name}, bom dia!\n\n` +
+                  `Olá ${primeiroNome}, bom dia!\n\n` +
                   `Seu plano de TV vence hoje: *(${brDate})*\n\n` +
                   `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n\n` +
                   `✅ *Favor enviar comprovante*\n\n` +
                   `🔗 *Acesse o link seguro para copiar o PIX e renovar:*\n` +
-                  `https://owerplay-gestor.lovable.app/renovar/${newClient.id}`
+                  `https://gestorbot.lovable.app/renovar/${newClient.id}`
                 );
 
                 const successMsg = `✅ <b>CLIENTE CADASTRADO COM SUCESSO!</b>\n\n` +
