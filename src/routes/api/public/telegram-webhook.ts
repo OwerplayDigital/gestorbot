@@ -501,8 +501,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 }
                 await sendMessage(chatId, `✅ <b>${name}</b> adicionado.\nMais algum ou avançar?`, {
                   inline_keyboard: [
-                    [{ text: "➕ Adicionar Outro", callback_data: "serv_outro" }],
-                    [{ text: "▶️ Avançar", callback_data: "serv_avancar" }]
+                    [{ text: "Adicionar Outro", callback_data: "serv_outro" }],
+                    [{ text: "Avançar", callback_data: "serv_avancar" }]
                   ]
                 });
               } else if (data === 'serv_outro') {
