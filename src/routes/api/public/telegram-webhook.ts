@@ -583,7 +583,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   inline_keyboard: [
                     [
                       { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
-                      { text: "👁️ Ver Ficha", callback_data: `view_client:${c.nome}` }
+                      { text: "👁️ Detalhes", callback_data: `view_client:${c.nome}` }
                     ]
                   ]
                 });
