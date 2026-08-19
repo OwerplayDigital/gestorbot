@@ -195,7 +195,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 return new Response('OK');
               }
               await setUserStep(chatId, 'aguardando_busca');
-              await sendMessage(chatId, "🔍 Digite o nome (ou parte do nome) do cliente:");
+              await sendMessage(chatId, "Digite o nome (ou parte do nome) do cliente:");
               return new Response('OK');
             }
 
