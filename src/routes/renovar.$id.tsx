@@ -68,9 +68,12 @@ function RenewPage() {
       <div className="w-full max-w-md space-y-8">
         {/* LOGO CENTRALIZADA */}
         <div className="flex flex-col items-center mt-6">
-           <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-slate-400 rounded-full flex items-center justify-center mb-4 shadow-2xl shadow-blue-500/20 border-2 border-slate-700/50">
-              <span className="text-3xl font-black text-white italic tracking-tighter">OP</span>
-           </div>
+           <img 
+             src="https://i.imgur.com/3YpX9ZT.png" 
+             alt="OWERPLAY TV" 
+             className="w-32 h-32 object-contain mb-2 drop-shadow-2xl"
+           />
+
            <h1 className="text-3xl font-black text-white tracking-[0.2em] italic">OWERPLAY TV</h1>
            <div className="h-1 w-12 bg-blue-500 rounded-full mt-2 opacity-50"></div>
         </div>
@@ -106,12 +109,6 @@ function RenewPage() {
                   </div>
                 </div>
 
-                <div 
-                  className="w-full bg-slate-950/50 border border-slate-800/80 p-5 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group/pix"
-                >
-                  <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-2 opacity-60">Chave Pix (E-mail)</span>
-                  <code className="text-blue-400 font-mono text-lg font-bold tracking-tight">82iptv@gmail.com</code>
-                </div>
               </div>
 
               <Button 
@@ -123,9 +120,9 @@ function RenewPage() {
                 }`}
               >
                 {copied ? (
-                  <><Check className="mr-2 w-6 h-6 not-italic" /> ✅ Chave Copiada com Sucesso!</>
+                  <>✅ Chave Copiada com Sucesso!</>
                 ) : (
-                  <><Copy className="mr-2 w-5 h-5 not-italic" /> 📋 Copiar Chave PIX</>
+                  <>📋 Copiar Chave PIX</>
                 )}
               </Button>
             </div>
