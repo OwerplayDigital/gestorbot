@@ -180,7 +180,7 @@ function Dashboard() {
           expiringToday: expiringWithServers,
           vencidos,
           chartData,
-          recentTransactions: currentMonthTransactions.slice(0, 5)
+          recentTransactions: currentMonthTransactions
         };
       } catch (error) {
         console.error("Dashboard error:", error);
