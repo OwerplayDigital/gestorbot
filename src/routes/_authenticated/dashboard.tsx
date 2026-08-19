@@ -206,13 +206,13 @@ function Dashboard() {
               </button>
             </div>
             <div className="text-4xl font-black tracking-tighter">
-              {showValues ? formatBRL(stats?.lucro || 0) : "••••••"}
+              {showValues ? formatBRL(stats?.lucro ?? 0) : "••••••"}
             </div>
             <div className="flex items-center gap-2 mt-2 text-xs font-bold">
               <span className="bg-background/20 px-2 py-0.5 rounded-full">
                 {selectedMonth}/{selectedYear}
               </span>
-              {stats?.lucro !== undefined && stats.lucro > 0 && (
+              {stats && stats.lucro > 0 && (
                 <span className="flex items-center gap-0.5 text-emerald-900">
                   <TrendingUp size={12} /> Em alta
                 </span>
