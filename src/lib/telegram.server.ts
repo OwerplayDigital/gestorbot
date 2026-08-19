@@ -434,3 +434,29 @@ export const resetFinancialHistory = async (clientId: string, userId: string) =>
 
   return { success: true };
 };
+
+export const resetGlobalFinancialHistory = async (userId: string) => {
+  // Deletar transações associadas ao usuário
+  const { error: transError } = await supabaseAdmin
+    .from("transacoes")
+    .delete()
+    .eq("user_id", userId);
+
+  if (transError) {
+    console.error("Erro ao resetar transações globais:", transError);
+    throw transError;
+  }
+
+  // Deletar renovações associadas ao usuário
+  const { error: renewError } = await supabaseAdmin
+    .from("renovacoes")
+    .delete()
+    .eq("user_id", userId);
+
+  if (renewError) {
+    console.error("Erro ao resetar renovações globais:", renewError);
+    throw renewError;
+  }
+
+  return { success: true };
+};
