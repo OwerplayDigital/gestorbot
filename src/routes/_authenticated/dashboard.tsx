@@ -502,7 +502,7 @@ function Dashboard() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-rose-500 transition-colors"
+                          className="h-8 w-8 text-rose-500 hover:text-rose-600 transition-colors"
                           disabled={isDeleting === t.id}
                         >
                           <Trash2 size={14} />
