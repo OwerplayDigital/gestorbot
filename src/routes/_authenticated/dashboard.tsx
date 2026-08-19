@@ -144,10 +144,15 @@ function Dashboard() {
           };
         });
 
-        const expiringWithServers = expiringToday.map(c => ({
-          ...c,
-          serverName: servers.find(s => c.servidores_ids?.includes(s.id))?.name || "N/A"
-        }));
+        const expiringWithServers = expiringToday.map((c: any) => {
+          const planPrice = Number(c.plans?.price ?? 0);
+          const base = planPrice > 0 ? planPrice : Number(c.valor ?? 0);
+          return {
+            ...c,
+            valorFinal: Math.max(0, base - Number(c.desconto || 0)),
+            serverName: servers.find(s => c.servidores_ids?.includes(s.id))?.name || "N/A"
+          };
+        });
 
         return {
           totalClients,
@@ -325,7 +330,7 @@ function Dashboard() {
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-black text-owerplay-cyan">
-                      {formatBRL(Number(client.valor ?? 0) - Number(client.desconto || 0))}
+                      {formatBRL(Number((client as any).valorFinal ?? 0))}
                     </div>
                     <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">A pagar</div>
                   </div>
@@ -409,7 +414,7 @@ function Dashboard() {
                   cursor={{ fill: 'transparent' }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
-                      const data = payload[0].payload as any;
+                      const data = (payload[0] as any)?.payload as any;
                       return (
                         <div className="bg-background border rounded-lg p-2 shadow-xl text-xs">
                           <p className="font-bold border-b pb-1 mb-1">{data.name}</p>
