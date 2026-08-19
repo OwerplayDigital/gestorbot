@@ -7,28 +7,37 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Menu, Sun, Moon, X } from "lucide-react";
 
 import { Toaster } from "@/components/ui/sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          A página que você procura não existe ou foi movida.
         </p>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            Voltar ao Início
           </Link>
         </div>
       </div>
@@ -47,10 +56,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          Erro ao carregar página
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Algo deu errado. Tente atualizar ou voltar para o início.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -60,13 +69,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            Tentar novamente
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            Início
           </a>
         </div>
       </div>
@@ -78,27 +87,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Gestão IPTV - Próxima Geração" },
-      { name: "description", content: "Sistema inteligente para revendedores de IPTV com integração via Telegram e Supabase." },
-      { name: "author", content: "IPTV Manager" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" },
+      { title: "Owerplay Gestor - IPTV" },
+      { name: "description", content: "Sistema inteligente para revendedores de IPTV." },
       { property: "og:site_name", content: "OWERPLAY TV" },
-      { property: "og:title", content: "OWERPLAY TV - Renovação" },
-      { property: "og:description", content: "Renove seu acesso de forma rápida e segura." },
+      { property: "og:title", content: "OWERPLAY Gestor" },
+      { property: "og:description", content: "Controle sua operação IPTV mobile-first." },
       { property: "og:image", content: "https://gestorbot.lovable.app/og-preview.png" },
-      { property: "og:image:secure_url", content: "https://gestorbot.lovable.app/og-preview.png" },
-      { property: "og:image:type", content: "image/png" },
-      { property: "og:image:width", content: "300" },
-      { property: "og:image:height", content: "300" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
       { rel: "icon", type: "image/png", href: "/favicon.png" },
     ],
   }),
@@ -109,13 +109,70 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (isDark) {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  }, [isDark]);
+
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <head>
         <HeadContent />
       </head>
-      <body>
-        {children}
+      <body className="antialiased">
+        <div className="flex flex-col min-h-screen">
+          {/* Header Mobile-First */}
+          <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container flex h-14 items-center justify-between px-4">
+              <div className="flex items-center gap-2">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="md:hidden">
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[280px]">
+                    <SheetHeader>
+                      <SheetTitle className="text-left flex items-center gap-2">
+                         <img src="/favicon.png" alt="Logo" className="h-6 w-6" />
+                         Owerplay Gestor
+                      </SheetTitle>
+                    </SheetHeader>
+                    <nav className="flex flex-col gap-4 mt-8">
+                      <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Dashboard</Link>
+                      <Link to="/" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Sair</Link>
+                    </nav>
+                  </SheetContent>
+                </Sheet>
+                <Link to="/dashboard" className="flex items-center gap-2 font-bold tracking-tighter text-lg">
+                  <img src="/favicon.png" alt="Logo" className="h-7 w-7" />
+                  <span className="hidden xs:inline-block">Owerplay Gestor</span>
+                </Link>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setIsDark(!isDark)}
+                  className="rounded-full"
+                >
+                  {isDark ? <Sun className="h-5 w-5 text-yellow-500" /> : <Moon className="h-5 w-5" />}
+                </Button>
+              </div>
+            </div>
+          </header>
+
+          <main className="flex-1 overflow-x-hidden">
+            {children}
+          </main>
+        </div>
         <Scripts />
       </body>
     </html>
@@ -129,7 +186,7 @@ function RootComponent() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <Outlet />
-        <Toaster />
+        <Toaster position="top-center" richColors />
       </QueryClientProvider>
     </ErrorBoundary>
   );
