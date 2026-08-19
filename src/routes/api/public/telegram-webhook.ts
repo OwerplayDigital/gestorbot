@@ -144,7 +144,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                     `Seu plano de TV vence hoje: *(${brDate})*\n` +
                     `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n` +
                     `*DADOS PARA PAGAMENTO:*\n` +
-                    `Valor: *R$ ${c.valor || (c.plans as any)?.price}*\n` +
+                    `Valor: *R$ ${(c as any).valor || (c.plans as any)?.price}*\n` +
                     `Pix: *82iptv@gmail.com*\n` +
                     `Banco: Nubank\n` +
                     `Nome: Diego Felix Owerney\n` +
