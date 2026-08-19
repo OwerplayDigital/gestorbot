@@ -77,7 +77,8 @@ function Dashboard() {
     queryKey: ["dashboard-stats-detailed", selectedMonth, selectedYear],
     queryFn: async () => {
       try {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const todayStr = format(now, "yyyy-MM-dd");
         
         const [
           clientsRes, 
@@ -125,8 +126,8 @@ function Dashboard() {
 
         const lucro = entradas - saidas;
 
-        const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-        const chartData = months.map((m, idx) => {
+        const monthsLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        const chartData = monthsLabels.map((m, idx) => {
           const monthStr = (idx + 1).toString().padStart(2, '0');
           const monthTrans = transactions.filter(t => {
             if (!t.data) return false;
@@ -186,7 +187,7 @@ function Dashboard() {
     );
   }
 
-  const formatBRL = (val: number | string | null) => {
+  const formatBRL = (val: number | string | null | undefined) => {
     const num = Number(val ?? 0);
     return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
