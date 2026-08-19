@@ -93,7 +93,7 @@ async function answerCallbackQuery(callbackQueryId: string, text?: string) {
 const mainMenu = {
   inline_keyboard: [
     [{ text: 'Vence Hoje', callback_data: 'vencendo_hoje' }, { text: 'Vencidos', callback_data: 'vencidos' }],
-    [{ text: 'Novo Cliente', callback_data: 'new_client_fast' }, { text: 'Buscar', callback_data: 'search_direct' }],
+    [{ text: 'Cadastrar', callback_data: 'new_client_fast' }, { text: 'Buscar', callback_data: 'search_direct' }],
     [{ text: 'Servidores', callback_data: 'list_servers' }, { text: 'Planos', callback_data: 'list_plans' }],
     [{ text: 'Financeiro', callback_data: 'financeiro' }]
   ]
