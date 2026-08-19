@@ -482,30 +482,34 @@ function Dashboard() {
                 const nome = (t as any).clientes?.nome || (t as any).servidores_iptv?.name || "Geral";
                 const label = t.tipo === 'entrada' ? `Renovação - ${nome}` : `Custo Servidor - ${nome}`;
                 return (
-                <div key={t.id} className="bg-card border rounded-2xl p-4 flex items-center justify-between group">
-                  <div className="flex items-center gap-3">
-                    <div className={`h-8 w-8 rounded-full flex items-center justify-center ${t.tipo === 'entrada' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                      {t.tipo === 'entrada' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                <div key={t.id} className="bg-card border rounded-2xl p-4 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center ${t.tipo === 'entrada' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                        {t.tipo === 'entrada' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold">{label}</span>
+                        <span className="text-[10px] text-muted-foreground">{t.data ? format(parseISO(t.data), "dd/MM/yyyy") : "?"}</span>
+                      </div>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold">{label}</span>
-                      <span className="text-[10px] text-muted-foreground">{t.data ? format(parseISO(t.data), "dd/MM/yyyy") : "?"}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
                     <span className={`text-sm font-black ${t.tipo === 'entrada' ? 'text-emerald-500' : 'text-rose-500'}`}>
                       {t.tipo === 'entrada' ? '+' : '-'} {formatBRL(t.valor)}
                     </span>
-                    
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2 border-t border-dashed">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Ações</span>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-rose-500 hover:text-rose-600 transition-colors"
+                          variant="destructive" 
+                          size="sm" 
+                          className="h-8 gap-2 rounded-xl px-4"
                           disabled={isDeleting === t.id}
                         >
                           <Trash2 size={14} />
+                          <span className="text-xs font-bold">Excluir Lançamento</span>
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
