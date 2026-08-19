@@ -33,7 +33,7 @@ type ClientRegistrationData = {
 };
 
 type UserState = {
-  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp' | 'renovar_cliente';
+  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp' | 'renovar_cliente' | 'editar_servidor';
   step: number;
   data: Partial<ClientRegistrationData>;
 };
@@ -199,6 +199,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                       [{ text: "🔄 Bot: Renovar", callback_data: `renew_init:${c.id}` }],
                       [{ text: "✏️ Alterar Vencimento", callback_data: `edit_venc:${c.id}` }],
                       [{ text: "🏷️ Alterar Desconto", callback_data: `edit_desc:${c.id}` }],
+                      [{ text: "🖥️ Alterar Servidor", callback_data: `edit_serv:${c.id}` }],
                       [{ text: "🗑️ Resetar Financeiro", callback_data: `reset_fin_confirm:${c.id}` }],
                       [{ text: "🔙 Voltar", callback_data: "voltar_clients" }]
                     ]
@@ -305,6 +306,28 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             else if (data.startsWith('edit_wpp:')) {
               userState.set(chatId, { action: 'editar_whatsapp', step: 1, data: { id: data.split(':')[1] } as any });
               await sendMessage(chatId, "Digite o novo WhatsApp com DDD:");
+            }
+            else if (data.startsWith('edit_serv:')) {
+              const id = data.split(':')[1];
+              userState.set(chatId, { action: 'editar_servidor', step: 1, data: { id } as any });
+              const servers = await listServers();
+              const buttons = servers.map(s => ([{ text: s.name, callback_data: `eserv_sel:${s.id}:${s.name}` }]));
+              await sendMessage(chatId, "<b>Alterar Servidor</b>\nSelecione o novo servidor para este cliente:", { inline_keyboard: buttons });
+            }
+            else if (state?.action === 'editar_servidor' && data.startsWith('eserv_sel:')) {
+              const [_, servId, servName] = data.split(':');
+              if (servId && state.data.id) {
+                const { data: updated } = await supabaseAdmin
+                  .from('clientes')
+                  .update({ servidores_ids: [servId] })
+                  .eq('id', state.data.id)
+                  .select('nome')
+                  .single();
+                
+                await sendMessage(chatId, `✅ Servidor atualizado para <b>${servName}</b>!`, clientsSubMenu);
+                if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
+              }
+              userState.delete(chatId);
             }
             else if (state?.action === 'editar_vencimento') {
               const currentIso = state.data.vencimento_temp;
