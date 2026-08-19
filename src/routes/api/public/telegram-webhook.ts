@@ -729,7 +729,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             const val = parseFloat(text.replace(',', '.'));
             if (!isNaN(val) && state.data.id) {
               await supabaseAdmin.from('clientes').update({ desconto: val }).eq('id', state.data.id);
-              await sendMessage(chatId, "Desconto atualizado!", mainMenu);
+              await sendMessage(chatId, "Desconto atualizado!", {
+                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
+              });
             }
             userState.delete(chatId);
             return new Response('OK');
