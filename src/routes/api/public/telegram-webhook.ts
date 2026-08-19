@@ -335,7 +335,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               if (userId) {
                 const { resetGlobalFinancialHistory } = await import('@/lib/telegram.server');
                 await resetGlobalFinancialHistory(userId);
-                await editMessage(chatId, messageId, "✅ Financeiro geral resetado com sucesso!");
+                await editMessage(chatId, messageId, "Financeiro geral resetado com sucesso!");
                 await sendMessage(chatId, "Menu Principal:", mainMenu);
               }
             }
