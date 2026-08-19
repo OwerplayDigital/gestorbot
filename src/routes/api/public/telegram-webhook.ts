@@ -580,10 +580,18 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             } else {
               for (const c of results) {
                 const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+                const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+                const primeiroNome = (c.nome || 'Cliente').split(' ')[0];
+                const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
+                const encodedCobranca = encodeURIComponent((BOT_TEMPLATES as any).COBRANCA(primeiroNome, brDate, paymentUrl));
+
                 await sendMessage(chatId, `👤 <b>${c.nome}</b>\n📅 Vencimento: ${brDate}`, {
                   inline_keyboard: [
                     [
-                      { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` },
+                      { text: "💬 Cobrar", url: `https://wa.me/55${c.whatsapp}?text=${encodedCobranca}` },
+                      { text: "🔄 Renovar", callback_data: `renew_init:${c.id}` }
+                    ],
+                    [
                       { text: "👁️ Detalhes", callback_data: `view_client:${c.nome}` }
                     ]
                   ]
