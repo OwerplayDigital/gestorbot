@@ -337,7 +337,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   .select('nome')
                   .single();
                 
-                await sendMessage(chatId, `✅ Servidor atualizado para <b>${servName}</b>!`, clientsSubMenu);
+                await editMessage(chatId, messageId, `✅ Servidor atualizado para <b>${servName}</b>!`, clientsSubMenu);
                 if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
               }
               userState.delete(chatId);
