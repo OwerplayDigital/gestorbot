@@ -594,9 +594,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 const encodedMsg = encodeURIComponent(
                   `Olá ${primeiroNome}, bom dia!\n\n` +
                   `Seu plano de TV vence hoje: *(${brDate})*\n\n` +
-                  `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n\n` +
-                  `✅ *Favor enviar comprovante*\n\n` +
-                  `🔗 *Acesse o link seguro para copiar o PIX e renovar:*\n` +
+                  `Atenção: na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n\n` +
+                  `Favor enviar comprovante\n\n` +
+                  `Acesse o link seguro para copiar o PIX e renovar:\n` +
                   `https://gestorbot.lovable.app/renovar/${newClient.id}`
                 );
 
