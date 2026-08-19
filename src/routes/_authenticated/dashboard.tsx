@@ -91,7 +91,7 @@ function Dashboard() {
           supabase.from("transacoes").select("*"),
           supabase.from("servidores_iptv").select("id, name"),
           supabase.from("clientes")
-            .select("id, nome, vencimento, valor, desconto, servidores_ids")
+            .select("id, nome, vencimento, valor, desconto, servidores_ids, plano_id, plans(price)")
             .eq("vencimento", todayStr)
             .order("nome"),
           supabase.from("clientes")
