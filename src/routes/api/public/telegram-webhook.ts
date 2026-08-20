@@ -270,57 +270,19 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (data === 'vencendo_hoje') {
               const todayList = await listClientsExpiringToday();
               
+              const { toZonedTime, format: formatTz } = await import('date-fns-tz');
+              const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
+              const todayStr = formatTz(nowBr, 'dd/MM/yyyy');
+
               if (todayList.length === 0) {
-                const { toZonedTime, format: formatTz } = await import('date-fns-tz');
-                const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
-                const todayStr = formatTz(nowBr, 'dd/MM/yyyy');
                 await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vence Hoje: 0\n\nNinguém vence hoje.`);
               } else {
-                const { toZonedTime, format: formatTz } = await import('date-fns-tz');
-                const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
-                const todayStr = formatTz(nowBr, 'dd/MM/yyyy');
-                
-                // ENRIQUECIMENTO DE DADOS EM 'VENCE HOJE'
-                const todayWithServers = await Promise.all(todayList.map(async (c: any) => {
-                  if (c.servidores_ids && c.servidores_ids.length > 0) {
-                    const { data: sData } = await supabaseAdmin
-                      .from('servidores_iptv')
-                      .select('id, name, nome')
-                      .in('id', c.servidores_ids);
-                    c.servidores = sData || [];
-                  }
-                  return c;
-                }));
+                const todayEnriched = await enrichClients(todayList);
 
-                await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vence Hoje: ${todayWithServers.length}`);
+                await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vence Hoje: ${todayEnriched.length}`);
                 
-                for (const c of todayWithServers) {
-                  // FORMATAÇÃO NO TEXTO DO TELEGRAM
-                  const vDate = c.vencimento.includes('/') 
-                    ? new Date(c.vencimento.split('/').reverse().join('-') + 'T12:00:00')
-                    : new Date(c.vencimento + 'T12:00:00');
-                  const brDate = formatBRDate(vDate);
-                  const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
-                  const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
-                  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || ''));
-                  const phone = cleanPhone(c.whatsapp || '');
-                  
-                  const nomeServidor = (Array.isArray(c.servidores) && c.servidores.length > 0)
-                    ? c.servidores.map((s: any) => s.name || s.nome).join(', ')
-                    : 'Não informado';
-
-                  const msg = `👤 Cliente: ${c.nome}\n` +
-                              `📅 Vencimento: ${brDate}\n` +
-                              `📡 Servidor: ${nomeServidor}`;
-                  
-                  await sendMessage(chatId, msg, {
-                    inline_keyboard: [
-                      [
-                        { text: "Cobrar", url: `https://wa.me/${phone}?text=${encodedCobranca}` },
-                        { text: "Renovar", callback_data: `renew_init:${c.id}` }
-                      ]
-                    ]
-                  });
+                for (const c of todayEnriched) {
+                  await sendClientCompact(chatId, c);
                 }
               }
               return new Response('OK');
