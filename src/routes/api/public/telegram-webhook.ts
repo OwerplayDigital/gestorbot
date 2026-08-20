@@ -113,12 +113,14 @@ function cleanPhone(phone: string): string {
 
 async function sendClientCompact(chatId: number, c: any) {
   const plan = c.plans;
-  const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
-  const discount = Number(c.desconto || 0);
   const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
   const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
-  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || ''));
+  
+  // Garantindo que a mensagem use quebras duplas e encoding correto
+  const msgCobranca = BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || '');
+  const encodedCobranca = encodeURIComponent(msgCobranca);
+  
   const phone = cleanPhone(c.whatsapp || '');
   
   const nomeServidor = c.servidores?.[0]?.name || c.servidor?.name || c.servidor || c.nome_servidor || 'Não informado';
@@ -150,8 +152,13 @@ async function sendClientFicha(chatId: number, c: any) {
   const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
   
   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
-  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || ''));
-  const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome || '', brDate || ''));
+  
+  // Garantindo que as mensagens usem quebras duplas e encoding correto
+  const msgCobranca = BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || '');
+  const encodedCobranca = encodeURIComponent(msgCobranca);
+  
+  const msgConfirmacao = BOT_TEMPLATES.CONFIRMACAO(primeiroNome || '', brDate || '');
+  const encodedConfirmacao = encodeURIComponent(msgConfirmacao);
   
   const phone = cleanPhone(c.whatsapp || '');
   const msg = `👤 Cliente: ${c.nome}\n` +
@@ -391,7 +398,11 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   const brDate = vDate ? formatBRDate(vDate) : 'N/A';
                   const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
                   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
-                  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl));
+                  
+                  // Garantindo que a mensagem use quebras duplas e encoding correto
+                  const msgCobranca = BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl);
+                  const encodedCobranca = encodeURIComponent(msgCobranca);
+                  
                   const phone = cleanPhone(c.whatsapp || '');
                   
                   const nomeServidor = (c as any).servidores?.[0]?.name || (c as any).servidor?.name || (c as any).servidor || (c as any).nome_servidor || 'Não informado';
