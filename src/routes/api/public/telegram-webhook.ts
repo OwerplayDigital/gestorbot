@@ -125,16 +125,20 @@ function cleanPhone(phone: string): string {
 }
 
 async function sendClientCompact(chatId: number, c: any) {
-  const plan = c.plans;
-  const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
-  const discount = Number(c.desconto || 0);
-  const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+  const vDate = c.vencimento.includes('/') 
+    ? new Date(c.vencimento.split('/').reverse().join('-') + 'T12:00:00')
+    : new Date(c.vencimento + 'T12:00:00');
+  
+  const brDate = formatBRDate(vDate);
   const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
   const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || ''));
   const phone = cleanPhone(c.whatsapp || '');
   
-  const nomeServidor = c.servidores?.[0]?.name || c.servidores?.nome || c.servidor?.name || c.servidor || c.nome_servidor || 'Não informado';
+  const nomeServidor = (Array.isArray(c.servidores) && c.servidores.length > 0)
+    ? c.servidores.map((s: any) => s.name || s.nome).join(', ')
+    : 'Não informado';
+
   const msg = `👤 Cliente: ${c.nome}\n` +
               `📅 Vencimento: ${brDate}\n` +
               `📡 Servidor: ${nomeServidor}`;
