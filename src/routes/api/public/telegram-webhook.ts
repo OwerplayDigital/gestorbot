@@ -266,9 +266,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (data === 'vencidos') {
               const expired = await listExpiredClients();
               if (expired.length === 0) {
-                await sendMessage(chatId, 'Nenhum cliente vencido.', {
-                  inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
-                });
+                await sendMessage(chatId, 'Nenhum cliente vencido.');
               } else {
                 for (const c of expired) {
                   const fullClient = await findClientByName(c.nome);
