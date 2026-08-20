@@ -139,9 +139,12 @@ async function sendClientCompact(chatId: number, c: any) {
     ? c.servidores.map((s: any) => s.name || s.nome).join(', ')
     : 'Não informado';
 
+  const debugInfo = `\n🔍 [DEBUG] Servidores IDs: ${JSON.stringify(c.servidores_ids || null)} | Encontrados: ${JSON.stringify(c.servidores || null)}`;
+
   const msg = `👤 Cliente: ${c.nome}\n` +
               `📅 Vencimento: ${brDate}\n` +
-              `📡 Servidor: ${nomeServidor}`;
+              `📡 Servidor: ${nomeServidor}` +
+              debugInfo;
   
   await sendMessage(chatId, msg, {
     inline_keyboard: [
