@@ -16,8 +16,8 @@ export const BOT_TEMPLATES = {
     `Após o pagamento, sua assinatura será renovada automaticamente.`,
 
   CONFIRMACAO: (nome: string, data: string): string =>
-    `📌 Obrigado pela confiança!\n` +
-    `✅ Sua assinatura foi renovada com sucesso!\n` +
+    `📌 Obrigado pela confiança!\n\n` +
+    `✅ Sua assinatura foi renovada com sucesso!\n\n` +
     `🗓️ *PRÓXIMO VENCIMENTO:* (${data})`
 };
 
