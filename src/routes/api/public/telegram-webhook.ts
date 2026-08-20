@@ -374,8 +374,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await editMessage(chatId, messageId, `<b>Renovação de Assinatura</b>\nSugestão de novo vencimento: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
-                    [{ text: `Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
-                    [{ text: "Cancelar", callback_data: "back_to_main" }]
+                    [{ text: `Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }]
                   ]
                 });
               }
