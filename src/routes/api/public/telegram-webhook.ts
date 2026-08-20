@@ -201,7 +201,7 @@ function parseBRDate(brDate: string): string | null {
 export const Route = createFileRoute('/api/public/telegram-webhook')({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }): Promise<Response> => {
         try {
           const body = await request.json();
           if (!body) return new Response('OK');
@@ -882,25 +882,18 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
             // Mapeamento direto de comandos para handlers de callback já existentes
             if (command === '/hoje') {
-               // Redirecionamento lógico manual
                const event = { callback_query: { id: 'cmd', data: 'vencendo_hoje', message: msg } };
-               const fakeReq = { json: async () => event } as any;
-               // @ts-ignore
-               return Route.options.server.handlers.POST({ request: fakeReq });
+               return handleTelegramEvent(event);
             }
 
             if (command === '/vencidos') {
                const event = { callback_query: { id: 'cmd', data: 'vencidos', message: msg } };
-               const fakeReq = { json: async () => event } as any;
-               // @ts-ignore
-               return Route.options.server.handlers.POST({ request: fakeReq });
+               return handleTelegramEvent(event);
             }
 
             if (command === '/cadastrar') {
                const event = { callback_query: { id: 'cmd', data: 'new_client_fast', message: msg } };
-               const fakeReq = { json: async () => event } as any;
-               // @ts-ignore
-               return Route.options.server.handlers.POST({ request: fakeReq });
+               return handleTelegramEvent(event);
             }
 
             if (command === '/buscar') {
@@ -923,9 +916,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
             if (command === '/servidores') {
                const event = { callback_query: { id: 'cmd', data: 'list_servers', message: msg } };
-               const fakeReq = { json: async () => event } as any;
-               // @ts-ignore
-               return Route.options.server.handlers.POST({ request: fakeReq });
+               return handleTelegramEvent(event);
             }
 
             if (command === '/planos') {
