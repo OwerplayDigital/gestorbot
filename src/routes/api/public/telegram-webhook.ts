@@ -139,9 +139,12 @@ async function sendClientCompact(chatId: number, c: any) {
     ? c.servidores.map((s: any) => s.name || s.nome).join(', ')
     : 'Não informado';
 
+  const debugInfo = `\n🔍 [DEBUG] Servidores IDs: ${JSON.stringify(c.servidores_ids || null)} | Encontrados: ${JSON.stringify(c.servidores || null)}`;
+
   const msg = `👤 Cliente: ${c.nome}\n` +
               `📅 Vencimento: ${brDate}\n` +
-              `📡 Servidor: ${nomeServidor}`;
+              `📡 Servidor: ${nomeServidor}` +
+              debugInfo;
   
   await sendMessage(chatId, msg, {
     inline_keyboard: [
@@ -161,9 +164,13 @@ async function sendClientFicha(chatId: number, c: any) {
   const valorFinal = Math.max(0, planPrice - discount).toFixed(2).replace('.', ',');
   
   const servers = c.servidores || [];
-  const serverNames = servers.map((s: any) => s.name).join(', ') || 'N/A';
+  const serverNames = servers.map((s: any) => s.name || s.nome).join(', ') || 'N/A';
   
-  const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+  const vDate = c.vencimento.includes('/') 
+    ? new Date(c.vencimento.split('/').reverse().join('-') + 'T12:00:00')
+    : new Date(c.vencimento + 'T12:00:00');
+  
+  const brDate = formatBRDate(vDate);
   const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
   
   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
@@ -171,13 +178,17 @@ async function sendClientFicha(chatId: number, c: any) {
   const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome || '', brDate || ''));
   
   const phone = cleanPhone(c.whatsapp || '');
-  const msg = `👤 Cliente: ${c.nome}\n` +
+  const debugInfo = `\n🔍 [DEBUG] Servidores IDs: ${JSON.stringify(c.servidores_ids || null)} | Encontrados: ${JSON.stringify(c.servidores || null)}`;
+
+  const msg = `👤 <b>FICHA DO CLIENTE</b>\n\n` +
+              `Nome: ${c.nome}\n` +
               `📅 Vencimento: ${brDate}\n` +
               `🖥️ Servidor: ${serverNames}\n` +
               `WhatsApp: ${c.whatsapp || 'N/A'}\n` +
               `Plano: ${planName}\n` +
               `Valor: R$ ${valorFinal}\n` +
-              `Status: ${c.status}`;
+              `Status: ${c.status}` +
+              debugInfo;
   
   await sendMessage(chatId, msg, {
     inline_keyboard: [
@@ -283,10 +294,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               if (todayList.length === 0) {
                 await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vence Hoje: 0\n\nNinguém vence hoje.`);
               } else {
+                // Enriquecimento com await garantido
                 const todayEnriched = await enrichClients(todayList);
 
                 await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vence Hoje: ${todayEnriched.length}`);
                 
+                // Envio sequencial aguardando cada mensagem
                 for (const c of todayEnriched) {
                   await sendClientCompact(chatId, c);
                 }
@@ -741,7 +754,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 ]
               });
             } else {
-              for (const c of results) {
+              const enrichedResults = await enrichClients(results);
+              for (const c of enrichedResults) {
                 await sendClientFicha(chatId, c);
               }
             }
