@@ -314,15 +314,19 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vencidos encontrados: ${expired.length}`);
                 for (const c of expired) {
                   // Reusando a lógica de exibição compacta
-                  const brDate = formatBRDate(parseDate(c.vencimento)!);
-                  const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
+                  const vDate = parseDate(c.vencimento);
+                  const brDate = vDate ? formatBRDate(vDate) : 'N/A';
+                  const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
                   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
                   const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl));
                   const phone = cleanPhone(c.whatsapp || '');
                   
+                  const servers = (c as any).servidores || [];
+                  const serverName = Array.isArray(servers) && servers[0] ? servers[0].name : 'N/A';
+
                   const msg = `👤 Cliente: ${c.nome}\n` +
                               `📅 Vencimento: ${brDate}\n` +
-                              `🖥️ Servidor: ${c.servidores?.[0]?.name || 'N/A'}`;
+                              `🖥️ Servidor: ${serverName}`;
                   
                   await sendMessage(chatId, msg, {
                     inline_keyboard: [
