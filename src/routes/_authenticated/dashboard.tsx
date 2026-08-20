@@ -121,18 +121,28 @@ function Dashboard() {
         const expiringToday = expiringTodayRes.data ?? [];
         const rawVencidos = vencidosRes.data ?? [];
 
-        const parseDate = (d: string) => {
-          if (!d) return new Date(0);
-          const parts = d.includes('/') ? d.split('/') : d.split('-').reverse();
-          return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+        const parseDate = (d: any): Date | null => {
+          if (!d || typeof d !== 'string') return null;
+          // Trata formato DD/MM/YYYY ou DD-MM-YYYY
+          if (d.includes('/') || (d.includes('-') && d.split('-')[0].length === 2)) {
+            const sep = d.includes('/') ? '/' : '-';
+            const [day, month, year] = d.split(sep).map(Number);
+            return new Date(year, month - 1, day);
+          }
+          // Trata formato YYYY-MM-DD
+          if (d.includes('-') && d.split('-')[0].length === 4) {
+            const [year, month, day] = d.split('-').map(Number);
+            return new Date(year, month - 1, day);
+          }
+          return null;
         };
 
         const vencidos = rawVencidos
           .filter((c: any) => {
-            if (!c.vencimento) return false;
-            return parseDate(c.vencimento) < nowBr;
+            const vencDate = parseDate(c.vencimento);
+            return vencDate && vencDate < nowBr;
           })
-          .sort((a: any, b: any) => parseDate(a.vencimento).getTime() - parseDate(b.vencimento).getTime());
+          .sort((a: any, b: any) => parseDate(a.vencimento)!.getTime() - parseDate(b.vencimento)!.getTime());
 
         const totalClients = clients.length;
         const activeClients = clients.filter((c: any) => c.status === "ativo").length;
@@ -316,7 +326,7 @@ function Dashboard() {
                   <div key={c.id} className="flex items-center justify-between p-3 border rounded-xl">
                     <div className="flex flex-col">
                       <span className="font-bold">{c.nome}</span>
-                      <span className="text-xs text-muted-foreground">Venceu em {c.vencimento ? format(parseISO(c.vencimento), "dd/MM/yyyy") : "?"}</span>
+                      <span className="text-xs text-muted-foreground">Venceu em {c.vencimento ? format(parseDate(c.vencimento)!, "dd/MM/yyyy") : "?"}</span>
                     </div>
                     <Badge variant="destructive">{formatBRL(c.valor)}</Badge>
                   </div>

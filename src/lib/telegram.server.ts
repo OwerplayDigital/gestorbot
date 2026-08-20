@@ -182,19 +182,28 @@ export const listExpiredClients = async () => {
     throw error;
   }
 
-  const parseDate = (d: string) => {
-    if (!d) return new Date(0);
-    const [day, month, year] = d.includes('/') ? d.split('/') : d.split('-').reverse();
-    return new Date(Number(year), Number(month) - 1, Number(day));
+  const parseDate = (d: any): Date | null => {
+    if (!d || typeof d !== 'string') return null;
+    // Trata formato DD/MM/YYYY ou DD-MM-YYYY
+    if (d.includes('/') || (d.includes('-') && d.split('-')[0].length === 2)) {
+      const sep = d.includes('/') ? '/' : '-';
+      const [day, month, year] = d.split(sep).map(Number);
+      return new Date(year, month - 1, day);
+    }
+    // Trata formato YYYY-MM-DD
+    if (d.includes('-') && d.split('-')[0].length === 4) {
+      const [year, month, day] = d.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+    return null;
   };
 
   const filteredData = (data || [])
     .filter((c: any) => {
-      if (!c.vencimento) return false;
       const vencDate = parseDate(c.vencimento);
-      return vencDate < nowBr;
+      return vencDate && vencDate < nowBr;
     })
-    .sort((a: any, b: any) => parseDate(a.vencimento).getTime() - parseDate(b.vencimento).getTime());
+    .sort((a: any, b: any) => parseDate(a.vencimento)!.getTime() - parseDate(b.vencimento)!.getTime());
   
   return filteredData;
 };
