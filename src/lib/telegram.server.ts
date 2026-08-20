@@ -239,14 +239,20 @@ export const listExpiredClients = async () => {
   console.log(`[DIAGNOSTICO] Clientes após filtro (vencidos): ${filteredData.length}`);
   
   // Buscar nomes dos servidores para os clientes filtrados
-  const result = await Promise.all(filteredData.map(async (c) => {
+  const result = await Promise.all(filteredData.map(async (c: any) => {
+    const rawIds = c.servidores_ids 
+      || (c.servidor_id ? [c.servidor_id] : null)
+      || (c.servidor_iptv_id ? [c.servidor_iptv_id] : null);
+
     let servidores: any[] = [];
-    if (c.servidores_ids && c.servidores_ids.length > 0) {
+    if (rawIds && Array.isArray(rawIds) && rawIds.length > 0) {
       const { data: sData } = await supabaseAdmin
         .from('servidores_iptv')
         .select('id, name')
-        .in('id', c.servidores_ids);
+        .in('id', rawIds);
       servidores = sData || [];
+    } else if (c.servidor && typeof c.servidor === 'string') {
+      servidores = [{ name: c.servidor }];
     }
     return { ...c, servidores };
   }));
@@ -268,6 +274,9 @@ export const listClientsExpiringToday = async () => {
       vencimento, 
       whatsapp,
       servidores_ids,
+      servidor_id,
+      servidor_iptv_id,
+      servidor,
       plano_id
     `);
 
@@ -357,6 +366,9 @@ export const findClientByName = async (name: string) => {
       desconto,
       plano_id,
       servidores_ids,
+      servidor_id,
+      servidor_iptv_id,
+      servidor,
       plans:plans(id, name, price)
     `)
     .ilike("nome", `%${name}%`)
