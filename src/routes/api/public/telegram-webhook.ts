@@ -112,7 +112,12 @@ async function enrichClients(clients: any[]) {
             .from('servidores_iptv')
             .select('id, name, nome')
             .in('id', validIds);
-          c.servidores = sData || [];
+          
+          // Mapeia para garantir que 'name' esteja sempre preenchido com o que estiver disponível
+          c.servidores = (sData || []).map((s: any) => ({
+            ...s,
+            name: s.name || s.nome || 'Servidor'
+          }));
         }
       }
     }
