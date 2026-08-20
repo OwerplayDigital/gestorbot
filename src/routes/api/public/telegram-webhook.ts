@@ -264,14 +264,81 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             }
 
             if (data === 'vencidos') {
-              const expired = await listExpiredClients();
+              const { toZonedTime, format: formatTz } = await import('date-fns-tz');
+              const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
+              nowBr.setHours(0, 0, 0, 0);
+              const todayStr = formatTz(nowBr, 'dd/MM/yyyy');
+
+              const { data: clients, error } = await supabaseAdmin
+                .from("clientes")
+                .select("id, nome, vencimento, whatsapp, servidores(name), plans(name, price)");
+
+              if (error) {
+                console.error("Erro ao buscar vencidos no webhook:", error);
+                await sendMessage(chatId, 'Erro ao processar lista de vencidos.');
+                return new Response('OK');
+              }
+
+              const parseDate = (d: any): Date | null => {
+                if (!d || typeof d !== 'string') return null;
+                const parts = d.split(/[/-]/);
+                if (parts.length !== 3) return null;
+                const p0 = Number(parts[0]), p1 = Number(parts[1]), p2 = Number(parts[2]);
+                let res: Date | null = null;
+                const s0 = parts[0];
+                if (s0 === undefined) return null;
+
+                if (d.includes('/') || (d.includes('-') && s0.length === 2)) {
+                  res = new Date(p2, p1 - 1, p0);
+                } else if (d.includes('-') && s0.length === 4) {
+                  res = new Date(p0, p1 - 1, p2);
+                }
+                if (res && !isNaN(res.getTime())) {
+                  res.setHours(0, 0, 0, 0);
+                  return res;
+                }
+                return null;
+              };
+
+              const expired = (clients || [])
+                .filter((c: any) => {
+                  const vDate = parseDate(c.vencimento);
+                  return vDate && vDate < nowBr;
+                })
+                .sort((a: any, b: any) => {
+                  const dA = parseDate(a.vencimento);
+                  const dB = parseDate(b.vencimento);
+                  return (dA?.getTime() || 0) - (dB?.getTime() || 0);
+                });
+
               if (expired.length === 0) {
-                await sendMessage(chatId, 'Nenhum cliente vencido.');
+                await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vencidos encontrados: 0\n\nNenhum cliente vencido.`);
               } else {
+                await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vencidos encontrados: ${expired.length}`);
                 for (const c of expired) {
-                  const fullClient = await findClientByName(c.nome);
-                  const detailed = fullClient[0];
-                  if (detailed) await sendClientCompact(chatId, detailed);
+                  // Reusando a lógica de exibição compacta
+                  const vDate = parseDate(c.vencimento);
+                  const brDate = vDate ? formatBRDate(vDate) : 'N/A';
+                  const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
+                  const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
+                  const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl));
+                  const phone = cleanPhone(c.whatsapp || '');
+                  
+                  const servers = (c as any).servidores || [];
+                  const serverName = Array.isArray(servers) && servers[0] ? servers[0].name : 'N/A';
+
+                  const msg = `👤 Cliente: ${c.nome}\n` +
+                              `📅 Vencimento: ${brDate}\n` +
+                              `🖥️ Servidor: ${serverName}`;
+                  
+                  await sendMessage(chatId, msg, {
+                    inline_keyboard: [
+                      [
+                        { text: "Cobrar", url: `https://wa.me/${phone}?text=${encodedCobranca}` },
+                        { text: "Renovar", callback_data: `renew_init:${c.id}` }
+                      ]
+                    ]
+                  });
                 }
               }
               return new Response('OK');
