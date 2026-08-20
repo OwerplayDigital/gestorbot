@@ -295,8 +295,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const id = data.split(':')[1];
               await editMessage(chatId, cb.message.message_id, "⚠️ <b>CONFIRMAÇÃO</b>\n\nDeseja realmente EXCLUIR este cliente? Todos os dados e histórico serão removidos.", {
                 inline_keyboard: [
-                  [{ text: "✅ Sim, Excluir", callback_data: `delete_client_exec:${id}` }],
-                  [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
+                  [{ text: "✅ Sim, Excluir", callback_data: `delete_client_exec:${id}` }]
                 ]
               });
               return new Response('OK');
