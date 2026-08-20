@@ -269,7 +269,6 @@ export const listClientsExpiringToday = async () => {
   const { toZonedTime, format: formatTz } = await import('date-fns-tz');
   const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
   nowBr.setHours(0, 0, 0, 0);
-  const todayStr = formatTz(nowBr, 'yyyy-MM-dd');
   
   const { data, error } = await supabaseAdmin
     .from("clientes")
@@ -308,20 +307,15 @@ export const listClientsExpiringToday = async () => {
     return null;
   };
 
-  // Filtrar em memória por data exata (Hoje) e remover duplicados por ID
   const filtered = data.filter((c: any) => {
     const vDate = parseDate(c.vencimento);
     if (!vDate) return false;
     
-    // Comparação estrita de Dia, Mês e Ano para HOJE
-    const isToday = vDate.getDate() === nowBr.getDate() && 
-                    vDate.getMonth() === nowBr.getMonth() && 
-                    vDate.getFullYear() === nowBr.getFullYear();
-    
-    return isToday;
+    return vDate.getDate() === nowBr.getDate() && 
+           vDate.getMonth() === nowBr.getMonth() && 
+           vDate.getFullYear() === nowBr.getFullYear();
   });
 
-  // Buscar nomes dos servidores e planos
   const result = await Promise.all(filtered.map(async (c: any) => {
     const serverKey = Object.keys(c).find(k => /servidor|server/i.test(k) && c[k] !== null && c[k] !== undefined);
     const valorServidor = serverKey ? c[serverKey] : null;
@@ -343,7 +337,6 @@ export const listClientsExpiringToday = async () => {
       }
     }
     
-    // Adicionar carregamento do plano
     let plan = null;
     if (c.plano_id) {
       const { data: pData } = await supabaseAdmin
