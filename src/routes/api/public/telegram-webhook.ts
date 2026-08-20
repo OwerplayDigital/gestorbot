@@ -251,14 +251,66 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             }
 
             if (data === 'vencendo_hoje') {
-              const today = await listClientsExpiringToday();
-              if (today.length === 0) {
+              const { toZonedTime } = await import('date-fns-tz');
+              const hoje = toZonedTime(new Date(), 'America/Sao_Paulo');
+              hoje.setHours(0, 0, 0, 0);
+
+              const { data, error } = await supabaseAdmin
+                .from("clientes")
+                .select(`
+                  id, nome, whatsapp, vencimento, status, desconto, plano_id, servidores_ids,
+                  plans:plans(id, name, price)
+                `);
+
+              if (error || !Array.isArray(data)) {
+                await sendMessage(chatId, '⚠️ Erro ao buscar dados no banco.');
+                return new Response('OK');
+              }
+
+              const parseDate = (d: any): Date | null => {
+                if (!d || typeof d !== 'string' || !d.trim()) return null;
+                const clean = d.trim();
+                if (clean.includes('/')) {
+                  const parts = clean.split('/').map(Number);
+                  if (parts.length !== 3) return null;
+                  const day = parts[0], month = parts[1], year = parts[2];
+                  if (day === undefined || month === undefined || year === undefined) return null;
+                  return new Date(year, month - 1, day);
+                }
+                if (clean.includes('-')) {
+                  const parts = clean.split('-').map(Number);
+                  if (parts.length !== 3) return null;
+                  const p0 = parts[0], p1 = parts[1], p2 = parts[2];
+                  if (p0 === undefined || p1 === undefined || p2 === undefined) return null;
+                  if (p0 > 1000) return new Date(p0, p1 - 1, p2); // YYYY-MM-DD
+                  return new Date(p2, p1 - 1, p0); // DD-MM-YYYY
+                }
+                return null;
+              };
+
+              const clientsToday = data.filter(c => {
+                const vencDate = parseDate(c.vencimento);
+                if (!vencDate) return false;
+                vencDate.setHours(0, 0, 0, 0);
+                return vencDate.getDate() === hoje.getDate() && 
+                       vencDate.getMonth() === hoje.getMonth() && 
+                       vencDate.getFullYear() === hoje.getFullYear();
+              });
+
+              if (clientsToday.length === 0) {
                 await sendMessage(chatId, 'Ninguém vence hoje.');
               } else {
-                for (const c of today) {
-                  const fullClient = await findClientByName(c.nome);
-                  const detailed = fullClient[0];
-                  if (detailed) await sendClientCompact(chatId, detailed);
+                for (const c of clientsToday) {
+                  // Enriquecimento de servidores
+                  let servidores: any[] = [];
+                  if (c.servidores_ids && c.servidores_ids.length > 0) {
+                    const { data: sData } = await supabaseAdmin
+                      .from('servidores_iptv')
+                      .select('id, name')
+                      .in('id', c.servidores_ids);
+                    servidores = sData || [];
+                  }
+                  await sendClientCompact(chatId, { ...c, servidores });
                 }
               }
               return new Response('OK');
