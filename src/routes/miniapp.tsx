@@ -128,7 +128,7 @@ function MiniAppComponent() {
 
       const { error } = await supabase
         .from("clientes")
-        .update({ vencimento: nextVencStr })
+        .update({ vencimento: nextVencStr as string })
         .eq("id", client.id);
 
       if (error) throw error;
