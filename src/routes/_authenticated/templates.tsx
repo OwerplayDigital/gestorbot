@@ -51,7 +51,10 @@ function TemplatesPage() {
     if (error) {
       toast.error("Erro ao carregar templates");
     } else {
-      setTemplates(data || []);
+      setTemplates((data || []).map(t => ({
+        ...t,
+        type: (t.type as any) || 'personalizado'
+      })));
     }
     setLoading(false);
   };

@@ -51,7 +51,6 @@ export const getUserStep = async (chatId: number) => {
   return data?.current_step || null;
 };
 
-// Funções de templates
 export const listUserTemplates = async (userId: string) => {
   const { data, error } = await supabaseAdmin
     .from("message_templates")
@@ -62,7 +61,10 @@ export const listUserTemplates = async (userId: string) => {
     console.error("Erro ao buscar templates:", error);
     return [];
   }
-  return data || [];
+  return (data || []).map(t => ({
+    ...t,
+    type: (t.type as 'cobrança' | 'renovação' | 'personalizado') || 'personalizado'
+  }));
 };
 
 export const getTemplateByType = async (userId: string, type: 'cobrança' | 'renovação') => {
@@ -167,12 +169,40 @@ export const renewClient = async (clientId: string, newVencimento: string, userI
   const { data: plan } = await supabaseAdmin.from("plans").select("price").eq("id", client.plano_id || "").single();
   if (!plan) throw new Error("Plano não encontrado.");
   let totalCusto = 0;
-  if (client.servidores_ids?.length > 0) {
+  if (client.servidores_ids && client.servidores_ids.length > 0) {
     const { data: servers } = await supabaseAdmin.from("servidores_iptv").select("valor").in("id", client.servidores_ids);
     totalCusto = servers?.reduce((sum, s) => sum + Number(s.valor), 0) || 0;
   }
   const valorEntrada = Number(plan.price) - Number(client.desconto || 0);
   await supabaseAdmin.from("renovacoes").insert({ user_id: userId, cliente_id: clientId, plano_id: client.plano_id, valor: valorEntrada, desconto: client.desconto, vencimento_anterior: client.vencimento, novo_vencimento: newVencimento, data_renovacao: new Date().toISOString() });
-  await supabaseAdmin.from("transacoes").insert({ user_id: userId, cliente_id: clientId, tipo: 'entrada', entrada: valorEntrada, custo: totalCusto, valor: valorEntrada - totalCusto, data: new Date().toISOString().split('T')[0], descricao: `Renovação cliente ${clientId}` });
+  await supabaseAdmin.from("transacoes").insert({ user_id: userId, cliente_id: clientId, tipo: 'entrada', entrada: valorEntrada, custo: totalCusto, valor: valorEntrada - totalCusto, data: (new Date().toISOString().split('T')[0] ?? null), descricao: `Renovação cliente ${clientId}` });
   return await supabaseAdmin.from("clientes").update({ vencimento: newVencimento, status: 'ativo' }).eq("id", clientId).select().single();
+};
+
+export const BOT_TEMPLATES = {
+  COBRANCA: (nome: string, data: string) => `Olá ${nome}, seu plano vence em ${data}.`,
+  RENOVACAO_LINK: (nome: string) => `Olá ${nome}, aqui está seu link de renovação.`,
+  CONFIRMACAO: (nome: string, data: string) => `✅ ${nome}, renovado até ${data}!`
+};
+
+export const getFinancialSummary = async () => {
+    const { data } = await supabaseAdmin.from("transacoes").select("entrada, custo");
+    const totalEntrada = data?.reduce((sum, t) => sum + (t.entrada || 0), 0) || 0;
+    const totalCusto = data?.reduce((sum, t) => sum + (t.custo || 0), 0) || 0;
+    return { entradas: totalEntrada, saidas: totalCusto, lucro: totalEntrada - totalCusto };
+};
+
+export const listExpiredClients = async () => {
+    const { data } = await supabaseAdmin.from("clientes").select("nome, status").eq("status", "vencido");
+    return data || [];
+};
+
+export const listClientsExpiringToday = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const { data } = await supabaseAdmin.from("clientes").select("nome, vencimento").eq("vencimento", today as string);
+    return data || [];
+};
+
+export const createClientWithDetails = async (data: any) => {
+    return await supabaseAdmin.from("clientes").insert(data).select().single();
 };
