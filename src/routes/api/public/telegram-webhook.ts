@@ -285,9 +285,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 if (parts.length !== 3) return null;
                 const p0 = Number(parts[0]), p1 = Number(parts[1]), p2 = Number(parts[2]);
                 let res: Date | null = null;
-                if (d.includes('/') || (d.includes('-') && parts[0].length === 2)) {
+                const s0 = parts[0];
+                if (s0 === undefined) return null;
+
+                if (d.includes('/') || (d.includes('-') && s0.length === 2)) {
                   res = new Date(p2, p1 - 1, p0);
-                } else if (d.includes('-') && parts[0].length === 4) {
+                } else if (d.includes('-') && s0.length === 4) {
                   res = new Date(p0, p1 - 1, p2);
                 }
                 if (res && !isNaN(res.getTime())) {
