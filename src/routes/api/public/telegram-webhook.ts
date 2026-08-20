@@ -176,8 +176,7 @@ async function sendClientFicha(chatId: number, c: any) {
         { text: "Editar", callback_data: `edit_client_full:${c.id}` }
       ],
       [
-        { text: "Excluir", callback_data: `delete_client_confirm:${c.id}` },
-        { text: "Menu Principal", callback_data: "back_to_main" }
+        { text: "Excluir", callback_data: `delete_client_confirm:${c.id}` }
       ]
     ]
   });
