@@ -91,6 +91,19 @@ async function answerCallbackQuery(callbackQueryId: string, text?: string) {
   }
 }
 
+async function enrichClients(clients: any[]) {
+  return await Promise.all(clients.map(async (c: any) => {
+    if (c.servidores_ids && c.servidores_ids.length > 0) {
+      const { data: sData } = await supabaseAdmin
+        .from('servidores_iptv')
+        .select('id, name, nome')
+        .in('id', c.servidores_ids);
+      c.servidores = sData || [];
+    }
+    return c;
+  }));
+}
+
 const mainMenu = {
   inline_keyboard: [
     [{ text: 'Vence Hoje', callback_data: 'vencendo_hoje' }, { text: 'Vencidos', callback_data: 'vencidos' }],
