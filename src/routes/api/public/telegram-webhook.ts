@@ -852,6 +852,23 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
           const dbStep = await getUserStep(chatId);
           const state = userState.get(chatId);
+          const lowerText = text.toLowerCase();
+
+          // 1. Verificar se é uma resposta de busca (step persistente no banco)
+          if (dbStep === 'aguardando_busca' && !text.startsWith('/')) {
+            await setUserStep(chatId, null);
+            const termo = text.trim();
+            const results = await findClientByName(termo);
+
+            if (results.length === 0) {
+              await sendMessage(chatId, `Nenhum cliente encontrado com o nome '${termo}'.`, {
+                inline_keyboard: [[{ text: "Buscar Novamente", callback_data: "search_retry" }]]
+              });
+            } else {
+              for (const c of results) await sendClientFicha(chatId, c);
+            }
+            return new Response('OK');
+          }
 
           // 2. Comandos do Menu (/comando) e Texto Normal
           if (text.startsWith('/')) {
@@ -863,20 +880,27 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               return new Response('OK');
             }
 
+            // Mapeamento direto de comandos para handlers de callback já existentes
             if (command === '/hoje') {
-              // Mimetiza o callback 'vencendo_hoje'
-              body.callback_query = { id: 'cmd', data: 'vencendo_hoje', message: msg };
-              return Route.options.server.handlers.POST({ request: new Request(request.url, { method: 'POST', body: JSON.stringify(body) }) } as any);
+               // Redirecionamento lógico manual
+               const event = { callback_query: { id: 'cmd', data: 'vencendo_hoje', message: msg } };
+               const fakeReq = { json: async () => event } as any;
+               // @ts-ignore
+               return Route.options.server.handlers.POST({ request: fakeReq });
             }
 
             if (command === '/vencidos') {
-              body.callback_query = { id: 'cmd', data: 'vencidos', message: msg };
-              return Route.options.server.handlers.POST({ request: new Request(request.url, { method: 'POST', body: JSON.stringify(body) }) } as any);
+               const event = { callback_query: { id: 'cmd', data: 'vencidos', message: msg } };
+               const fakeReq = { json: async () => event } as any;
+               // @ts-ignore
+               return Route.options.server.handlers.POST({ request: fakeReq });
             }
 
             if (command === '/cadastrar') {
-              body.callback_query = { id: 'cmd', data: 'new_client_fast', message: msg };
-              return Route.options.server.handlers.POST({ request: new Request(request.url, { method: 'POST', body: JSON.stringify(body) }) } as any);
+               const event = { callback_query: { id: 'cmd', data: 'new_client_fast', message: msg } };
+               const fakeReq = { json: async () => event } as any;
+               // @ts-ignore
+               return Route.options.server.handlers.POST({ request: fakeReq });
             }
 
             if (command === '/buscar') {
@@ -898,18 +922,24 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             }
 
             if (command === '/servidores') {
-              body.callback_query = { id: 'cmd', data: 'list_servers', message: msg };
-              return Route.options.server.handlers.POST({ request: new Request(request.url, { method: 'POST', body: JSON.stringify(body) }) } as any);
+               const event = { callback_query: { id: 'cmd', data: 'list_servers', message: msg } };
+               const fakeReq = { json: async () => event } as any;
+               // @ts-ignore
+               return Route.options.server.handlers.POST({ request: fakeReq });
             }
 
             if (command === '/planos') {
-              body.callback_query = { id: 'cmd', data: 'list_plans', message: msg };
-              return Route.options.server.handlers.POST({ request: new Request(request.url, { method: 'POST', body: JSON.stringify(body) }) } as any);
+               const event = { callback_query: { id: 'cmd', data: 'list_plans', message: msg } };
+               const fakeReq = { json: async () => event } as any;
+               // @ts-ignore
+               return Route.options.server.handlers.POST({ request: fakeReq });
             }
 
             if (command === '/financeiro') {
-              body.callback_query = { id: 'cmd', data: 'financeiro', message: msg };
-              return Route.options.server.handlers.POST({ request: new Request(request.url, { method: 'POST', body: JSON.stringify(body) }) } as any);
+               const event = { callback_query: { id: 'cmd', data: 'financeiro', message: msg } };
+               const fakeReq = { json: async () => event } as any;
+               // @ts-ignore
+               return Route.options.server.handlers.POST({ request: fakeReq });
             }
           }
 
