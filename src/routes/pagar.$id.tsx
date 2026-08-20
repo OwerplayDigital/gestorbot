@@ -84,7 +84,7 @@ function RenewPage() {
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
           
           <CardHeader className="text-center pb-0 pt-8">
-            <h2 className="text-blue-400 text-lg font-bold mb-1 italic">Olá, {primeiroNome}</h2>
+            <h2 className="text-blue-400 text-lg font-bold mb-1 italic">Olá</h2>
             <p className="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-black opacity-70">Seu vencimento é em {brDate}</p>
           </CardHeader>
 
