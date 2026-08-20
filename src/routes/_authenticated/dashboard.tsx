@@ -120,7 +120,20 @@ function Dashboard() {
         const transactions = transactionsRes.data ?? [];
         const servers = serversRes.data ?? [];
         const expiringToday = expiringTodayRes.data ?? [];
-        const vencidos = vencidosRes.data ?? [];
+        const rawVencidos = vencidosRes.data ?? [];
+
+        // Tratamento para garantir comparação ISO YYYY-MM-DD
+        const vencidos = rawVencidos.filter((c: any) => {
+          if (!c.vencimento) return false;
+          const isoVenc = c.vencimento.includes('/') 
+            ? c.vencimento.split('/').reverse().join('-') 
+            : c.vencimento;
+          return isoVenc < todayStr;
+        }).sort((a: any, b: any) => {
+          const dA = a.vencimento.includes('/') ? a.vencimento.split('/').reverse().join('-') : a.vencimento;
+          const dB = b.vencimento.includes('/') ? b.vencimento.split('/').reverse().join('-') : b.vencimento;
+          return dA.localeCompare(dB);
+        });
 
         const totalClients = clients.length;
         const activeClients = clients.filter((c: any) => c.status === "ativo").length;

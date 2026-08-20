@@ -153,33 +153,55 @@ export const getClientsSummary = async () => {
   const ativos = allClients.filter((c: any) => c.status === 'ativo').length;
   
   const { toZonedTime, format: formatTz } = await import('date-fns-tz');
-  const today = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd');
-  const vencidos = allClients.filter((c: any) => c.vencimento && c.vencimento < today).length;
+  const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
+  const today = formatTz(nowBr, 'yyyy-MM-dd');
+  const vencidos = allClients.filter((c: any) => {
+    if (!c.vencimento) return false;
+    const isoVenc = c.vencimento.includes('/') 
+      ? c.vencimento.split('/').reverse().join('-') 
+      : c.vencimento;
+    return isoVenc < today;
+  }).length;
 
   return { total, ativos, vencidos };
 };
 
 export const listExpiredClients = async () => {
   const { toZonedTime, format: formatTz } = await import('date-fns-tz');
-  const today = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd');
+  const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
+  const today = formatTz(nowBr, 'yyyy-MM-dd');
   
   const { data, error } = await supabaseAdmin
     .from("clientes")
     .select("id, nome, vencimento, whatsapp")
-    .lt("vencimento", today)
+    .or(`vencimento.lt.${today},vencimento.like.%/%`) // Busca vencidos ou datas em formato BR para filtrar no JS
     .order('vencimento', { ascending: true });
 
   if (error) {
     console.error("Erro Supabase (expired select):", error);
     throw error;
   }
+
+  // Filtro refinado para garantir ISO e comparação correta
+  const filteredData = (data || []).filter((c: any) => {
+    if (!c.vencimento) return false;
+    const isoVenc = c.vencimento.includes('/') 
+      ? c.vencimento.split('/').reverse().join('-') 
+      : c.vencimento;
+    return isoVenc < today;
+  }).sort((a: any, b: any) => {
+    const dateA = a.vencimento.includes('/') ? a.vencimento.split('/').reverse().join('-') : a.vencimento;
+    const dateB = b.vencimento.includes('/') ? b.vencimento.split('/').reverse().join('-') : b.vencimento;
+    return (dateA || '').localeCompare(dateB || '');
+  });
   
-  return data;
+  return filteredData;
 };
 
 export const listClientsExpiringToday = async () => {
   const { toZonedTime, format: formatTz } = await import('date-fns-tz');
-  const today = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd');
+  const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
+  const today = formatTz(nowBr, 'yyyy-MM-dd');
   
   const { data, error } = await supabaseAdmin
     .from("clientes")
