@@ -155,7 +155,13 @@ export const getClientsSummary = async () => {
   const { toZonedTime, format: formatTz } = await import('date-fns-tz');
   const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
   const today = formatTz(nowBr, 'yyyy-MM-dd');
-  const vencidos = allClients.filter((c: any) => c.vencimento && c.vencimento < today).length;
+  const vencidos = allClients.filter((c: any) => {
+    if (!c.vencimento) return false;
+    const isoVenc = c.vencimento.includes('/') 
+      ? c.vencimento.split('/').reverse().join('-') 
+      : c.vencimento;
+    return isoVenc < today;
+  }).length;
 
   return { total, ativos, vencidos };
 };
@@ -183,10 +189,10 @@ export const listExpiredClients = async () => {
       ? c.vencimento.split('/').reverse().join('-') 
       : c.vencimento;
     return isoVenc < today;
-  }).sort((a, b) => {
+  }).sort((a: any, b: any) => {
     const dateA = a.vencimento.includes('/') ? a.vencimento.split('/').reverse().join('-') : a.vencimento;
     const dateB = b.vencimento.includes('/') ? b.vencimento.split('/').reverse().join('-') : b.vencimento;
-    return dateA.localeCompare(dateB);
+    return (dateA || '').localeCompare(dateB || '');
   });
   
   return filteredData;
