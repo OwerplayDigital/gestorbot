@@ -199,9 +199,8 @@ function parseBRDate(brDate: string): string | null {
 }
 
 async function handleTelegramEvent(body: any): Promise<Response> {
-        try {
-          const body = await request.json();
-          if (!body) return new Response('OK');
+  try {
+    if (!body) return new Response('OK');
           
           if (body.callback_query) {
             const cb = body.callback_query;
