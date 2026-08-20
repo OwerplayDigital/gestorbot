@@ -198,13 +198,9 @@ function parseBRDate(brDate: string): string | null {
   return isNaN(date.getTime()) ? null : (date.toISOString().split('T')[0] ?? null);
 }
 
-export const Route = createFileRoute('/api/public/telegram-webhook')({
-  server: {
-    handlers: {
-      POST: async ({ request }) => {
-        try {
-          const body = await request.json();
-          if (!body) return new Response('OK');
+async function handleTelegramEvent(body: any): Promise<Response> {
+  try {
+    if (!body) return new Response('OK');
           
           if (body.callback_query) {
             const cb = body.callback_query;
@@ -852,8 +848,6 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
           const dbStep = await getUserStep(chatId);
           const state = userState.get(chatId);
-
-          // Comando /buscar simplificado
           const lowerText = text.toLowerCase();
 
           // 1. Verificar se é uma resposta de busca (step persistente no banco)
@@ -864,44 +858,75 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
             if (results.length === 0) {
               await sendMessage(chatId, `Nenhum cliente encontrado com o nome '${termo}'.`, {
-                inline_keyboard: [
-                  [{ text: "Buscar Novamente", callback_data: "search_retry" }]
-                ]
+                inline_keyboard: [[{ text: "Buscar Novamente", callback_data: "search_retry" }]]
               });
             } else {
-              for (const c of results) {
-                await sendClientFicha(chatId, c);
-              }
+              for (const c of results) await sendClientFicha(chatId, c);
             }
             return new Response('OK');
           }
 
-          // 2. Comandos e Menu
-          if (lowerText.startsWith('/buscar')) {
-            const termo = text.includes(' ') ? text.split(' ').slice(1).join(' ').trim() : '';
-            if (!termo) {
-              await setUserStep(chatId, 'aguardando_busca');
-              await sendMessage(chatId, "Digite o nome (ou parte do nome) do cliente:");
+          // 2. Comandos do Menu (/comando) e Texto Normal
+          if (text.startsWith('/')) {
+            const command = lowerText.split(' ')[0];
+            
+            if (command === '/start') {
+              userState.delete(chatId);
+              await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
               return new Response('OK');
             }
 
-            const results = await findClientByName(termo);
-            if (results.length === 0) {
-              await sendMessage(chatId, `Nenhum cliente encontrado com o nome '${termo}'.`, {
-                inline_keyboard: [
-                  [{ text: "Buscar Novamente", callback_data: "search_retry" }]
-                ]
-              });
-            } else {
-              for (const c of results) {
-                await sendClientFicha(chatId, c);
-              }
+            // Mapeamento direto de comandos para handlers de callback já existentes
+            if (command === '/hoje') {
+               const event = { callback_query: { id: 'cmd', data: 'vencendo_hoje', message: msg } };
+               return handleTelegramEvent(event);
             }
-            return new Response('OK');
+
+            if (command === '/vencidos') {
+               const event = { callback_query: { id: 'cmd', data: 'vencidos', message: msg } };
+               return handleTelegramEvent(event);
+            }
+
+            if (command === '/cadastrar') {
+               const event = { callback_query: { id: 'cmd', data: 'new_client_fast', message: msg } };
+               return handleTelegramEvent(event);
+            }
+
+            if (command === '/buscar') {
+              const termo = text.includes(' ') ? text.split(' ').slice(1).join(' ').trim() : '';
+              if (!termo) {
+                await setUserStep(chatId, 'aguardando_busca');
+                await sendMessage(chatId, "Digite o nome (ou parte do nome) do cliente:");
+              } else {
+                const results = await findClientByName(termo);
+                if (results.length === 0) {
+                  await sendMessage(chatId, `Nenhum cliente encontrado com o nome '${termo}'.`, {
+                    inline_keyboard: [[{ text: "Buscar Novamente", callback_data: "search_retry" }]]
+                  });
+                } else {
+                  for (const c of results) await sendClientFicha(chatId, c);
+                }
+              }
+              return new Response('OK');
+            }
+
+            if (command === '/servidores') {
+               const event = { callback_query: { id: 'cmd', data: 'list_servers', message: msg } };
+               return handleTelegramEvent(event);
+            }
+
+            if (command === '/planos') {
+               const event = { callback_query: { id: 'cmd', data: 'list_plans', message: msg } };
+               return handleTelegramEvent(event);
+            }
+
+            if (command === '/financeiro') {
+               const event = { callback_query: { id: 'cmd', data: 'financeiro', message: msg } };
+               return handleTelegramEvent(event);
+            }
           }
 
-
-          if (text === '/start' || text === 'Voltar') {
+          if (text === 'Voltar') {
             userState.delete(chatId);
             await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
             return new Response('OK');
@@ -998,15 +1023,20 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 inline_keyboard: [[{ text: `Confirmar: ${br}`, callback_data: "venc_confirm" }]]
               });
             }
-            return new Response('OK');
-          }
+    }
+    return new Response('OK');
+  } catch (e) {
+    console.error("ERRO WEBHOOK TELEGRAM:", e);
+    return new Response('OK');
+  }
+}
 
-          return new Response('OK');
-
-        } catch (e) {
-          console.error("ERRO WEBHOOK TELEGRAM:", e);
-          return new Response('OK');
-        }
+export const Route = createFileRoute('/api/public/telegram-webhook')({
+  server: {
+    handlers: {
+      POST: async ({ request }): Promise<Response> => {
+        const body = await request.json();
+        return handleTelegramEvent(body);
       }
     }
   }
