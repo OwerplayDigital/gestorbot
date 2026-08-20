@@ -193,7 +193,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (t && c) {
               const filled = fillTemplate(t.content, { 
                 nome: c.nome, 
-                vencimento: formatBRDate(c.vencimento),
+                vencimento: formatBRDate(c.vencimento || ""),
                 valor: `R$ ${(Number(c.plans?.price || 0) - Number(c.desconto || 0)).toFixed(2)}`
               });
               await sendMessage(chatId, filled);
@@ -202,7 +202,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           else if (data.startsWith('renew:')) {
             const clientId = data.split(':')[1];
             const today = new Date();
-            const nextMonth = new Date(today.setMonth(today.getMonth() + 1)).toISOString().split('T')[0];
+            const nextMonth = new Date(today.setMonth(today.getMonth() + 1)).toISOString().split('T')[0] || "";
             await renewClient(clientId, nextMonth, userId);
             await sendMessage(chatId, "✅ Cliente renovado com sucesso!");
             // Refresh ficha
