@@ -14,7 +14,9 @@ import {
   listExpiredClients,
   listClientsExpiringToday,
   renewClient,
+  getClientById,
   BOT_TEMPLATES
+
 } from '@/lib/telegram.server';
 
 
@@ -34,7 +36,7 @@ type ClientRegistrationData = {
 };
 
 type UserState = {
-  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp' | 'renovar_cliente' | 'editar_servidor';
+  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp' | 'renovar_cliente' | 'editar_servidor' | 'editar_nome';
   step: number;
   data: Partial<ClientRegistrationData>;
 };
@@ -177,15 +179,12 @@ async function sendClientFicha(chatId: number, c: any) {
       ],
       [
         { text: "Renovar", callback_data: `renew_init:${c.id}` },
-        { text: "Vencimento", callback_data: `edit_venc:${c.id}` }
-      ],
-      [
-        { text: "Servidor", callback_data: `edit_serv:${c.id}` },
         { text: "Editar", callback_data: `edit_client_full:${c.id}` }
       ],
       [
         { text: "Excluir", callback_data: `delete_client_confirm:${c.id}` }
       ]
+
     ]
   });
 }
@@ -442,7 +441,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const id = data.split(':')[1];
               await editMessage(chatId, cb.message.message_id, "⚠️ <b>CONFIRMAÇÃO</b>\n\nDeseja realmente EXCLUIR este cliente? Todos os dados e histórico serão removidos.", {
                 inline_keyboard: [
-                  [{ text: "✅ Sim, Excluir", callback_data: `delete_client_exec:${id}` }]
+                  [{ text: "✅ Sim, Excluir", callback_data: `delete_client_exec:${id}` }],
+                  [{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]
+
                 ]
               });
               return new Response('OK');
@@ -460,6 +461,40 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             }
 
             // Callbacks Globais e Fluxo de Detalhes
+            
+            if (data.startsWith('client_menu:')) {
+              const id = data.split(':')[1];
+              if (id) {
+                const client = await getClientById(id);
+                if (client) {
+                  await sendClientFicha(chatId, client);
+                }
+              }
+              return new Response('OK');
+            }
+
+            if (data.startsWith('edit_client_full:')) {
+              const id = data.split(':')[1];
+              if (id) {
+                await editMessage(chatId, messageId, "🛡️ <b>MENU DE EDIÇÃO</b>\nO que você deseja alterar?", {
+                  inline_keyboard: [
+                    [{ text: "📝 Nome", callback_data: `edit_name:${id}` }, { text: "📱 WhatsApp", callback_data: `edit_wpp:${id}` }],
+                    [{ text: "📅 Vencimento", callback_data: `edit_venc:${id}` }, { text: "📡 Servidor", callback_data: `edit_serv:${id}` }],
+                    [{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]
+                  ]
+                });
+              }
+              return new Response('OK');
+            }
+
+            if (data.startsWith('edit_name:')) {
+              userState.set(chatId, { action: 'editar_nome' as any, step: 1, data: { id: data.split(':')[1] } as any });
+              await sendMessage(chatId, "Digite o novo nome do cliente:");
+              return new Response('OK');
+            }
+
+            // Callbacks Globais e Fluxo de Detalhes (continuação)
+
 
             if (data.startsWith('view_client:')) {
                const nome = data.split(':')[1];
@@ -474,9 +509,11 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const id = data.split(':')[1];
               await editMessage(chatId, messageId, "CONFIRMAÇÃO CRÍTICA\n\nTem certeza que deseja resetar o financeiro deste cliente? Essa ação não pode ser desfeita e limpará todo o histórico de transações e renovações.", {
                 inline_keyboard: [
-                  [{ text: "Sim, Resetar Agora", callback_data: `reset_fin_exec:${id}` }]
+                  [{ text: "Sim, Resetar Agora", callback_data: `reset_fin_exec:${id}` }],
+                  [{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]
                 ]
               });
+
             }
             else if (data.startsWith('reset_fin_exec:')) {
               const id = data.split(':')[1];
@@ -521,8 +558,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await editMessage(chatId, messageId, `<b>Renovação de Assinatura</b>\nSugestão de novo vencimento: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
-                    [{ text: `Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }]
+                    [{ text: `Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
+                    [{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]
                   ]
+
                 });
               }
             }
@@ -542,8 +581,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await editMessage(chatId, messageId, `<b>Renovação de Assinatura</b>\nNovo vencimento: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
-                    [{ text: `Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }]
+                    [{ text: `Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
+                    [{ text: "🔙 Voltar", callback_data: `client_menu:${state.data.id}` }]
                   ]
+
                 });
               } else if (data === 'erenew_confirm') {
                 const isoDate = state.data.vencimento_temp?.split('T')[0];
@@ -560,8 +601,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   );
                   await sendMessage(chatId, `<b>Assinatura Renovada!</b>\nO caixa foi atualizado automaticamente.`, {
                     inline_keyboard: [
-                    [{ text: "Enviar Comprovante", url: `https://wa.me/${phone}?text=${encodedReceipt}` }]
+                    [{ text: "Enviar Comprovante", url: `https://wa.me/${phone}?text=${encodedReceipt}` }],
+                    [{ text: "🔙 Voltar ao Menu", callback_data: `client_menu:${state.data.id}` }]
                   ]
+
                 });
               }
               userState.delete(chatId);
@@ -577,8 +620,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await editMessage(chatId, messageId, `<b>Alterar Vencimento</b>\nAtual: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
-                    [{ text: `Salvar: ${br}`, callback_data: "evenc_save" }]
+                    [{ text: `Salvar: ${br}`, callback_data: "evenc_save" }],
+                    [{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]
                   ]
+
                 });
               }
             }
@@ -595,7 +640,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               userState.set(chatId, { action: 'editar_servidor', step: 1, data: { id } as any });
               const servers = await listServers();
               const buttons = servers.map(s => ([{ text: s.name, callback_data: `eserv_sel:${s.id}:${s.name}` }]));
+              buttons.push([{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]);
               await editMessage(chatId, messageId, "<b>Alterar Servidor</b>\nSelecione o novo servidor para este cliente:", { inline_keyboard: buttons });
+
             }
             else if (state?.action === 'editar_servidor' && data.startsWith('eserv_sel:')) {
               const [_, servId, servName] = data.split(':');
@@ -628,8 +675,10 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await editMessage(chatId, messageId, `<b>Alterar Vencimento</b>\nNovo: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
-                    [{ text: `Salvar: ${br}`, callback_data: "evenc_save" }]
+                    [{ text: `Salvar: ${br}`, callback_data: "evenc_save" }],
+                    [{ text: "🔙 Voltar", callback_data: `client_menu:${state.data.id}` }]
                   ]
+
                 });
               } else if (data === 'evenc_save') {
                 const isoDate = state.data.vencimento_temp?.split('T')[0];
@@ -858,11 +907,24 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             return new Response('OK');
           }
 
+          if (state?.action === 'editar_nome') {
+            if (state.data.id && text.trim()) {
+              await supabaseAdmin.from('clientes').update({ nome: text.trim() }).eq('id', state.data.id);
+              await sendMessage(chatId, "✅ Nome atualizado com sucesso!");
+              const client = await getClientById(state.data.id);
+              if (client) await sendClientFicha(chatId, client);
+            }
+            userState.delete(chatId);
+            return new Response('OK');
+          }
+
           if (state?.action === 'editar_desconto') {
             const val = parseFloat(text.replace(',', '.'));
             if (!isNaN(val) && state.data.id) {
               await supabaseAdmin.from('clientes').update({ desconto: val }).eq('id', state.data.id);
               await sendMessage(chatId, "Desconto atualizado!");
+              const client = await getClientById(state.data.id);
+              if (client) await sendClientFicha(chatId, client);
             }
             userState.delete(chatId);
             return new Response('OK');
@@ -872,10 +934,14 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (state.data.id) {
               await supabaseAdmin.from('clientes').update({ whatsapp: text }).eq('id', state.data.id);
               await sendMessage(chatId, "WhatsApp atualizado!");
+              const client = await getClientById(state.data.id);
+              if (client) await sendClientFicha(chatId, client);
             }
             userState.delete(chatId);
             return new Response('OK');
           }
+
+
 
           if (state?.action === 'buscar_cliente') {
             const results = await findClientByName(text);
@@ -935,10 +1001,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             return new Response('OK');
           }
 
-          // Comandos de texto legados (Switch) removidos pois foram substituídos por Callback Data no novo Menu Principal
           return new Response('OK');
 
-          return new Response('OK');
         } catch (e) {
           console.error("ERRO WEBHOOK TELEGRAM:", e);
           return new Response('OK');
