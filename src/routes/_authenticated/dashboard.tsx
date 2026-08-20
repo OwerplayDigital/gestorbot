@@ -82,6 +82,31 @@ type DashboardStats = {
   recentTransactions: any[];
 };
 
+const parseDate = (d: any): Date | null => {
+  if (!d || typeof d !== 'string') return null;
+  const parts = d.split(/[/-]/);
+  if (parts.length !== 3) return null;
+
+  const s0 = parts[0];
+  const s1 = parts[1];
+  const s2 = parts[2];
+  if (s0 === undefined || s1 === undefined || s2 === undefined) return null;
+
+  const p0 = Number(s0);
+  const p1 = Number(s1);
+  const p2 = Number(s2);
+
+  if (d.includes('/') || (d.includes('-') && s0.length === 2)) {
+    // DD/MM/YYYY
+    return new Date(p2, p1 - 1, p0);
+  }
+  if (d.includes('-') && s0.length === 4) {
+    // YYYY-MM-DD
+    return new Date(p0, p1 - 1, p2);
+  }
+  return null;
+};
+
 function Dashboard() {
   const [showValues, setShowValues] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -121,18 +146,13 @@ function Dashboard() {
         const expiringToday = expiringTodayRes.data ?? [];
         const rawVencidos = vencidosRes.data ?? [];
 
-        const parseDate = (d: string) => {
-          if (!d) return new Date(0);
-          const parts = d.includes('/') ? d.split('/') : d.split('-').reverse();
-          return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-        };
 
         const vencidos = rawVencidos
           .filter((c: any) => {
-            if (!c.vencimento) return false;
-            return parseDate(c.vencimento) < nowBr;
+            const vencDate = parseDate(c.vencimento);
+            return vencDate && vencDate < nowBr;
           })
-          .sort((a: any, b: any) => parseDate(a.vencimento).getTime() - parseDate(b.vencimento).getTime());
+          .sort((a: any, b: any) => parseDate(a.vencimento)!.getTime() - parseDate(b.vencimento)!.getTime());
 
         const totalClients = clients.length;
         const activeClients = clients.filter((c: any) => c.status === "ativo").length;
@@ -316,7 +336,7 @@ function Dashboard() {
                   <div key={c.id} className="flex items-center justify-between p-3 border rounded-xl">
                     <div className="flex flex-col">
                       <span className="font-bold">{c.nome}</span>
-                      <span className="text-xs text-muted-foreground">Venceu em {c.vencimento ? format(parseISO(c.vencimento), "dd/MM/yyyy") : "?"}</span>
+                      <span className="text-xs text-muted-foreground">Venceu em {c.vencimento ? format(parseDate(c.vencimento)!, "dd/MM/yyyy") : "?"}</span>
                     </div>
                     <Badge variant="destructive">{formatBRL(c.valor)}</Badge>
                   </div>
