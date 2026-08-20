@@ -216,6 +216,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
         try {
           const body = await request.json();
           if (!body) return new Response('OK');
+
+          // Log de diagnóstico para rastreio no Lovable
+          const diagChatId = body.message?.chat?.id || body.callback_query?.message?.chat?.id;
+          if (diagChatId) {
+            console.log(`[TELEGRAM WEBHOOK] Recebido update do Chat ID: ${diagChatId}`);
+          }
           
           if (body.callback_query) {
             const cb = body.callback_query;
