@@ -93,12 +93,20 @@ async function answerCallbackQuery(callbackQueryId: string, text?: string) {
 
 async function enrichClients(clients: any[]) {
   return await Promise.all(clients.map(async (c: any) => {
-    if (c.servidores_ids && c.servidores_ids.length > 0) {
+    // Captura flexível de IDs de servidores (UUIDs)
+    const rawIds = c.servidores_ids 
+      || (c.servidor_id ? [c.servidor_id] : null)
+      || (c.servidor_iptv_id ? [c.servidor_iptv_id] : null);
+
+    if (rawIds && Array.isArray(rawIds) && rawIds.length > 0) {
       const { data: sData } = await supabaseAdmin
         .from('servidores_iptv')
         .select('id, name, nome')
-        .in('id', c.servidores_ids);
+        .in('id', rawIds);
       c.servidores = sData || [];
+    } else if (c.servidor && typeof c.servidor === 'string') {
+      // Fallback para nome direto se for string
+      c.servidores = [{ name: c.servidor }];
     }
     return c;
   }));
@@ -139,12 +147,9 @@ async function sendClientCompact(chatId: number, c: any) {
     ? c.servidores.map((s: any) => s.name || s.nome).join(', ')
     : 'Não informado';
 
-  const debugInfo = `\n🔍 [DEBUG] Servidores IDs: ${JSON.stringify(c.servidores_ids || null)} | Encontrados: ${JSON.stringify(c.servidores || null)}`;
-
   const msg = `👤 Cliente: ${c.nome}\n` +
               `📅 Vencimento: ${brDate}\n` +
-              `📡 Servidor: ${nomeServidor}` +
-              debugInfo;
+              `📡 Servidor: ${nomeServidor}`;
   
   await sendMessage(chatId, msg, {
     inline_keyboard: [
@@ -178,8 +183,6 @@ async function sendClientFicha(chatId: number, c: any) {
   const encodedConfirmacao = encodeURIComponent(BOT_TEMPLATES.CONFIRMACAO(primeiroNome || '', brDate || ''));
   
   const phone = cleanPhone(c.whatsapp || '');
-  const debugInfo = `\n🔍 [DEBUG] Servidores IDs: ${JSON.stringify(c.servidores_ids || null)} | Encontrados: ${JSON.stringify(c.servidores || null)}`;
-
   const msg = `👤 <b>FICHA DO CLIENTE</b>\n\n` +
               `Nome: ${c.nome}\n` +
               `📅 Vencimento: ${brDate}\n` +
@@ -187,8 +190,7 @@ async function sendClientFicha(chatId: number, c: any) {
               `WhatsApp: ${c.whatsapp || 'N/A'}\n` +
               `Plano: ${planName}\n` +
               `Valor: R$ ${valorFinal}\n` +
-              `Status: ${c.status}` +
-              debugInfo;
+              `Status: ${c.status}`;
   
   await sendMessage(chatId, msg, {
     inline_keyboard: [
