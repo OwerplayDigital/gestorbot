@@ -272,12 +272,18 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 const clean = d.trim();
                 if (clean.includes('/')) {
                   const parts = clean.split('/').map(Number);
-                  return (parts[0] && parts[1] && parts[2]) ? new Date(parts[2], parts[1] - 1, parts[0]) : null;
+                  if (parts.length !== 3) return null;
+                  const day = parts[0], month = parts[1], year = parts[2];
+                  if (day === undefined || month === undefined || year === undefined) return null;
+                  return new Date(year, month - 1, day);
                 }
                 if (clean.includes('-')) {
                   const parts = clean.split('-').map(Number);
-                  if (parts[0] > 1000) return new Date(parts[0], parts[1] - 1, parts[2]);
-                  return new Date(parts[2], parts[1] - 1, parts[0]);
+                  if (parts.length !== 3) return null;
+                  const p0 = parts[0], p1 = parts[1], p2 = parts[2];
+                  if (p0 === undefined || p1 === undefined || p2 === undefined) return null;
+                  if (p0 > 1000) return new Date(p0, p1 - 1, p2); // YYYY-MM-DD
+                  return new Date(p2, p1 - 1, p0); // DD-MM-YYYY
                 }
                 return null;
               };
