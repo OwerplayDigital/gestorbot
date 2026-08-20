@@ -123,7 +123,7 @@ function Dashboard() {
         const vencidos = vencidosRes.data ?? [];
 
         const totalClients = clients.length;
-        const activeClients = clients.filter(c => c.status === "ativo").length;
+        const activeClients = clients.filter((c: any) => c.status === "ativo").length;
         const totalVencidos = vencidos.length;
 
         const currentMonthTransactions = transactions.filter(t => {
