@@ -921,16 +921,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
             if (command === '/planos') {
                const event = { callback_query: { id: 'cmd', data: 'list_plans', message: msg } };
-               const fakeReq = { json: async () => event } as any;
-               // @ts-ignore
-               return Route.options.server.handlers.POST({ request: fakeReq });
+               return handleTelegramEvent(event);
             }
 
             if (command === '/financeiro') {
                const event = { callback_query: { id: 'cmd', data: 'financeiro', message: msg } };
-               const fakeReq = { json: async () => event } as any;
-               // @ts-ignore
-               return Route.options.server.handlers.POST({ request: fakeReq });
+               return handleTelegramEvent(event);
             }
           }
 
@@ -1031,15 +1027,20 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 inline_keyboard: [[{ text: `Confirmar: ${br}`, callback_data: "venc_confirm" }]]
               });
             }
-            return new Response('OK');
-          }
+    }
+    return new Response('OK');
+  } catch (e) {
+    console.error("ERRO WEBHOOK TELEGRAM:", e);
+    return new Response('OK');
+  }
+}
 
-          return new Response('OK');
-
-        } catch (e) {
-          console.error("ERRO WEBHOOK TELEGRAM:", e);
-          return new Response('OK');
-        }
+export const Route = createFileRoute('/api/public/telegram-webhook')({
+  server: {
+    handlers: {
+      POST: async ({ request }): Promise<Response> => {
+        const body = await request.json();
+        return handleTelegramEvent(body);
       }
     }
   }
