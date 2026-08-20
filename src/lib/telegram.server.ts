@@ -181,7 +181,8 @@ export const listExpiredClients = async () => {
 
 export const listClientsExpiringToday = async () => {
   const { toZonedTime, format: formatTz } = await import('date-fns-tz');
-  const today = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd');
+  const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
+  const today = formatTz(nowBr, 'yyyy-MM-dd');
   
   const { data, error } = await supabaseAdmin
     .from("clientes")
