@@ -125,37 +125,50 @@ function Dashboard() {
       try {
         const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
         nowBr.setHours(0, 0, 0, 0);
-        const todayStr = formatTz(nowBr, "yyyy-MM-dd");
+        const todayIso = formatTz(nowBr, "yyyy-MM-dd");
         
         const [
           clientsRes, 
           transactionsRes, 
           serversRes, 
-          expiringTodayRes,
-          vencidosRes
+          allClientsRes
         ] = await Promise.all([
           supabase.from("clientes").select("id, status"),
           supabase.from("transacoes").select("*, clientes(nome), servidores_iptv(name)").order("data", { ascending: false }),
           supabase.from("servidores_iptv").select("id, name"),
           supabase.from("clientes")
-            .select("id, nome, vencimento, valor, desconto, servidores_ids, plano_id, plans(price)")
-            .eq("vencimento", todayStr)
-            .order("nome"),
-          supabase.from("clientes")
-            .select("id, nome, vencimento, valor, status")
+            .select("id, nome, vencimento, valor, desconto, servidores_ids, plano_id, plans(price), status")
         ]);
 
         const clients = clientsRes.data ?? [];
         const transactions = transactionsRes.data ?? [];
         const servers = serversRes.data ?? [];
-        const expiringToday = expiringTodayRes.data ?? [];
-        const rawVencidos = vencidosRes.data ?? [];
+        const allClients = allClientsRes.data ?? [];
 
+        // Filtragem robusta em memória para Vencendo Hoje e Vencidos
+        const seenIdsToday = new Set();
+        const expiringToday = allClients.filter((c: any) => {
+          if (seenIdsToday.has(c.id)) return false;
+          const vDate = parseDate(c.vencimento);
+          const isToday = vDate && vDate.getTime() === nowBr.getTime();
+          if (isToday) {
+            seenIdsToday.add(c.id);
+            return true;
+          }
+          return false;
+        }).sort((a, b) => a.nome.localeCompare(b.nome));
 
-        const vencidos = rawVencidos
+        const seenIdsVencidos = new Set();
+        const vencidos = allClients
           .filter((c: any) => {
-            const vencDate = parseDate(c.vencimento);
-            return vencDate && vencDate < nowBr;
+            if (seenIdsVencidos.has(c.id)) return false;
+            const vDate = parseDate(c.vencimento);
+            const isExpired = vDate && vDate < nowBr;
+            if (isExpired) {
+              seenIdsVencidos.add(c.id);
+              return true;
+            }
+            return false;
           })
           .sort((a: any, b: any) => {
             const dateA = parseDate(a.vencimento);
