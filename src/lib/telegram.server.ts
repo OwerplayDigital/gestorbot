@@ -280,27 +280,33 @@ export const findClientByName = async (name: string) => {
   
   // Buscar nomes dos servidores separadamente se houver IDs
   const result = await Promise.all(data.map(async (c: any) => {
-    const serverKey = Object.keys(c).find(k => /servidor|server/i.test(k) && c[k] !== null && c[k] !== undefined);
-    const valorServidor = serverKey ? c[serverKey] : null;
+    const possibleIds = [
+      c.servidores_ids,
+      c.servidor_id,
+      c.servidor_iptv_id,
+      c.servidor
+    ].flat().filter(id => 
+      typeof id === 'string' && 
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    );
 
     let servidores: any[] = [];
-    if (valorServidor) {
-      if (typeof valorServidor === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(valorServidor)) {
-        servidores = [{ name: valorServidor }];
-      } else {
-        const rawIds = Array.isArray(valorServidor) ? valorServidor : [valorServidor];
-        const validIds = rawIds.filter(id => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
-        if (validIds.length > 0) {
-          const { data: sData } = await supabaseAdmin
-            .from('servidores_iptv')
-            .select('id, name, nome')
-            .in('id', validIds);
-          
-          servidores = (sData || []).map((s: any) => ({
-            ...s,
-            name: s.name || s.nome || 'Servidor'
-          }));
-        }
+    if (possibleIds.length > 0) {
+      const { data: sData } = await supabaseAdmin
+        .from('servidores_iptv')
+        .select('id, name, nome')
+        .in('id', possibleIds);
+      
+      servidores = (sData || []).map((s: any) => ({
+        ...s,
+        name: s.name || s.nome || 'Servidor'
+      }));
+    } else {
+      const serverText = typeof c.servidor === 'string' && 
+                         !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c.servidor)
+                         ? c.servidor : null;
+      if (serverText) {
+        servidores = [{ name: serverText }];
       }
     }
     return { ...c, servidores };
