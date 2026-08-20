@@ -61,12 +61,27 @@ export const Route = createFileRoute('/api/public/cron-notifications')({
         // Data atual em Brasília para o filtro de vencimento
         const today = formatTz(brTime, 'yyyy-MM-dd');
         
-        const { data: authUsers, error: authError } = await supabaseAdmin
+        let authUsers: { telegram_chat_id: string | number; user_id: string }[] = [];
+        const { data: dbAuthUsers, error: authError } = await supabaseAdmin
           .from("telegram_authorized_users")
           .select("telegram_chat_id, user_id");
 
-        if (authError || !authUsers) {
-          return new Response(JSON.stringify({ error: authError }), { status: 500 });
+        if (dbAuthUsers && dbAuthUsers.length > 0) {
+          authUsers = dbAuthUsers;
+        } else {
+          // Fallback: Usar TELEGRAM_ALLOWED_USER_ID ou TELEGRAM_ADMIN_ID
+          const adminChatId = process.env['TELEGRAM_ALLOWED_USER_ID'] || process.env['TELEGRAM_ADMIN_ID'];
+          if (adminChatId) {
+            const { data: userData } = await supabaseAdmin.auth.admin.listUsers();
+            const firstUser = userData?.users?.[0];
+            if (firstUser) {
+              authUsers = [{ telegram_chat_id: adminChatId, user_id: firstUser.id }];
+            }
+          }
+        }
+
+        if (authUsers.length === 0) {
+          return new Response(JSON.stringify({ error: "Nenhum administrador configurado ou encontrado." }), { status: 404 });
         }
 
         let totalSent = 0;

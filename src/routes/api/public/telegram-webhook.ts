@@ -843,6 +843,9 @@ async function handleTelegramEvent(body: any): Promise<Response> {
           const chatId = msg.chat.id;
           const text = msg.text || '';
           
+          // Tentar vínculo automático se for o admin
+          await (await import('@/lib/telegram.server')).bindAdminIfMatching(chatId);
+
           const userId = await getAuthorizedUser(chatId);
           if (!userId) return new Response('OK');
 

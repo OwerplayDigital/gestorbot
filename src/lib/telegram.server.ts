@@ -33,6 +33,49 @@ export const getAuthorizedUser = async (chatId: number) => {
   return userId;
 };
 
+export const bindAdminIfMatching = async (chatId: number) => {
+  const allowedId = process.env['TELEGRAM_ALLOWED_USER_ID'] || process.env['TELEGRAM_ADMIN_ID'];
+  if (!allowedId || chatId.toString() !== allowedId) return null;
+
+  // Verificar se já existe vínculo
+  const { data: existing } = await supabaseAdmin
+    .from("telegram_authorized_users")
+    .select("user_id")
+    .eq("telegram_chat_id", chatId)
+    .maybeSingle();
+
+  if (existing) return existing.user_id;
+
+  // Buscar o primeiro usuário administrador do sistema (auth.users)
+  // Como não temos acesso direto à tabela auth.users via query builder padrão em alguns contextos,
+  // vamos tentar buscar da tabela profiles ou similar se existir, ou usar o service_role.
+  // Em projetos Lovable, o primeiro usuário criado geralmente é o admin.
+  
+  // Vamos buscar o primeiro usuário que possua clientes ou transações se possível,
+  // ou simplesmente o primeiro da tabela de usuários se disponível via admin.
+  const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers();
+  const firstUser = userData?.users?.[0];
+
+  if (!firstUser) {
+    console.error("Nenhum usuário encontrado no Auth para vincular o Admin do Telegram.");
+    return null;
+  }
+
+  const { error: insertError } = await supabaseAdmin
+    .from("telegram_authorized_users")
+    .insert({
+      telegram_chat_id: chatId,
+      user_id: firstUser.id,
+    });
+
+  if (insertError) {
+    console.error("Erro ao vincular admin automaticamente:", insertError);
+    return null;
+  }
+
+  return firstUser.id;
+};
+
 export const setUserStep = async (chatId: number, step: string | null) => {
   const { error } = await supabaseAdmin
     .from("telegram_authorized_users")
