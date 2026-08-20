@@ -176,8 +176,7 @@ async function sendClientFicha(chatId: number, c: any) {
         { text: "Editar", callback_data: `edit_client_full:${c.id}` }
       ],
       [
-        { text: "Excluir", callback_data: `delete_client_confirm:${c.id}` },
-        { text: "Menu Principal", callback_data: "back_to_main" }
+        { text: "Excluir", callback_data: `delete_client_confirm:${c.id}` }
       ]
     ]
   });
@@ -243,8 +242,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await sendMessage(chatId, msg, {
                   inline_keyboard: [
                     [{ text: "Atualizar", callback_data: "financeiro" }],
-                    [{ text: "Zerar Financeiro", callback_data: "reset_global_confirm" }],
-                    [{ text: "Menu Principal", callback_data: "back_to_main" }]
+                    [{ text: "Zerar Financeiro", callback_data: "reset_global_confirm" }]
                   ]
                 });
               }
@@ -254,9 +252,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (data === 'vencendo_hoje') {
               const today = await listClientsExpiringToday();
               if (today.length === 0) {
-                await sendMessage(chatId, 'Ninguém vence hoje.', {
-                  inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
-                });
+                await sendMessage(chatId, 'Ninguém vence hoje.');
               } else {
                 for (const c of today) {
                   const fullClient = await findClientByName(c.nome);
@@ -270,9 +266,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (data === 'vencidos') {
               const expired = await listExpiredClients();
               if (expired.length === 0) {
-                await sendMessage(chatId, 'Nenhum cliente vencido.', {
-                  inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
-                });
+                await sendMessage(chatId, 'Nenhum cliente vencido.');
               } else {
                 for (const c of expired) {
                   const fullClient = await findClientByName(c.nome);
@@ -286,18 +280,14 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (data === 'list_servers') {
               const servers = await listServers();
               const sMsg = servers.map(s => `• ${s.name}: R$ ${s.valor}`).join('\n') || 'Nenhum servidor.';
-              await sendMessage(chatId, `<b>SERVIDORES:</b>\n${sMsg}`, {
-                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
-              });
+              await sendMessage(chatId, `<b>SERVIDORES:</b>\n${sMsg}`);
               return new Response('OK');
             }
 
             if (data === 'list_plans') {
               const plans = await listPlans();
               const pMsg = plans.map(p => `• ${p.name}: R$ ${p.price}`).join('\n') || 'Nenhum plano.';
-              await sendMessage(chatId, `<b>PLANOS:</b>\n${pMsg}`, {
-                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
-              });
+              await sendMessage(chatId, `<b>PLANOS:</b>\n${pMsg}`);
               return new Response('OK');
             }
 
@@ -305,8 +295,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const id = data.split(':')[1];
               await editMessage(chatId, cb.message.message_id, "⚠️ <b>CONFIRMAÇÃO</b>\n\nDeseja realmente EXCLUIR este cliente? Todos os dados e histórico serão removidos.", {
                 inline_keyboard: [
-                  [{ text: "✅ Sim, Excluir", callback_data: `delete_client_exec:${id}` }],
-                  [{ text: "❌ Cancelar", callback_data: "back_to_main" }]
+                  [{ text: "✅ Sim, Excluir", callback_data: `delete_client_exec:${id}` }]
                 ]
               });
               return new Response('OK');
@@ -338,8 +327,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const id = data.split(':')[1];
               await editMessage(chatId, messageId, "CONFIRMAÇÃO CRÍTICA\n\nTem certeza que deseja resetar o financeiro deste cliente? Essa ação não pode ser desfeita e limpará todo o histórico de transações e renovações.", {
                 inline_keyboard: [
-                  [{ text: "Sim, Resetar Agora", callback_data: `reset_fin_exec:${id}` }],
-                  [{ text: "Cancelar", callback_data: "back_to_main" }]
+                  [{ text: "Sim, Resetar Agora", callback_data: `reset_fin_exec:${id}` }]
                 ]
               });
             }
@@ -355,8 +343,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             else if (data === 'reset_global_confirm') {
               await editMessage(chatId, messageId, "ATENÇÃO: Deseja realmente resetar e zerar todos os registros e relatórios do financeiro? Essa ação não afetará o cadastro dos seus clientes, mas limpará o histórico financeiro do mês.", {
                 inline_keyboard: [
-                  [{ text: "Sim, Zerar Financeiro", callback_data: "reset_global_exec" }],
-                  [{ text: "Cancelar", callback_data: "back_to_main" }]
+                  [{ text: "Sim, Zerar Financeiro", callback_data: "reset_global_exec" }]
                 ]
               });
             }
@@ -387,8 +374,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await editMessage(chatId, messageId, `<b>Renovação de Assinatura</b>\nSugestão de novo vencimento: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
-                    [{ text: `Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
-                    [{ text: "Cancelar", callback_data: "back_to_main" }]
+                    [{ text: `Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }]
                   ]
                 });
               }
@@ -409,8 +395,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await editMessage(chatId, messageId, `<b>Renovação de Assinatura</b>\nNovo vencimento: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
-                    [{ text: `Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
-                    [{ text: "Cancelar", callback_data: "back_to_main" }]
+                    [{ text: `Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }]
                   ]
                 });
               } else if (data === 'erenew_confirm') {
@@ -428,8 +413,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   );
                   await sendMessage(chatId, `<b>Assinatura Renovada!</b>\nO caixa foi atualizado automaticamente.`, {
                     inline_keyboard: [
-                    [{ text: "Enviar Comprovante", url: `https://wa.me/${phone}?text=${encodedReceipt}` }],
-                    [{ text: "Menu Principal", callback_data: "back_to_main" }]
+                    [{ text: "Enviar Comprovante", url: `https://wa.me/${phone}?text=${encodedReceipt}` }]
                   ]
                 });
               }
@@ -446,8 +430,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await editMessage(chatId, messageId, `<b>Alterar Vencimento</b>\nAtual: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
-                    [{ text: `Salvar: ${br}`, callback_data: "evenc_save" }],
-                    [{ text: "Cancelar", callback_data: "back_to_main" }]
+                    [{ text: `Salvar: ${br}`, callback_data: "evenc_save" }]
                   ]
                 });
               }
@@ -498,8 +481,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await editMessage(chatId, messageId, `<b>Alterar Vencimento</b>\nNovo: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
-                    [{ text: `Salvar: ${br}`, callback_data: "evenc_save" }],
-                    [{ text: "Cancelar", callback_data: "back_to_main" }]
+                    [{ text: `Salvar: ${br}`, callback_data: "evenc_save" }]
                   ]
                 });
               } else if (data === 'evenc_save') {
@@ -648,8 +630,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   inline_keyboard: [
                     [{ text: "Cobrar Cliente", url: `https://wa.me/${phone}?text=${encodedMsg}` }],
                     [{ text: "Ver Ficha", callback_data: `view_client:${d.nome}` }],
-                    [{ text: "Novo Cliente", callback_data: "new_client_fast" }],
-                    [{ text: "Menu Principal", callback_data: "back_to_main" }]
+                    [{ text: "Novo Cliente", callback_data: "new_client_fast" }]
                   ]
                 });
                 userState.delete(chatId);
@@ -688,8 +669,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (results.length === 0) {
               await sendMessage(chatId, `Nenhum cliente encontrado com o nome '${termo}'.`, {
                 inline_keyboard: [
-                  [{ text: "Buscar Novamente", callback_data: "search_retry" }],
-                  [{ text: "Voltar", callback_data: "back_to_main" }]
+                  [{ text: "Buscar Novamente", callback_data: "search_retry" }]
                 ]
               });
             } else {
@@ -713,8 +693,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (results.length === 0) {
               await sendMessage(chatId, `Nenhum cliente encontrado com o nome '${termo}'.`, {
                 inline_keyboard: [
-                  [{ text: "Buscar Novamente", callback_data: "search_retry" }],
-                  [{ text: "Voltar", callback_data: "back_to_main" }]
+                  [{ text: "Buscar Novamente", callback_data: "search_retry" }]
                 ]
               });
             } else {
@@ -736,9 +715,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             const val = parseFloat(text.replace(',', '.'));
             if (!isNaN(val) && state.data.id) {
               await supabaseAdmin.from('clientes').update({ desconto: val }).eq('id', state.data.id);
-              await sendMessage(chatId, "Desconto atualizado!", {
-                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
-              });
+              await sendMessage(chatId, "Desconto atualizado!");
             }
             userState.delete(chatId);
             return new Response('OK');
@@ -747,9 +724,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           if (state?.action === 'editar_whatsapp') {
             if (state.data.id) {
               await supabaseAdmin.from('clientes').update({ whatsapp: text }).eq('id', state.data.id);
-              await sendMessage(chatId, "WhatsApp atualizado!", {
-                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
-              });
+              await sendMessage(chatId, "WhatsApp atualizado!");
             }
             userState.delete(chatId);
             return new Response('OK');
@@ -758,9 +733,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           if (state?.action === 'buscar_cliente') {
             const results = await findClientByName(text);
             if (results.length === 0) {
-              await sendMessage(chatId, "Nenhum cliente encontrado.", {
-                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
-              });
+              await sendMessage(chatId, "Nenhum cliente encontrado.");
             } else {
               for (const c of results) {
                 await sendClientFicha(chatId, c);
