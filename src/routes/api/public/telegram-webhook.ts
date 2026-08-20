@@ -430,8 +430,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await editMessage(chatId, messageId, `<b>Alterar Vencimento</b>\nAtual: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
-                    [{ text: `Salvar: ${br}`, callback_data: "evenc_save" }],
-                    [{ text: "Cancelar", callback_data: "back_to_main" }]
+                    [{ text: `Salvar: ${br}`, callback_data: "evenc_save" }]
                   ]
                 });
               }
