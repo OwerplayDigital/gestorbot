@@ -746,7 +746,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 ]
               });
             } else {
-              for (const c of results) {
+              const enrichedResults = await enrichClients(results);
+              for (const c of enrichedResults) {
                 await sendClientFicha(chatId, c);
               }
             }
