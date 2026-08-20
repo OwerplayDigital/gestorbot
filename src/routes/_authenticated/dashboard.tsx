@@ -112,8 +112,8 @@ function Dashboard() {
             .order("nome"),
           supabase.from("clientes")
             .select("id, nome, vencimento, valor, status")
-            .eq("status", "vencido")
-            .order("vencimento", { ascending: false })
+            .lt("vencimento", todayStr)
+            .order("vencimento", { ascending: true })
         ]);
 
         const clients = clientsRes.data ?? [];

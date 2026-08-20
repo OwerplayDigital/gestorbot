@@ -157,12 +157,14 @@ export const getClientsSummary = async () => {
 };
 
 export const listExpiredClients = async () => {
+  const { toZonedTime, format: formatTz } = await import('date-fns-tz');
+  const today = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd');
+  
   const { data, error } = await supabaseAdmin
     .from("clientes")
     .select("id, nome, vencimento, whatsapp")
-    .eq("status", "vencido")
-    .order('vencimento', { ascending: true })
-    .limit(15);
+    .lt("vencimento", today)
+    .order('vencimento', { ascending: true });
 
   if (error) {
     console.error("Erro Supabase (expired select):", error);
