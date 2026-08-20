@@ -216,7 +216,7 @@ function Dashboard() {
           return {
             ...c,
             valorFinal: Math.max(0, base - Number(c.desconto || 0)),
-            serverName: servers.find(s => c.servidores_ids?.includes(s.id))?.name || "N/A"
+            serverName: c.servidores?.[0]?.name || c.servidores?.name || servers.find(s => c.servidores_ids?.includes(s.id))?.name || "N/A"
           };
         });
 
