@@ -96,13 +96,18 @@ const parseDate = (d: any): Date | null => {
   const p1 = Number(s1);
   const p2 = Number(s2);
 
+  let resultDate: Date | null = null;
   if (d.includes('/') || (d.includes('-') && s0.length === 2)) {
     // DD/MM/YYYY
-    return new Date(p2, p1 - 1, p0);
-  }
-  if (d.includes('-') && s0.length === 4) {
+    resultDate = new Date(p2, p1 - 1, p0);
+  } else if (d.includes('-') && s0.length === 4) {
     // YYYY-MM-DD
-    return new Date(p0, p1 - 1, p2);
+    resultDate = new Date(p0, p1 - 1, p2);
+  }
+
+  if (resultDate && !isNaN(resultDate.getTime())) {
+    resultDate.setHours(0, 0, 0, 0);
+    return resultDate;
   }
   return null;
 };
