@@ -334,6 +334,16 @@ export const renewClient = async (
     }
   }
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const currentVenc = client.vencimento ? new Date(client.vencimento + 'T12:00:00') : today;
+  
+  // Regra de data: Se vencido, Hoje + 30 dias. Se em dia, Vencimento + 30 dias.
+  const baseDate = currentVenc < today ? today : currentVenc;
+  const nextDate = new Date(baseDate);
+  nextDate.setDate(nextDate.getDate() + 30);
+  const calculatedNewVencimento = nextDate.toISOString().split('T')[0];
+
   const valorEntrada = Number(plan.price) - Number(client.desconto || 0);
   const vencimentoAnterior = client.vencimento;
 
@@ -351,7 +361,7 @@ export const renewClient = async (
       valor: valorEntrada,
       desconto: client.desconto,
       vencimento_anterior: vencimentoAnterior,
-      novo_vencimento: newVencimento,
+      novo_vencimento: calculatedNewVencimento || newVencimento,
       data_renovacao: new Date().toISOString(),
     });
 
@@ -382,7 +392,7 @@ export const renewClient = async (
   const { data: updatedClient, error: updateError } = await supabaseAdmin
     .from("clientes")
     .update({
-      vencimento: newVencimento,
+      vencimento: calculatedNewVencimento || newVencimento,
       status: 'ativo'
     })
     .eq("id", clientId)

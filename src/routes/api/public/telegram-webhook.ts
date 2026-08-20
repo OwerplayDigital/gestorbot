@@ -374,7 +374,13 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const id = data.split(':')[1];
               const { data: c } = await supabaseAdmin.from('clientes').select('vencimento').eq('id', id).single();
               if (c) {
-                const nextMonth = new Date(c.vencimento + 'T12:00:00');
+                const currentVenc = new Date(c.vencimento + 'T12:00:00');
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                // Regra visual no Bot: se vencido, Hoje + 30. Se em dia, Vencimento + 30.
+                const baseDate = currentVenc < today ? today : currentVenc;
+                const nextMonth = new Date(baseDate);
                 nextMonth.setDate(nextMonth.getDate() + 30);
                 userState.set(chatId, { action: 'renovar_cliente', step: 1, data: { id, vencimento_temp: nextMonth.toISOString() } as any });
                 const br = formatBRDate(nextMonth);
