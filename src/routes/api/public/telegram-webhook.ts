@@ -271,11 +271,16 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
               const { data: clients, error } = await supabaseAdmin
                 .from("clientes")
-                .select("id, nome, vencimento, whatsapp, servidores(name), plans(name, price)");
+                .select("*");
 
-              if (error || !Array.isArray(clients)) {
+              if (error) {
                 console.error("Erro ao buscar vencidos no webhook:", error);
-                await sendMessage(chatId, 'Erro ao buscar dados no banco.');
+                await sendMessage(chatId, `⚠️ Erro no Banco: ${error.message}`);
+                return new Response('OK');
+              }
+
+              if (!Array.isArray(clients)) {
+                await sendMessage(chatId, 'Erro ao buscar dados no banco: Resposta inválida.');
                 return new Response('OK');
               }
 
