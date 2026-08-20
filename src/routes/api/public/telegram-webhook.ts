@@ -1001,10 +1001,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             return new Response('OK');
           }
 
-          // Comandos de texto legados (Switch) removidos pois foram substituídos por Callback Data no novo Menu Principal
           return new Response('OK');
 
-          return new Response('OK');
         } catch (e) {
           console.error("ERRO WEBHOOK TELEGRAM:", e);
           return new Response('OK');
