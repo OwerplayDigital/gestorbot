@@ -169,31 +169,32 @@ export const getClientsSummary = async () => {
 export const listExpiredClients = async () => {
   const { toZonedTime, format: formatTz } = await import('date-fns-tz');
   const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
+  nowBr.setHours(0, 0, 0, 0);
   const today = formatTz(nowBr, 'yyyy-MM-dd');
   
+  // Buscamos todos para filtrar em memória devido ao formato DD/MM/YYYY no banco
   const { data, error } = await supabaseAdmin
     .from("clientes")
-    .select("id, nome, vencimento, whatsapp")
-    .or(`vencimento.lt.${today},vencimento.like.%/%`) // Busca vencidos ou datas em formato BR para filtrar no JS
-    .order('vencimento', { ascending: true });
+    .select("id, nome, vencimento, whatsapp");
 
   if (error) {
     console.error("Erro Supabase (expired select):", error);
     throw error;
   }
 
-  // Filtro refinado para garantir ISO e comparação correta
-  const filteredData = (data || []).filter((c: any) => {
-    if (!c.vencimento) return false;
-    const isoVenc = c.vencimento.includes('/') 
-      ? c.vencimento.split('/').reverse().join('-') 
-      : c.vencimento;
-    return isoVenc < today;
-  }).sort((a: any, b: any) => {
-    const dateA = a.vencimento.includes('/') ? a.vencimento.split('/').reverse().join('-') : a.vencimento;
-    const dateB = b.vencimento.includes('/') ? b.vencimento.split('/').reverse().join('-') : b.vencimento;
-    return (dateA || '').localeCompare(dateB || '');
-  });
+  const parseDate = (d: string) => {
+    if (!d) return new Date(0);
+    const [day, month, year] = d.includes('/') ? d.split('/') : d.split('-').reverse();
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  };
+
+  const filteredData = (data || [])
+    .filter((c: any) => {
+      if (!c.vencimento) return false;
+      const vencDate = parseDate(c.vencimento);
+      return vencDate < nowBr;
+    })
+    .sort((a: any, b: any) => parseDate(a.vencimento).getTime() - parseDate(b.vencimento).getTime());
   
   return filteredData;
 };
