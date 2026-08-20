@@ -150,11 +150,11 @@ export const getClientsSummary = async () => {
   }
 
   const total = allClients.length;
-  const ativos = allClients.filter(c => c.status === 'ativo').length;
+  const ativos = allClients.filter((c: any) => c.status === 'ativo').length;
   
   const { toZonedTime, format: formatTz } = await import('date-fns-tz');
   const today = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd');
-  const vencidos = allClients.filter(c => c.vencimento && c.vencimento < today).length;
+  const vencidos = allClients.filter((c: any) => c.vencimento && c.vencimento < today).length;
 
   return { total, ativos, vencidos };
 };
