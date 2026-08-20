@@ -198,10 +198,7 @@ function parseBRDate(brDate: string): string | null {
   return isNaN(date.getTime()) ? null : (date.toISOString().split('T')[0] ?? null);
 }
 
-export const Route = createFileRoute('/api/public/telegram-webhook')({
-  server: {
-    handlers: {
-      POST: async ({ request }): Promise<Response> => {
+async function handleTelegramEvent(body: any): Promise<Response> {
         try {
           const body = await request.json();
           if (!body) return new Response('OK');
