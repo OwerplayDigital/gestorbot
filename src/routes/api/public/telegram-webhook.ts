@@ -317,7 +317,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
               const { data: clients, error } = await supabaseAdmin
                 .from("clientes")
-                .select("*, servidores_ids, servidor_id, servidor_iptv_id, servidor");
+                .select("*, servidores_ids");
 
               if (error || !Array.isArray(clients)) {
                 await sendMessage(chatId, `⚠️ Erro no Banco: ${error?.message || 'Dados inválidos'}`);

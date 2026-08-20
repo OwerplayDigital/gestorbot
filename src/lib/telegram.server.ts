@@ -240,6 +240,7 @@ export const listExpiredClients = async () => {
   
   // Buscar nomes dos servidores para os clientes filtrados
   const result = await Promise.all(filteredData.map(async (c: any) => {
+    // Captura flexível de IDs de servidores ou fallbacks para nomes/colunas extras
     const rawIds = c.servidores_ids 
       || (c.servidor_id ? [c.servidor_id] : null)
       || (c.servidor_iptv_id ? [c.servidor_iptv_id] : null);
@@ -274,9 +275,6 @@ export const listClientsExpiringToday = async () => {
       vencimento, 
       whatsapp,
       servidores_ids,
-      servidor_id,
-      servidor_iptv_id,
-      servidor,
       plano_id
     `);
 
@@ -366,9 +364,6 @@ export const findClientByName = async (name: string) => {
       desconto,
       plano_id,
       servidores_ids,
-      servidor_id,
-      servidor_iptv_id,
-      servidor,
       plans:plans(id, name, price)
     `)
     .ilike("nome", `%${name}%`)
