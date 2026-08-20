@@ -273,29 +273,28 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 .from("clientes")
                 .select("id, nome, vencimento, whatsapp, servidores(name), plans(name, price)");
 
-              if (error) {
+              if (error || !Array.isArray(clients)) {
                 console.error("Erro ao buscar vencidos no webhook:", error);
-                await sendMessage(chatId, 'Erro ao processar lista de vencidos.');
+                await sendMessage(chatId, 'Erro ao buscar dados no banco.');
                 return new Response('OK');
               }
 
               const parseDate = (d: any): Date | null => {
-                if (!d || typeof d !== 'string') return null;
-                const parts = d.split(/[/-]/);
-                if (parts.length !== 3) return null;
-                const p0 = Number(parts[0]), p1 = Number(parts[1]), p2 = Number(parts[2]);
-                let res: Date | null = null;
-                const s0 = parts[0];
-                if (s0 === undefined) return null;
-
-                if (d.includes('/') || (d.includes('-') && s0.length === 2)) {
-                  res = new Date(p2, p1 - 1, p0);
-                } else if (d.includes('-') && s0.length === 4) {
-                  res = new Date(p0, p1 - 1, p2);
+                if (!d || typeof d !== 'string' || !d.trim()) return null;
+                const clean = d.trim();
+                if (clean.includes('/')) {
+                  const parts = clean.split('/').map(Number);
+                  const day = parts[0], month = parts[1], year = parts[2];
+                  if (day === undefined || month === undefined || year === undefined) return null;
+                  return (day && month && year) ? new Date(year, month - 1, day) : null;
                 }
-                if (res && !isNaN(res.getTime())) {
-                  res.setHours(0, 0, 0, 0);
-                  return res;
+                if (clean.includes('-')) {
+                  const parts = clean.split('-').map(Number);
+                  if (parts.length !== 3) return null;
+                  const p0 = parts[0], p1 = parts[1], p2 = parts[2];
+                  if (p0 === undefined || p1 === undefined || p2 === undefined) return null;
+                  if (p0 > 1000) return new Date(p0, p1 - 1, p2); // YYYY-MM-DD
+                  return new Date(p2, p1 - 1, p0); // DD-MM-YYYY
                 }
                 return null;
               };
