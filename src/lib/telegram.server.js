@@ -9,9 +9,9 @@ export const BOT_TEMPLATES = {
         `Aqui está o seu link para renovação da assinatura:\n\n` +
         `🔗 ${url}\n\n` +
         `Após o pagamento, sua assinatura será renovada automaticamente.`,
-    CONFIRMACAO: (nome, data) => `📌 Obrigado pela confiança!\n` +
-        `✅ Sua assinatura foi renovada com sucesso!\n` +
-        `🗓️ *PRÓXIMO VENCIMENTO:* (${data})`
+    CONFIRMACAO: (nome, data) => `📌 Obrigado pela confiança!\n\n` +
+      `✅ Sua assinatura foi renovada com sucesso!\n\n` +
+      `🗓️ *PRÓXIMO VENCIMENTO:* ${data}`
 };
 export const getAuthorizedUser = async (chatId) => {
     const allowedId = process.env['TELEGRAM_ALLOWED_USER_ID'];

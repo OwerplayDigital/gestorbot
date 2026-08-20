@@ -554,7 +554,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   const primeiroNome = updated.nome ? updated.nome.trim().split(' ')[0] : 'Cliente';
                   const phone = cleanPhone(updated.whatsapp || '');
                   const encodedReceipt = encodeURIComponent(
-                    `📌 Obrigado pela confiança, ${primeiroNome}!\n\n` +
+                    `📌 Obrigado pela confiança!\n\n` +
                     `✅ Sua assinatura foi renovada com sucesso!\n\n` +
                     `PRÓXIMO VENCIMENTO: (${br})`
                   );
