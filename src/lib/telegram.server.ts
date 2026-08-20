@@ -273,14 +273,7 @@ export const listClientsExpiringToday = async () => {
   
   const { data, error } = await supabaseAdmin
     .from("clientes")
-    .select(`
-      id, 
-      nome, 
-      vencimento, 
-      whatsapp,
-      servidores_ids,
-      plano_id
-    `);
+    .select("*");
 
   if (error || !Array.isArray(data)) {
     console.error("Erro Supabase (today select):", error);
