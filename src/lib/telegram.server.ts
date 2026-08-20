@@ -184,17 +184,17 @@ export const listExpiredClients = async () => {
 
   const parseDate = (d: any): Date | null => {
     if (!d || typeof d !== 'string') return null;
-    const parts = d.split(/[/-]/).map(Number);
+    const parts = d.split(/[/-]/);
     if (parts.length !== 3) return null;
-    const p0 = parts[0]!;
-    const p1 = parts[1]!;
-    const p2 = parts[2]!;
+    const p0 = Number(parts[0]);
+    const p1 = Number(parts[1]);
+    const p2 = Number(parts[2]);
 
-    if (d.includes('/') || (d.includes('-') && d.split('-')[0].length === 2)) {
+    if (d.includes('/') || (d.includes('-') && parts[0].length === 2)) {
       // DD/MM/YYYY
       return new Date(p2, p1 - 1, p0);
     }
-    if (d.includes('-') && d.split('-')[0].length === 4) {
+    if (d.includes('-') && parts[0].length === 4) {
       // YYYY-MM-DD
       return new Date(p0, p1 - 1, p2);
     }
