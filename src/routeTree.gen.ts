@@ -13,7 +13,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as PagarIdRouteImport } from './routes/pagar.$id'
 import { Route as ApiPublicCronNotificationsRouteImport } from './routes/api/public/cron-notifications'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram-webhook'
@@ -35,11 +34,6 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
-  id: '/templates',
-  path: '/templates',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const PagarIdRoute = PagarIdRouteImport.update({
@@ -64,7 +58,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/templates': typeof AuthenticatedTemplatesRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
@@ -73,7 +66,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/templates': typeof AuthenticatedTemplatesRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
@@ -84,7 +76,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
-  '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
@@ -95,7 +86,6 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/settings'
-    | '/templates'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
     | '/api/public/telegram-webhook'
@@ -104,7 +94,6 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/settings'
-    | '/templates'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
     | '/api/public/telegram-webhook'
@@ -114,7 +103,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/_authenticated/dashboard'
     | '/_authenticated/settings'
-    | '/_authenticated/templates'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
     | '/api/public/telegram-webhook'
@@ -158,13 +146,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/templates': {
-      id: '/_authenticated/templates'
-      path: '/templates'
-      fullPath: '/templates'
-      preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/pagar/$id': {
       id: '/pagar/$id'
       path: '/pagar/$id'
@@ -192,13 +173,11 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
-  AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
-  AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
