@@ -1,6 +1,8 @@
 export const BOT_TEMPLATES = {
   COBRANCA: (nome: string, data: string, url: string = ""): string => 
-    `Olá ${nome}, sua assinatura vence dia ${data}!\n\n` +
+    `Olá ${nome}, bom dia!\n` +
+    `Seu plano de TV vence hoje: *${data}*\n\n` +
+    `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n\n` +
     `🔗 *Acesse o link seguro para copiar o PIX e renovar:*\n\n` +
     `${url}`,
 
