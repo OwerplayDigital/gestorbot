@@ -53,7 +53,8 @@ function TemplatesPage() {
     } else {
       setTemplates((data || []).map(t => ({
         ...t,
-        type: (t.type as any) || 'personalizado'
+        type: (t.type as any) || 'personalizado',
+        is_default: !!t.is_default
       })));
     }
     setLoading(false);
