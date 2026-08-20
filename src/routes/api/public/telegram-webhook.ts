@@ -168,16 +168,21 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           }
           else if (data.startsWith('view_client:')) {
             const clientId = data.split(':')[1];
-            const clients = await findClientByName(""); // Fallback search helper could be improved
-            const { data: c } = await supabaseAdmin.from('clientes').select('*, plans(*), servidores_iptv(*)').eq('id', clientId).single();
+            const { data: c, error } = await supabaseAdmin
+              .from('clientes')
+              .select('*, plans(*)')
+              .eq('id', clientId)
+              .maybeSingle();
+            
             if (c) {
-                // Manual join simulation as findClientByName does it but we need a single one
                 let servidores: any[] = [];
                 if (c.servidores_ids && c.servidores_ids.length > 0) {
                   const { data: sData } = await supabaseAdmin.from('servidores_iptv').select('id, name').in('id', c.servidores_ids);
                   servidores = sData || [];
                 }
                 await sendClientFicha(chatId, { ...c, servidores });
+            } else {
+                await sendMessage(chatId, "❌ Cliente não encontrado.");
             }
           }
           else if (data.startsWith('list_templates:')) {
