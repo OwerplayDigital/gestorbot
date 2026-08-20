@@ -257,7 +257,8 @@ export const listExpiredClients = async () => {
 export const listClientsExpiringToday = async () => {
   const { toZonedTime, format: formatTz } = await import('date-fns-tz');
   const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
-  const today = formatTz(nowBr, 'yyyy-MM-dd');
+  nowBr.setHours(0, 0, 0, 0);
+  const todayStr = formatTz(nowBr, 'yyyy-MM-dd');
   
   const { data, error } = await supabaseAdmin
     .from("clientes")
@@ -268,16 +269,58 @@ export const listClientsExpiringToday = async () => {
       whatsapp,
       servidores_ids,
       plans:plans(id, name, price)
-    `)
-    .eq("vencimento", today as string);
+    `);
 
-  if (error) {
+  if (error || !Array.isArray(data)) {
     console.error("Erro Supabase (today select):", error);
     throw new Error("Erro ao listar clientes vencendo hoje.");
   }
 
+  const parseDate = (d: any): Date | null => {
+    if (!d || typeof d !== 'string') return null;
+    const parts = d.split(/[/-]/);
+    if (parts.length !== 3) return null;
+    
+    const s0 = parts[0];
+    const s1 = parts[1];
+    const s2 = parts[2];
+    if (s0 === undefined || s1 === undefined || s2 === undefined) return null;
+
+    const p0 = Number(s0);
+    const p1 = Number(s1);
+    const p2 = Number(s2);
+
+    let resultDate: Date | null = null;
+    if (d.includes('/') || (d.includes('-') && s0.length === 2)) {
+      resultDate = new Date(p2, p1 - 1, p0);
+    } else if (d.includes('-') && s0.length === 4) {
+      resultDate = new Date(p0, p1 - 1, p2);
+    }
+
+    if (resultDate && !isNaN(resultDate.getTime())) {
+      resultDate.setHours(0, 0, 0, 0);
+      return resultDate;
+    }
+    return null;
+  };
+
+  // Filtrar em memória por data exata (Hoje) e remover duplicados por ID
+  const seenIds = new Set();
+  const filtered = data.filter((c: any) => {
+    if (seenIds.has(c.id)) return false;
+    
+    const vDate = parseDate(c.vencimento);
+    const isToday = vDate && vDate.getTime() === nowBr.getTime();
+    
+    if (isToday) {
+      seenIds.add(c.id);
+      return true;
+    }
+    return false;
+  });
+
   // Buscar nomes dos servidores
-  const result = await Promise.all(data.map(async (c) => {
+  const result = await Promise.all(filtered.map(async (c) => {
     let servidores: any[] = [];
     if (c.servidores_ids && c.servidores_ids.length > 0) {
       const { data: sData } = await supabaseAdmin
