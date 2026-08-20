@@ -137,7 +137,7 @@ function MiniAppComponent() {
       
       // Copy renewal message
       const serverName = servers.find(s => client.servidores_ids?.includes(s.id))?.name || "IPTV";
-      const message = BOT_TEMPLATES.CONFIRMACAO(client.nome, nextVencStr);
+      const message = BOT_TEMPLATES.CONFIRMACAO(client.nome, format(nextVenc, "dd/MM/yyyy"));
       
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(message);
