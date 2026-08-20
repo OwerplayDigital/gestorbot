@@ -343,8 +343,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             else if (data === 'reset_global_confirm') {
               await editMessage(chatId, messageId, "ATENÇÃO: Deseja realmente resetar e zerar todos os registros e relatórios do financeiro? Essa ação não afetará o cadastro dos seus clientes, mas limpará o histórico financeiro do mês.", {
                 inline_keyboard: [
-                  [{ text: "Sim, Zerar Financeiro", callback_data: "reset_global_exec" }],
-                  [{ text: "Cancelar", callback_data: "back_to_main" }]
+                  [{ text: "Sim, Zerar Financeiro", callback_data: "reset_global_exec" }]
                 ]
               });
             }
