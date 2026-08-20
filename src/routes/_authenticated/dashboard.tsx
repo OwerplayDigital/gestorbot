@@ -82,6 +82,22 @@ type DashboardStats = {
   recentTransactions: any[];
 };
 
+const parseDate = (d: any): Date | null => {
+  if (!d || typeof d !== 'string') return null;
+  const parts = d.split(/[/-]/).map(Number);
+  if (parts.length !== 3) return null;
+
+  if (d.includes('/') || (d.includes('-') && d.split('-')[0].length === 2)) {
+    // DD/MM/YYYY
+    return new Date(parts[2], parts[1] - 1, parts[0]);
+  }
+  if (d.includes('-') && d.split('-')[0].length === 4) {
+    // YYYY-MM-DD
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+  return null;
+};
+
 function Dashboard() {
   const [showValues, setShowValues] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -121,21 +137,6 @@ function Dashboard() {
         const expiringToday = expiringTodayRes.data ?? [];
         const rawVencidos = vencidosRes.data ?? [];
 
-        const parseDate = (d: any): Date | null => {
-          if (!d || typeof d !== 'string') return null;
-          // Trata formato DD/MM/YYYY ou DD-MM-YYYY
-          if (d.includes('/') || (d.includes('-') && d.split('-')[0].length === 2)) {
-            const sep = d.includes('/') ? '/' : '-';
-            const [day, month, year] = d.split(sep).map(Number);
-            return new Date(year, month - 1, day);
-          }
-          // Trata formato YYYY-MM-DD
-          if (d.includes('-') && d.split('-')[0].length === 4) {
-            const [year, month, day] = d.split('-').map(Number);
-            return new Date(year, month - 1, day);
-          }
-          return null;
-        };
 
         const vencidos = rawVencidos
           .filter((c: any) => {
