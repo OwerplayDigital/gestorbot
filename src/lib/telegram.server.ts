@@ -492,7 +492,7 @@ export const renewClient = async (
       entrada: valorEntrada,
       custo: totalCusto,
       valor: valorEntrada - totalCusto, // 'valor' agora representa o lucro líquido para compatibilidade legada
-      data: formatTz(nowBr, 'yyyy-MM-dd'),
+      data: formatTz(nowBr, 'yyyy-MM-dd HH:mm:ss'),
       descricao: `Renovação cliente ${clientId}`,
     });
 

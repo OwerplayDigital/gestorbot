@@ -135,7 +135,7 @@ function Dashboard() {
           vencidosRes
         ] = await Promise.all([
           supabase.from("clientes").select("id, status"),
-          supabase.from("transacoes").select("*, clientes(nome), servidores_iptv(name)").order("data", { ascending: false }),
+          supabase.from("transacoes").select("*, clientes(nome), servidores_iptv(name)").order("created_at", { ascending: false }),
           supabase.from("servidores_iptv").select("id, name"),
           supabase.from("clientes")
             .select("id, nome, vencimento, valor, desconto, servidores_ids, plano_id, plans(price)")
