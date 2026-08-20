@@ -312,8 +312,9 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               }).format(new Date());
               const [y, m, d_val] = spString.split('-').map(Number);
               const todayStr = `${String(d_val).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
+              const deployTag = " [v1.0.1]";
 
-              let msg = `🚨 CLIENTES VENCIDOS (${enriched.length})\nHoje: ${todayStr}\n\n`;
+              let msg = `🚨 CLIENTES VENCIDOS (${enriched.length})${deployTag}\nHoje: ${todayStr}\n\n`;
               if (enriched.length === 0) {
                 msg += "Nenhum cliente encontrado.";
               } else {
