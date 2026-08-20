@@ -300,32 +300,69 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               return new Response('OK');
             }
 
-            if (data === 'vencendo_hoje' || data === 'vencidos') {
-              const { toZonedTime, format: formatTz } = await import('date-fns-tz');
-              const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
-              nowBr.setHours(0, 0, 0, 0);
-              const todayStr = formatTz(nowBr, 'dd/MM/yyyy');
-
-              let clients = [];
-              let label = '';
+            if (action === 'vencidos') {
+              const clients = await listExpiredClients();
+              const enriched = await enrichClients(clients);
               
-              if (data === 'vencendo_hoje') {
-                clients = await listClientsExpiringToday();
-                label = 'Vence Hoje';
-              } else {
-                clients = await listExpiredClients();
-                label = 'Vencidos encontrados';
-              }
+              const spString = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'America/Sao_Paulo',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+              }).format(new Date());
+              const [y, m, d_val] = spString.split('-').map(Number);
+              const today = new Date(y, m - 1, d_val);
+              const todayStr = `${String(d_val).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
 
-              if (clients.length === 0) {
-                await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | ${label}: 0\n\nNinguém encontrado.`);
+              let msg = `🚨 CLIENTES VENCIDOS (${enriched.length})\nHoje: ${todayStr}\n\n`;
+              if (enriched.length === 0) {
+                msg += "Nenhum cliente encontrado.";
               } else {
-                const enriched = await enrichClients(clients);
-                await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | ${label}: ${enriched.length}`);
-                for (const c of enriched) {
-                  await sendClientCompact(chatId, c);
-                }
+                enriched.forEach((c: any) => {
+                  const nomeServidor = (Array.isArray(c.servidores) && c.servidores.length > 0)
+                    ? c.servidores.map((s: any) => s.name || s.nome).join(', ')
+                    : 'Não informado';
+                  msg += `👤 Cliente: ${c.nome || 'Sem nome'}\n`;
+                  msg += `📅 Vencimento: ${c.vencimento || 'N/A'}\n`;
+                  msg += `📡 Servidor: ${nomeServidor}\n`;
+                  if (c.whatsapp) msg += `📱 WhatsApp: ${c.whatsapp}\n`;
+                  msg += `----------------------------\n`;
+                });
               }
+              await sendMessage(chatId, msg);
+              return new Response('OK');
+            }
+
+            if (action === 'vencendo_hoje' || action === 'vencimento_hoje' || data === 'vencendo_hoje') {
+              const clients = await listClientsExpiringToday();
+              const enriched = await enrichClients(clients);
+
+              const spString = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'America/Sao_Paulo',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+              }).format(new Date());
+              const [y, m, d_val] = spString.split('-').map(Number);
+              const today = new Date(y, m - 1, d_val);
+              const todayStr = `${String(d_val).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
+
+              let msg = `📅 VENCEM HOJE (${enriched.length})\nHoje: ${todayStr}\n\n`;
+              if (enriched.length === 0) {
+                msg += "Nenhum cliente encontrado.";
+              } else {
+                enriched.forEach((c: any) => {
+                  const nomeServidor = (Array.isArray(c.servidores) && c.servidores.length > 0)
+                    ? c.servidores.map((s: any) => s.name || s.nome).join(', ')
+                    : 'Não informado';
+                  msg += `👤 Cliente: ${c.nome || 'Sem nome'}\n`;
+                  msg += `📅 Vencimento: ${c.vencimento || 'N/A'}\n`;
+                  msg += `📡 Servidor: ${nomeServidor}\n`;
+                  if (c.whatsapp) msg += `📱 WhatsApp: ${c.whatsapp}\n`;
+                  msg += `----------------------------\n`;
+                });
+              }
+              await sendMessage(chatId, msg);
               return new Response('OK');
             }
 
