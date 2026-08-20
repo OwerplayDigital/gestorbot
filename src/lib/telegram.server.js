@@ -1,16 +1,16 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const BOT_TEMPLATES = {
-    COBRANCA: (nome, data, url = "") => `Olá ${nome}, bom dia!\n\n` +
+    COBRANCA: (nome, data, url = "") => `Olá, bom dia!\n\n` +
         `Seu plano de TV vence hoje: *(${data})*\n\n` +
         `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n\n` +
         `🔗 *Acesse o link seguro para copiar o PIX e renovar:*\n` +
         `${url}`,
-    RENOVACAO_LINK: (nome, url = "") => `Olá ${nome}!\n\n` +
+    RENOVACAO_LINK: (nome, url = "") => `Olá!\n\n` +
         `Aqui está o seu link para renovação da assinatura:\n\n` +
         `🔗 ${url}\n\n` +
         `Após o pagamento, sua assinatura será renovada automaticamente.`,
-    CONFIRMACAO: (nome, data) => `📌 Obrigado pela confiança, ${nome}!\n\n` +
-        `✅ Sua assinatura foi renovada com sucesso!\n\n` +
+    CONFIRMACAO: (nome, data) => `📌 Obrigado pela confiança!\n` +
+        `✅ Sua assinatura foi renovada com sucesso!\n` +
         `🗓️ *PRÓXIMO VENCIMENTO:* (${data})`
 };
 export const getAuthorizedUser = async (chatId) => {

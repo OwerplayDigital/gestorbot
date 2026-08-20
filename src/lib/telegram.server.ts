@@ -18,7 +18,7 @@ export const BOT_TEMPLATES = {
   CONFIRMACAO: (nome: string, data: string): string =>
     `📌 Obrigado pela confiança!\n` +
     `✅ Sua assinatura foi renovada com sucesso!\n` +
-    `PRÓXIMO VENCIMENTO: ${data}`
+    `🗓️ *PRÓXIMO VENCIMENTO:* (${data})`
 };
 
 export const getAuthorizedUser = async (chatId: number) => {
