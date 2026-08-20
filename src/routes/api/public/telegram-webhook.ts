@@ -853,55 +853,67 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           const dbStep = await getUserStep(chatId);
           const state = userState.get(chatId);
 
-          // Comando /buscar simplificado
-          const lowerText = text.toLowerCase();
-
-          // 1. Verificar se é uma resposta de busca (step persistente no banco)
-          if (dbStep === 'aguardando_busca' && !text.startsWith('/')) {
-            await setUserStep(chatId, null);
-            const termo = text.trim();
-            const results = await findClientByName(termo);
-
-            if (results.length === 0) {
-              await sendMessage(chatId, `Nenhum cliente encontrado com o nome '${termo}'.`, {
-                inline_keyboard: [
-                  [{ text: "Buscar Novamente", callback_data: "search_retry" }]
-                ]
-              });
-            } else {
-              for (const c of results) {
-                await sendClientFicha(chatId, c);
-              }
-            }
-            return new Response('OK');
-          }
-
-          // 2. Comandos e Menu
-          if (lowerText.startsWith('/buscar')) {
-            const termo = text.includes(' ') ? text.split(' ').slice(1).join(' ').trim() : '';
-            if (!termo) {
-              await setUserStep(chatId, 'aguardando_busca');
-              await sendMessage(chatId, "Digite o nome (ou parte do nome) do cliente:");
+          // 2. Comandos do Menu (/comando) e Texto Normal
+          if (text.startsWith('/')) {
+            const command = lowerText.split(' ')[0];
+            
+            if (command === '/start') {
+              userState.delete(chatId);
+              await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
               return new Response('OK');
             }
 
-            const results = await findClientByName(termo);
-            if (results.length === 0) {
-              await sendMessage(chatId, `Nenhum cliente encontrado com o nome '${termo}'.`, {
-                inline_keyboard: [
-                  [{ text: "Buscar Novamente", callback_data: "search_retry" }]
-                ]
-              });
-            } else {
-              for (const c of results) {
-                await sendClientFicha(chatId, c);
-              }
+            if (command === '/hoje') {
+              // Mimetiza o callback 'vencendo_hoje'
+              body.callback_query = { id: 'cmd', data: 'vencendo_hoje', message: msg };
+              return Route.options.server.handlers.POST({ request: new Request(request.url, { method: 'POST', body: JSON.stringify(body) }) } as any);
             }
-            return new Response('OK');
+
+            if (command === '/vencidos') {
+              body.callback_query = { id: 'cmd', data: 'vencidos', message: msg };
+              return Route.options.server.handlers.POST({ request: new Request(request.url, { method: 'POST', body: JSON.stringify(body) }) } as any);
+            }
+
+            if (command === '/cadastrar') {
+              body.callback_query = { id: 'cmd', data: 'new_client_fast', message: msg };
+              return Route.options.server.handlers.POST({ request: new Request(request.url, { method: 'POST', body: JSON.stringify(body) }) } as any);
+            }
+
+            if (command === '/buscar') {
+              const termo = text.includes(' ') ? text.split(' ').slice(1).join(' ').trim() : '';
+              if (!termo) {
+                await setUserStep(chatId, 'aguardando_busca');
+                await sendMessage(chatId, "Digite o nome (ou parte do nome) do cliente:");
+              } else {
+                const results = await findClientByName(termo);
+                if (results.length === 0) {
+                  await sendMessage(chatId, `Nenhum cliente encontrado com o nome '${termo}'.`, {
+                    inline_keyboard: [[{ text: "Buscar Novamente", callback_data: "search_retry" }]]
+                  });
+                } else {
+                  for (const c of results) await sendClientFicha(chatId, c);
+                }
+              }
+              return new Response('OK');
+            }
+
+            if (command === '/servidores') {
+              body.callback_query = { id: 'cmd', data: 'list_servers', message: msg };
+              return Route.options.server.handlers.POST({ request: new Request(request.url, { method: 'POST', body: JSON.stringify(body) }) } as any);
+            }
+
+            if (command === '/planos') {
+              body.callback_query = { id: 'cmd', data: 'list_plans', message: msg };
+              return Route.options.server.handlers.POST({ request: new Request(request.url, { method: 'POST', body: JSON.stringify(body) }) } as any);
+            }
+
+            if (command === '/financeiro') {
+              body.callback_query = { id: 'cmd', data: 'financeiro', message: msg };
+              return Route.options.server.handlers.POST({ request: new Request(request.url, { method: 'POST', body: JSON.stringify(body) }) } as any);
+            }
           }
 
-
-          if (text === '/start' || text === 'Voltar') {
+          if (text === 'Voltar') {
             userState.delete(chatId);
             await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
             return new Response('OK');
