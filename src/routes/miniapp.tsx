@@ -59,6 +59,9 @@ function MiniAppComponent() {
   // Edit Modal State
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Client>>({});
+  
+  // Renewal Message State
+  const [renewalMessage, setRenewalMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -135,18 +138,24 @@ function MiniAppComponent() {
 
       toast.success(`${client.nome} renovado com sucesso!`);
       
-      // Copy renewal message
-      const serverName = servers.find(s => client.servidores_ids?.includes(s.id))?.name || "IPTV";
-      const message = BOT_TEMPLATES.CONFIRMACAO(client.nome, format(nextVenc, "dd/MM/yyyy"));
+      // Generate specific approved message
+      const nextVencFormatted = format(nextVenc, "dd/MM/yyyy");
+      const message = `📌 Obrigado pela confiança!\n✅ Sua assinatura foi renovada com sucesso!\n🗓️ *PRÓXIMO VENCIMENTO:* ${nextVencFormatted}`;
       
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(message);
-        toast.info("Mensagem de confirmação copiada!");
-      }
-
+      setRenewalMessage(message);
       fetchData();
     } catch (error: any) {
       toast.error("Erro ao renovar: " + error.message);
+    }
+  };
+
+  const copyRenewalMessage = async () => {
+    if (!renewalMessage) return;
+    try {
+      await navigator.clipboard.writeText(renewalMessage);
+      toast.info("Mensagem de confirmação copiada!");
+    } catch (err) {
+      toast.error("Erro ao copiar mensagem.");
     }
   };
 
@@ -374,6 +383,38 @@ function MiniAppComponent() {
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" className="border-slate-700" onClick={() => setEditingClient(null)}>Cancelar</Button>
             <Button onClick={saveEdit} className="bg-blue-600 hover:bg-blue-700">Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Renewal Confirmation Modal */}
+      <Dialog open={!!renewalMessage} onOpenChange={(open) => !open && setRenewalMessage(null)}>
+        <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 w-[95%] max-w-sm rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-green-500" />
+              Renovado com Sucesso!
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-6">
+            <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 whitespace-pre-wrap text-sm font-mono">
+              {renewalMessage}
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button 
+              variant="outline" 
+              className="border-slate-700 flex-1" 
+              onClick={() => setRenewalMessage(null)}
+            >
+              Fechar
+            </Button>
+            <Button 
+              onClick={copyRenewalMessage} 
+              className="bg-green-600 hover:bg-green-700 flex-1 gap-2"
+            >
+              Copiar Mensagem
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
