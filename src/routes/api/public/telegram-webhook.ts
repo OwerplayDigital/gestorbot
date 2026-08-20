@@ -36,7 +36,7 @@ type ClientRegistrationData = {
 };
 
 type UserState = {
-  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp' | 'renovar_cliente' | 'editar_servidor';
+  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp' | 'renovar_cliente' | 'editar_servidor' | 'editar_nome';
   step: number;
   data: Partial<ClientRegistrationData>;
 };
@@ -907,24 +907,44 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             return new Response('OK');
           }
 
+          if (state?.action === 'editar_nome') {
+            if (state.data.id && text.trim()) {
+              await supabaseAdmin.from('clientes').update({ nome: text.trim() }).eq('id', state.data.id);
+              await sendMessage(chatId, "✅ Nome atualizado com sucesso!");
+              const client = await getClientById(state.data.id);
+              if (client) await sendClientFicha(chatId, client);
+            }
+            userState.delete(chatId);
+            return new Response('OK');
+          }
+
           if (state?.action === 'editar_desconto') {
+
             const val = parseFloat(text.replace(',', '.'));
             if (!isNaN(val) && state.data.id) {
               await supabaseAdmin.from('clientes').update({ desconto: val }).eq('id', state.data.id);
               await sendMessage(chatId, "Desconto atualizado!");
             }
+              const client = await getClientById(state.data.id);
+              if (client) await sendClientFicha(chatId, client);
+            }
             userState.delete(chatId);
             return new Response('OK');
           }
+
 
           if (state?.action === 'editar_whatsapp') {
             if (state.data.id) {
               await supabaseAdmin.from('clientes').update({ whatsapp: text }).eq('id', state.data.id);
               await sendMessage(chatId, "WhatsApp atualizado!");
             }
+              const client = await getClientById(state.data.id);
+              if (client) await sendClientFicha(chatId, client);
+            }
             userState.delete(chatId);
             return new Response('OK');
           }
+
 
           if (state?.action === 'buscar_cliente') {
             const results = await findClientByName(text);
