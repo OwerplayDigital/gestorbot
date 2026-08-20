@@ -329,56 +329,6 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               return new Response('OK');
             }
 
-            if (data === 'vencidos') {
-              const { toZonedTime, format: formatTz } = await import('date-fns-tz');
-              const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
-              nowBr.setHours(0, 0, 0, 0);
-              const todayStr = formatTz(nowBr, 'dd/MM/yyyy');
-
-              const { data: clients, error } = await supabaseAdmin
-                .from("clientes")
-                .select("*, servidores_ids");
-
-              if (error || !Array.isArray(clients)) {
-                await sendMessage(chatId, `⚠️ Erro no Banco: ${error?.message || 'Dados inválidos'}`);
-                return new Response('OK');
-              }
-
-              const parseDate = (d: any): Date | null => {
-                if (!d || typeof d !== 'string' || !d.trim()) return null;
-                const clean = d.trim();
-                if (clean.includes('/')) {
-                  const parts = clean.split('/').map(Number);
-                  const day = parts[0], month = parts[1], year = parts[2];
-                  return (day && month && year) ? new Date(year, month - 1, day) : null;
-                }
-                if (clean.includes('-')) {
-                  const parts = clean.split('-').map(Number);
-                  const p0 = parts[0], p1 = parts[1], p2 = parts[2];
-                  if (parts.length !== 3 || p0 === undefined || p1 === undefined || p2 === undefined) return null;
-                  return p0 > 1000 ? new Date(p0, p1 - 1, p2) : new Date(p2, p1 - 1, p0);
-                }
-                return null;
-              };
-
-              const expired = (clients || [])
-                .filter((c: any) => {
-                  const vDate = parseDate(c.vencimento);
-                  return vDate && vDate < nowBr;
-                })
-                .sort((a: any, b: any) => (parseDate(a.vencimento)?.getTime() || 0) - (parseDate(b.vencimento)?.getTime() || 0));
-
-              if (expired.length === 0) {
-                await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vencidos encontrados: 0\n\nNenhum cliente vencido.`);
-              } else {
-                const expiredEnriched = await enrichClients(expired);
-                await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vencidos encontrados: ${expiredEnriched.length}`);
-                for (const c of expiredEnriched) {
-                  await sendClientCompact(chatId, c);
-                }
-              }
-              return new Response('OK');
-            }
 
             if (data === 'list_servers') {
               const servers = await listServers();
