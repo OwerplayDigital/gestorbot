@@ -40,9 +40,11 @@ export const Route = createFileRoute('/api/public/cron-notifications')({
         const hour = brTime.getHours();
         const minutes = brTime.getMinutes();
         
+        // Checar se a requisição vem do botão de teste (usando um query param)
         const url = new URL(request.url);
         const isTest = url.searchParams.get('test') === 'true';
 
+        // Se não for teste e não estiver na janela de 08:30-08:35, bloquear.
         if (!isTest) {
           const isCorrectTime = (hour === 8 && minutes >= 30 && minutes <= 35);
           if (!isCorrectTime) {
@@ -56,8 +58,8 @@ export const Route = createFileRoute('/api/public/cron-notifications')({
 
         console.log("Executando rotina de notificações via Cron...");
         
-        const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
-        nowBr.setHours(0, 0, 0, 0);
+        // Data atual em Brasília para o filtro de vencimento
+        const today = formatTz(brTime, 'yyyy-MM-dd');
         
         const { data: authUsers, error: authError } = await supabaseAdmin
           .from("telegram_authorized_users")
@@ -67,64 +69,32 @@ export const Route = createFileRoute('/api/public/cron-notifications')({
           return new Response(JSON.stringify({ error: authError }), { status: 500 });
         }
 
-        const parseDate = (d: any): Date | null => {
-          if (!d || typeof d !== 'string') return null;
-          const parts = d.split(/[/-]/);
-          if (parts.length !== 3) return null;
-          const s0 = parts[0], s1 = parts[1], s2 = parts[2];
-          if (s0 === undefined || s1 === undefined || s2 === undefined) return null;
-          const p0 = Number(s0), p1 = Number(s1), p2 = Number(s2);
-          let res: Date | null = null;
-          if (d.includes('/') || (d.includes('-') && s0.length === 2)) res = new Date(p2, p1 - 1, p0);
-          else if (d.includes('-') && s0.length === 4) res = new Date(p0, p1 - 1, p2);
-          if (res && !isNaN(res.getTime())) { res.setHours(0, 0, 0, 0); return res; }
-          return null;
-        };
-
         let totalSent = 0;
-        let totalNotified = 0;
 
         for (const user of authUsers) {
-          if (!user.user_id || !user.telegram_chat_id) continue;
-
-          const { data: allClientes, error: clientError } = await supabaseAdmin
+          const { data: clientes, error: clientError } = await supabaseAdmin
             .from("clientes")
-            .select("id, nome, vencimento")
-            .eq("user_id", user.user_id);
+            .select("id, nome")
+            .eq("user_id", user.user_id)
+            .eq("vencimento", today as string);
 
-          if (clientError || !Array.isArray(allClientes)) continue;
-
-          const seenIds = new Set();
-          const expiringToday = allClientes.filter(c => {
-            if (seenIds.has(c.id)) return false;
-            const vDate = parseDate(c.vencimento);
-            const isToday = vDate && vDate.getTime() === nowBr.getTime();
-            if (isToday) {
-              seenIds.add(c.id);
-              return true;
-            }
-            return false;
-          });
-
-          if (expiringToday.length === 0) continue;
+          if (clientError || !clientes || clientes.length === 0) continue;
 
           const brDateStr = formatBRDate(new Date());
           const msg = `🔔 <b>LEMBRETE DIÁRIO DE VENCIMENTOS (${brDateStr})</b>\n\n` +
-                      `Você tem <b>${expiringToday.length}</b> cliente(s) vencendo hoje:\n\n` +
+                      `Você tem <b>${clientes.length}</b> cliente(s) vencendo hoje:\n\n` +
                       `Clique no cliente abaixo para cobrar ou renovar:`;
           
-          const buttons = expiringToday.map(c => ([{ 
+          const buttons = clientes.map(c => ([{ 
             text: `👤 ${c.nome}`, 
             callback_data: `view_client:${c.nome}` 
           }]));
 
           await sendMessage(Number(user.telegram_chat_id), msg, { inline_keyboard: buttons });
           totalSent++;
-          totalNotified += expiringToday.length;
         }
 
-        console.log(`[DIAGNOSTICO] Cron finalizada. Usuários notificados: ${totalSent}. Clientes alertados: ${totalNotified}.`);
-        return new Response(JSON.stringify({ success: true, processed: authUsers.length, sent: totalSent, notifiedClients: totalNotified }));
+        return new Response(JSON.stringify({ success: true, processed: authUsers.length, sent: totalSent }));
       }
     }
   }

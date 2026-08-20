@@ -125,47 +125,37 @@ function Dashboard() {
       try {
         const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
         nowBr.setHours(0, 0, 0, 0);
-        const todayIso = formatTz(nowBr, "yyyy-MM-dd");
+        const todayStr = formatTz(nowBr, "yyyy-MM-dd");
         
         const [
           clientsRes, 
           transactionsRes, 
           serversRes, 
-          allClientsRes
+          expiringTodayRes,
+          vencidosRes
         ] = await Promise.all([
           supabase.from("clientes").select("id, status"),
           supabase.from("transacoes").select("*, clientes(nome), servidores_iptv(name)").order("data", { ascending: false }),
           supabase.from("servidores_iptv").select("id, name"),
           supabase.from("clientes")
-            .select("id, nome, vencimento, valor, desconto, servidores_ids, plano_id, plans(price), status")
+            .select("id, nome, vencimento, valor, desconto, servidores_ids, plano_id, plans(price)")
+            .eq("vencimento", todayStr)
+            .order("nome"),
+          supabase.from("clientes")
+            .select("id, nome, vencimento, valor, status")
         ]);
 
         const clients = clientsRes.data ?? [];
         const transactions = transactionsRes.data ?? [];
         const servers = serversRes.data ?? [];
-        const allClients = allClientsRes.data ?? [];
+        const expiringToday = expiringTodayRes.data ?? [];
+        const rawVencidos = vencidosRes.data ?? [];
 
-        // Filtragem robusta em memória para Vencendo Hoje e Vencidos
-        const expiringToday = allClients.filter((c: any) => {
-          const vDate = parseDate(c.vencimento);
-          const isToday = vDate && 
-                          vDate.getDate() === nowBr.getDate() && 
-                          vDate.getMonth() === nowBr.getMonth() && 
-                          vDate.getFullYear() === nowBr.getFullYear();
-          return isToday;
-        }).sort((a, b) => a.nome.localeCompare(b.nome));
 
-        const seenIdsVencidos = new Set();
-        const vencidos = allClients
+        const vencidos = rawVencidos
           .filter((c: any) => {
-            if (seenIdsVencidos.has(c.id)) return false;
-            const vDate = parseDate(c.vencimento);
-            const isExpired = vDate && vDate < nowBr;
-            if (isExpired) {
-              seenIdsVencidos.add(c.id);
-              return true;
-            }
-            return false;
+            const vencDate = parseDate(c.vencimento);
+            return vencDate && vencDate < nowBr;
           })
           .sort((a: any, b: any) => {
             const dateA = parseDate(a.vencimento);
@@ -216,7 +206,7 @@ function Dashboard() {
           return {
             ...c,
             valorFinal: Math.max(0, base - Number(c.desconto || 0)),
-            serverName: c.servidores?.[0]?.name || c.servidores?.name || servers.find(s => c.servidores_ids?.includes(s.id))?.name || "N/A"
+            serverName: servers.find(s => c.servidores_ids?.includes(s.id))?.name || "N/A"
           };
         });
 
