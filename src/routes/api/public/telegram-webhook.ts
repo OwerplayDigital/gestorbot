@@ -163,8 +163,7 @@ async function sendClientCompact(chatId: number, c: any) {
 
   const msg = `👤 Cliente: ${c.nome}\n` +
               `📅 Vencimento: ${brDate}\n` +
-              `📡 Servidor: ${nomeServidor}` +
-              (nomeServidor === 'Não informado' && c._debug_fields ? `\n🔍 [CAMPOS DISPONÍVEIS]: ${c._debug_fields}` : '');
+              `📡 Servidor: ${nomeServidor}`;
   
   await sendMessage(chatId, msg, {
     inline_keyboard: [
@@ -205,8 +204,7 @@ async function sendClientFicha(chatId: number, c: any) {
               `WhatsApp: ${c.whatsapp || 'N/A'}\n` +
               `Plano: ${planName}\n` +
               `Valor: R$ ${valorFinal}\n` +
-              `Status: ${c.status}` +
-              (serverNames === 'N/A' && c._debug_fields ? `\n\n🔍 [CAMPOS DISPONÍVEIS]: ${c._debug_fields}` : '');
+              `Status: ${c.status}`;
   
   await sendMessage(chatId, msg, {
     inline_keyboard: [
