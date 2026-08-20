@@ -300,7 +300,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               return new Response('OK');
             }
 
-            if (action === 'vencidos') {
+            if (data === 'vencidos') {
               const clients = await listExpiredClients();
               const enriched = await enrichClients(clients);
               
@@ -311,7 +311,6 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 day: '2-digit',
               }).format(new Date());
               const [y, m, d_val] = spString.split('-').map(Number);
-              const today = new Date(y, m - 1, d_val);
               const todayStr = `${String(d_val).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
 
               let msg = `🚨 CLIENTES VENCIDOS (${enriched.length})\nHoje: ${todayStr}\n\n`;
@@ -333,7 +332,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               return new Response('OK');
             }
 
-            if (action === 'vencendo_hoje' || action === 'vencimento_hoje' || data === 'vencendo_hoje') {
+            if (data === 'vencendo_hoje' || data === 'vencimento_hoje') {
               const clients = await listClientsExpiringToday();
               const enriched = await enrichClients(clients);
 
@@ -344,7 +343,6 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 day: '2-digit',
               }).format(new Date());
               const [y, m, d_val] = spString.split('-').map(Number);
-              const today = new Date(y, m - 1, d_val);
               const todayStr = `${String(d_val).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
 
               let msg = `📅 VENCEM HOJE (${enriched.length})\nHoje: ${todayStr}\n\n`;
