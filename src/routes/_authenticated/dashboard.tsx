@@ -86,14 +86,17 @@ const parseDate = (d: any): Date | null => {
   if (!d || typeof d !== 'string') return null;
   const parts = d.split(/[/-]/).map(Number);
   if (parts.length !== 3) return null;
+  const p0 = parts[0]!;
+  const p1 = parts[1]!;
+  const p2 = parts[2]!;
 
   if (d.includes('/') || (d.includes('-') && d.split('-')[0].length === 2)) {
     // DD/MM/YYYY
-    return new Date(parts[2], parts[1] - 1, parts[0]);
+    return new Date(p2, p1 - 1, p0);
   }
   if (d.includes('-') && d.split('-')[0].length === 4) {
     // YYYY-MM-DD
-    return new Date(parts[0], parts[1] - 1, parts[2]);
+    return new Date(p0, p1 - 1, p2);
   }
   return null;
 };
