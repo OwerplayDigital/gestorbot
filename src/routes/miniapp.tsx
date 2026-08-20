@@ -386,6 +386,38 @@ function MiniAppComponent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Renewal Confirmation Modal */}
+      <Dialog open={!!renewalMessage} onOpenChange={(open) => !open && setRenewalMessage(null)}>
+        <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 w-[95%] max-w-sm rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-green-500" />
+              Renovado com Sucesso!
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-6">
+            <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 whitespace-pre-wrap text-sm font-mono">
+              {renewalMessage}
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button 
+              variant="outline" 
+              className="border-slate-700 flex-1" 
+              onClick={() => setRenewalMessage(null)}
+            >
+              Fechar
+            </Button>
+            <Button 
+              onClick={copyRenewalMessage} 
+              className="bg-green-600 hover:bg-green-700 flex-1 gap-2"
+            >
+              Copiar Mensagem
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
