@@ -94,6 +94,7 @@ function Dashboard() {
     queryFn: async () => {
       try {
         const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
+        nowBr.setHours(0, 0, 0, 0);
         const todayStr = formatTz(nowBr, "yyyy-MM-dd");
         
         const [
@@ -112,8 +113,6 @@ function Dashboard() {
             .order("nome"),
           supabase.from("clientes")
             .select("id, nome, vencimento, valor, status")
-            .lt("vencimento", todayStr)
-            .order("vencimento", { ascending: true })
         ]);
 
         const clients = clientsRes.data ?? [];
@@ -122,18 +121,18 @@ function Dashboard() {
         const expiringToday = expiringTodayRes.data ?? [];
         const rawVencidos = vencidosRes.data ?? [];
 
-        // Tratamento para garantir comparação ISO YYYY-MM-DD
-        const vencidos = rawVencidos.filter((c: any) => {
-          if (!c.vencimento) return false;
-          const isoVenc = c.vencimento.includes('/') 
-            ? c.vencimento.split('/').reverse().join('-') 
-            : c.vencimento;
-          return isoVenc < todayStr;
-        }).sort((a: any, b: any) => {
-          const dA = a.vencimento.includes('/') ? a.vencimento.split('/').reverse().join('-') : a.vencimento;
-          const dB = b.vencimento.includes('/') ? b.vencimento.split('/').reverse().join('-') : b.vencimento;
-          return dA.localeCompare(dB);
-        });
+        const parseDate = (d: string) => {
+          if (!d) return new Date(0);
+          const parts = d.includes('/') ? d.split('/') : d.split('-').reverse();
+          return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+        };
+
+        const vencidos = rawVencidos
+          .filter((c: any) => {
+            if (!c.vencimento) return false;
+            return parseDate(c.vencimento) < nowBr;
+          })
+          .sort((a: any, b: any) => parseDate(a.vencimento).getTime() - parseDate(b.vencimento).getTime());
 
         const totalClients = clients.length;
         const activeClients = clients.filter((c: any) => c.status === "ativo").length;
