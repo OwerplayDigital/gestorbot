@@ -286,10 +286,12 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               if (todayList.length === 0) {
                 await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vence Hoje: 0\n\nNinguém vence hoje.`);
               } else {
+                // Enriquecimento com await garantido
                 const todayEnriched = await enrichClients(todayList);
 
                 await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vence Hoje: ${todayEnriched.length}`);
                 
+                // Envio sequencial aguardando cada mensagem
                 for (const c of todayEnriched) {
                   await sendClientCompact(chatId, c);
                 }
