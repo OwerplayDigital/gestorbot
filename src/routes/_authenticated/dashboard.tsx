@@ -157,7 +157,11 @@ function Dashboard() {
             const vencDate = parseDate(c.vencimento);
             return vencDate && vencDate < nowBr;
           })
-          .sort((a: any, b: any) => parseDate(a.vencimento)!.getTime() - parseDate(b.vencimento)!.getTime());
+          .sort((a: any, b: any) => {
+            const dateA = parseDate(a.vencimento);
+            const dateB = parseDate(b.vencimento);
+            return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
+          });
 
         const totalClients = clients.length;
         const activeClients = clients.filter((c: any) => c.status === "ativo").length;
