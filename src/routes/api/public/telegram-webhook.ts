@@ -280,9 +280,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (data === 'list_servers') {
               const servers = await listServers();
               const sMsg = servers.map(s => `• ${s.name}: R$ ${s.valor}`).join('\n') || 'Nenhum servidor.';
-              await sendMessage(chatId, `<b>SERVIDORES:</b>\n${sMsg}`, {
-                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
-              });
+              await sendMessage(chatId, `<b>SERVIDORES:</b>\n${sMsg}`);
               return new Response('OK');
             }
 
