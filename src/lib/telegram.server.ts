@@ -293,9 +293,13 @@ export const findClientByName = async (name: string) => {
         if (validIds.length > 0) {
           const { data: sData } = await supabaseAdmin
             .from('servidores_iptv')
-            .select('id, name')
+            .select('id, name, nome')
             .in('id', validIds);
-          servidores = sData || [];
+          
+          servidores = (sData || []).map((s: any) => ({
+            ...s,
+            name: s.name || s.nome || 'Servidor'
+          }));
         }
       }
     }
