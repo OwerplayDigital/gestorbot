@@ -13,6 +13,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BOT_TEMPLATES } from "@/lib/templates";
 
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: any;
+    };
+  }
+}
+
 export const Route = createFileRoute("/miniapp")({
   head: () => ({
     title: "Mini App Gestor",
@@ -120,7 +128,6 @@ function MiniAppComponent() {
 
       const { error } = await supabase
         .from("clientes")
-        .from("clientes")
         .update({ vencimento: nextVencStr })
         .eq("id", client.id);
 
@@ -130,7 +137,7 @@ function MiniAppComponent() {
       
       // Copy renewal message
       const serverName = servers.find(s => client.servidores_ids?.includes(s.id))?.name || "IPTV";
-      const message = BOT_TEMPLATES.CONFIRMACAO(client.nome, nextVencStr, serverName);
+      const message = BOT_TEMPLATES.CONFIRMACAO(client.nome, nextVencStr);
       
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(message);
