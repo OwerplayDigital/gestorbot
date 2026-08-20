@@ -399,22 +399,18 @@ export const createClientWithDetails = async (clientData: {
 export const getFinancialSummary = async () => {
   const { data: transacoes, error } = await supabaseAdmin
     .from("transacoes")
-    .select("tipo, valor");
+    .select("entrada, custo, valor");
 
   if (error) {
     console.error("Erro Supabase (financial summary):", error);
     throw error;
   }
 
-  const entradas = transacoes
-    .filter(t => t.tipo === 'entrada')
-    .reduce((sum, t) => sum + Number(t.valor), 0);
-  
-  const saidas = transacoes
-    .filter(t => t.tipo === 'saida')
-    .reduce((sum, t) => sum + Number(t.valor), 0);
+  const entradas = transacoes.reduce((sum, t) => sum + Number(t.entrada || 0), 0);
+  const saidas = transacoes.reduce((sum, t) => sum + Number(t.custo || 0), 0);
+  const lucro = entradas - saidas;
 
-  return { entradas, saidas, lucro: entradas - saidas };
+  return { entradas, saidas, lucro };
 };
 
 export const renewClient = async (
