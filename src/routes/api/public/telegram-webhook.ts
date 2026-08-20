@@ -253,8 +253,15 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
             if (data === 'vencendo_hoje') {
               const today = await listClientsExpiringToday();
               if (today.length === 0) {
-                await sendMessage(chatId, 'Ninguém vence hoje.');
+                const { toZonedTime, format: formatTz } = await import('date-fns-tz');
+                const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
+                const todayStr = formatTz(nowBr, 'dd/MM/yyyy');
+                await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vence Hoje: 0\n\nNinguém vence hoje.`);
               } else {
+                const { toZonedTime, format: formatTz } = await import('date-fns-tz');
+                const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
+                const todayStr = formatTz(nowBr, 'dd/MM/yyyy');
+                await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vence Hoje: ${today.length}`);
                 for (const c of today) {
                   // NOVO: Usar estritamente o objeto 'c' iterado para garantir isolamento
                   await sendClientCompact(chatId, c);
@@ -324,6 +331,15 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                     .select('id, name')
                     .in('id', c.servidores_ids);
                   servidores = sData || [];
+                }
+                // Adicionamos fallback para 'plans' também
+                if (!c.plans && c.plano_id) {
+                   const { data: pData } = await supabaseAdmin
+                    .from('plans')
+                    .select('id, name, price')
+                    .eq('id', c.plano_id)
+                    .maybeSingle();
+                   c.plans = pData;
                 }
                 return { ...c, servidores };
               }));

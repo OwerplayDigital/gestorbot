@@ -268,8 +268,7 @@ export const listClientsExpiringToday = async () => {
       vencimento, 
       whatsapp,
       servidores_ids,
-      servidores:servidores_iptv(name),
-      plans:plans(id, name, price)
+      plano_id
     `);
 
   if (error || !Array.isArray(data)) {
@@ -318,8 +317,8 @@ export const listClientsExpiringToday = async () => {
     return isToday;
   });
 
-  // Buscar nomes dos servidores
-  const result = await Promise.all(filtered.map(async (c) => {
+  // Buscar nomes dos servidores e planos
+  const result = await Promise.all(filtered.map(async (c: any) => {
     let servidores: any[] = [];
     if (c.servidores_ids && c.servidores_ids.length > 0) {
       const { data: sData } = await supabaseAdmin
@@ -328,7 +327,19 @@ export const listClientsExpiringToday = async () => {
         .in('id', c.servidores_ids);
       servidores = sData || [];
     }
-    return { ...c, servidores };
+    
+    // Adicionar carregamento do plano
+    let plan = null;
+    if (c.plano_id) {
+      const { data: pData } = await supabaseAdmin
+        .from('plans')
+        .select('id, name, price')
+        .eq('id', c.plano_id)
+        .maybeSingle();
+      plan = pData;
+    }
+
+    return { ...c, servidores, plans: plan };
   }));
 
   return result;
