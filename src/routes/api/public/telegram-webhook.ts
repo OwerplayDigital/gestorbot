@@ -22,7 +22,8 @@ import {
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env['TELEGRAM_BOT_TOKEN']}`;
 
-function formatBRDate(dateStr: string): string {
+function formatBRDate(dateStr: string | null): string {
+  if (!dateStr) return "N/A";
   const [year, month, day] = dateStr.split('-');
   return `${day}/${month}/${year}`;
 }
