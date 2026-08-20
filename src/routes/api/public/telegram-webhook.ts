@@ -93,38 +93,35 @@ async function answerCallbackQuery(callbackQueryId: string, text?: string) {
 
 async function enrichClients(clients: any[]) {
   return await Promise.all(clients.map(async (c: any) => {
-    // 1. INSPEÇÃO E CAPTURA DINÂMICA
-    const serverKey = Object.keys(c).find(k => /servidor|server/i.test(k) && c[k] !== null && c[k] !== undefined);
-    const valorServidor = serverKey ? c[serverKey] : null;
+    // 1. Coletar IDs de servidores de todos os campos possíveis
+    const possibleIds = [
+      c.servidores_ids,
+      c.servidor_id,
+      c.servidor_iptv_id,
+      c.servidor
+    ].flat().filter(id => 
+      typeof id === 'string' && 
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    );
 
-    if (valorServidor) {
-      // 2. TRATAMENTO DO VALOR ENCONTRADO
-      if (typeof valorServidor === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(valorServidor)) {
-        // Se for texto direto (e não UUID), usa como nome
-        c.servidores = [{ name: valorServidor }];
-      } else {
-        // Se for UUID ou Array de UUIDs, busca no banco
-        const rawIds = Array.isArray(valorServidor) ? valorServidor : [valorServidor];
-        const validIds = rawIds.filter(id => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
-        
-        if (validIds.length > 0) {
-          const { data: sData } = await supabaseAdmin
-            .from('servidores_iptv')
-            .select('id, name, nome')
-            .in('id', validIds);
-          
-          // Mapeia para garantir que 'name' esteja sempre preenchido com o que estiver disponível
-          c.servidores = (sData || []).map((s: any) => ({
-            ...s,
-            name: s.name || s.nome || 'Servidor'
-          }));
-        }
+    if (possibleIds.length > 0) {
+      const { data: sData } = await supabaseAdmin
+        .from('servidores_iptv')
+        .select('id, name, nome')
+        .in('id', possibleIds);
+      
+      c.servidores = (sData || []).map((s: any) => ({
+        ...s,
+        name: s.name || s.nome || 'Servidor'
+      }));
+    } else {
+      // 2. Se não houver UUIDs, tenta capturar texto direto do campo 'servidor'
+      const serverText = typeof c.servidor === 'string' && 
+                         !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c.servidor)
+                         ? c.servidor : null;
+      if (serverText) {
+        c.servidores = [{ name: serverText }];
       }
-    }
-    
-    // Fallback caso não encontre nada nas chaves mapeadas
-    if (!c.servidores || c.servidores.length === 0) {
-      c._debug_fields = Object.keys(c).join(', ');
     }
     
     return c;
