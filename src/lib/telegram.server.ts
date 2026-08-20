@@ -314,6 +314,42 @@ export const findClientByName = async (name: string) => {
   return result;
 };
 
+export const getClientById = async (id: string) => {
+  const { data, error } = await supabaseAdmin
+    .from("clientes")
+    .select(`
+      id, 
+      nome, 
+      whatsapp, 
+      vencimento, 
+      status, 
+      desconto,
+      plano_id,
+      servidores_ids,
+      plans:plans(id, name, price)
+    `)
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    console.error("Erro Supabase (getClientById):", error);
+    throw error;
+  }
+
+  // Buscar nomes dos servidores
+  let servidores: any[] = [];
+  if (data.servidores_ids && data.servidores_ids.length > 0) {
+    const { data: sData } = await supabaseAdmin
+      .from('servidores_iptv')
+      .select('id, name')
+      .in('id', data.servidores_ids);
+    servidores = sData || [];
+  }
+
+  return { ...data, servidores };
+};
+
+
 export const updateClient = async (id: string, updates: any) => {
   const { data, error } = await supabaseAdmin
     .from("clientes")
