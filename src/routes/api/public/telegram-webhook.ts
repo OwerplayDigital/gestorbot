@@ -919,31 +919,28 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           }
 
           if (state?.action === 'editar_desconto') {
-
             const val = parseFloat(text.replace(',', '.'));
             if (!isNaN(val) && state.data.id) {
               await supabaseAdmin.from('clientes').update({ desconto: val }).eq('id', state.data.id);
               await sendMessage(chatId, "Desconto atualizado!");
-            }
               const client = await getClientById(state.data.id);
               if (client) await sendClientFicha(chatId, client);
             }
             userState.delete(chatId);
             return new Response('OK');
           }
-
 
           if (state?.action === 'editar_whatsapp') {
             if (state.data.id) {
               await supabaseAdmin.from('clientes').update({ whatsapp: text }).eq('id', state.data.id);
               await sendMessage(chatId, "WhatsApp atualizado!");
-            }
               const client = await getClientById(state.data.id);
               if (client) await sendClientFicha(chatId, client);
             }
             userState.delete(chatId);
             return new Response('OK');
           }
+
 
 
           if (state?.action === 'buscar_cliente') {
