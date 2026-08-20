@@ -170,7 +170,7 @@ export const listExpiredClients = async () => {
   const { toZonedTime, format: formatTz } = await import('date-fns-tz');
   const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
   nowBr.setHours(0, 0, 0, 0);
-  const today = formatTz(nowBr, 'yyyy-MM-dd');
+  const todayStr = formatTz(nowBr, 'yyyy-MM-dd');
   
   // Buscamos todos para filtrar em memória devido ao formato DD/MM/YYYY no banco
   const { data, error } = await supabaseAdmin
@@ -196,23 +196,41 @@ export const listExpiredClients = async () => {
     const p1 = Number(s1);
     const p2 = Number(s2);
 
+    let resultDate: Date | null = null;
     if (d.includes('/') || (d.includes('-') && s0.length === 2)) {
       // DD/MM/YYYY
-      return new Date(p2, p1 - 1, p0);
-    }
-    if (d.includes('-') && s0.length === 4) {
+      resultDate = new Date(p2, p1 - 1, p0);
+    } else if (d.includes('-') && s0.length === 4) {
       // YYYY-MM-DD
-      return new Date(p0, p1 - 1, p2);
+      resultDate = new Date(p0, p1 - 1, p2);
+    }
+
+    if (resultDate && !isNaN(resultDate.getTime())) {
+      resultDate.setHours(0, 0, 0, 0);
+      return resultDate;
     }
     return null;
   };
 
+  console.log(`[DIAGNOSTICO] Total clientes banco: ${data?.length || 0}`);
+  if (data && data.length > 0) {
+    console.log(`[DIAGNOSTICO] Amostra (vencimento): ${data.slice(0, 3).map(c => c.vencimento).join(', ')}`);
+  }
+  console.log(`[DIAGNOSTICO] HOJE (Brasil): ${todayStr}`);
+
   const filteredData = (data || [])
     .filter((c: any) => {
       const vencDate = parseDate(c.vencimento);
-      return vencDate && vencDate < nowBr;
+      const isExpired = vencDate && vencDate < nowBr;
+      return isExpired;
     })
-    .sort((a: any, b: any) => parseDate(a.vencimento)!.getTime() - parseDate(b.vencimento)!.getTime());
+    .sort((a: any, b: any) => {
+      const dateA = parseDate(a.vencimento);
+      const dateB = parseDate(b.vencimento);
+      return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
+    });
+  
+  console.log(`[DIAGNOSTICO] Clientes após filtro (vencidos): ${filteredData.length}`);
   
   return filteredData;
 };
