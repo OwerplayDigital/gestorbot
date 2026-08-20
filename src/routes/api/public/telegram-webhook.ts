@@ -308,12 +308,14 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 const clean = d.trim();
                 if (clean.includes('/')) {
                   const parts = clean.split('/').map(Number);
-                  return (parts[0] && parts[1] && parts[2]) ? new Date(parts[2], parts[1] - 1, parts[0]) : null;
+                  const day = parts[0], month = parts[1], year = parts[2];
+                  return (day && month && year) ? new Date(year, month - 1, day) : null;
                 }
                 if (clean.includes('-')) {
                   const parts = clean.split('-').map(Number);
-                  if (parts.length !== 3) return null;
-                  return parts[0] > 1000 ? new Date(parts[0], parts[1] - 1, parts[2]) : new Date(parts[2], parts[1] - 1, parts[0]);
+                  const p0 = parts[0], p1 = parts[1], p2 = parts[2];
+                  if (parts.length !== 3 || p0 === undefined || p1 === undefined || p2 === undefined) return null;
+                  return p0 > 1000 ? new Date(p0, p1 - 1, p2) : new Date(p2, p1 - 1, p0);
                 }
                 return null;
               };
