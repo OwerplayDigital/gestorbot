@@ -146,16 +146,13 @@ function Dashboard() {
         const allClients = allClientsRes.data ?? [];
 
         // Filtragem robusta em memória para Vencendo Hoje e Vencidos
-        const seenIdsToday = new Set();
         const expiringToday = allClients.filter((c: any) => {
-          if (seenIdsToday.has(c.id)) return false;
           const vDate = parseDate(c.vencimento);
-          const isToday = vDate && vDate.getTime() === nowBr.getTime();
-          if (isToday) {
-            seenIdsToday.add(c.id);
-            return true;
-          }
-          return false;
+          const isToday = vDate && 
+                          vDate.getDate() === nowBr.getDate() && 
+                          vDate.getMonth() === nowBr.getMonth() && 
+                          vDate.getFullYear() === nowBr.getFullYear();
+          return isToday;
         }).sort((a, b) => a.nome.localeCompare(b.nome));
 
         const seenIdsVencidos = new Set();

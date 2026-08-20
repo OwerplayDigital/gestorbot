@@ -305,18 +305,16 @@ export const listClientsExpiringToday = async () => {
   };
 
   // Filtrar em memória por data exata (Hoje) e remover duplicados por ID
-  const seenIds = new Set();
   const filtered = data.filter((c: any) => {
-    if (seenIds.has(c.id)) return false;
-    
     const vDate = parseDate(c.vencimento);
-    const isToday = vDate && vDate.getTime() === nowBr.getTime();
+    if (!vDate) return false;
     
-    if (isToday) {
-      seenIds.add(c.id);
-      return true;
-    }
-    return false;
+    // Comparação estrita de Dia, Mês e Ano para HOJE
+    const isToday = vDate.getDate() === nowBr.getDate() && 
+                    vDate.getMonth() === nowBr.getMonth() && 
+                    vDate.getFullYear() === nowBr.getFullYear();
+    
+    return isToday;
   });
 
   // Buscar nomes dos servidores
