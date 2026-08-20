@@ -342,12 +342,11 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl));
                   const phone = cleanPhone(c.whatsapp || '');
                   
-                  const servers = (c as any).servidores || [];
-                  const serverName = Array.isArray(servers) && servers[0] ? servers[0].name : 'N/A';
+                  const nomeServidor = (c as any).servidores?.[0]?.name || (c as any).servidor?.name || (c as any).servidor || (c as any).nome_servidor || 'Não informado';
 
                   const msg = `👤 Cliente: ${c.nome}\n` +
                               `📅 Vencimento: ${brDate}\n` +
-                              `🖥️ Servidor: ${serverName}`;
+                              `🖥️ Servidor: ${nomeServidor}`;
                   
                   await sendMessage(chatId, msg, {
                     inline_keyboard: [
