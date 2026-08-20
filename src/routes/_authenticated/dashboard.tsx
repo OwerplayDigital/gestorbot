@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toZonedTime, format as formatTz } from "date-fns-tz";
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -84,16 +85,16 @@ type DashboardStats = {
 function Dashboard() {
   const [showValues, setShowValues] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "MM"));
-  const [selectedYear, setSelectedYear] = useState(format(new Date(), "yyyy"));
+  const [selectedMonth, setSelectedMonth] = useState(formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), "MM"));
+  const [selectedYear, setSelectedYear] = useState(formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), "yyyy"));
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const { data: stats, isLoading, refetch } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats-detailed", selectedMonth, selectedYear],
     queryFn: async () => {
       try {
-        const now = new Date();
-        const todayStr = format(now, "yyyy-MM-dd");
+        const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
+        const todayStr = formatTz(nowBr, "yyyy-MM-dd");
         
         const [
           clientsRes, 
