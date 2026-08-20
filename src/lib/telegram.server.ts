@@ -168,15 +168,28 @@ export const listExpiredClients = async () => {
   const { data, error } = await supabaseAdmin
     .from("clientes")
     .select("id, nome, vencimento, whatsapp")
-    .lt("vencimento", today)
+    .or(`vencimento.lt.${today},vencimento.like.%/%`) // Busca vencidos ou datas em formato BR para filtrar no JS
     .order('vencimento', { ascending: true });
 
   if (error) {
     console.error("Erro Supabase (expired select):", error);
     throw error;
   }
+
+  // Filtro refinado para garantir ISO e comparação correta
+  const filteredData = (data || []).filter((c: any) => {
+    if (!c.vencimento) return false;
+    const isoVenc = c.vencimento.includes('/') 
+      ? c.vencimento.split('/').reverse().join('-') 
+      : c.vencimento;
+    return isoVenc < today;
+  }).sort((a, b) => {
+    const dateA = a.vencimento.includes('/') ? a.vencimento.split('/').reverse().join('-') : a.vencimento;
+    const dateB = b.vencimento.includes('/') ? b.vencimento.split('/').reverse().join('-') : b.vencimento;
+    return dateA.localeCompare(dateB);
+  });
   
-  return data;
+  return filteredData;
 };
 
 export const listClientsExpiringToday = async () => {
