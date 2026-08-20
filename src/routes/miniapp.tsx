@@ -138,18 +138,24 @@ function MiniAppComponent() {
 
       toast.success(`${client.nome} renovado com sucesso!`);
       
-      // Copy renewal message
-      const serverName = servers.find(s => client.servidores_ids?.includes(s.id))?.name || "IPTV";
-      const message = BOT_TEMPLATES.CONFIRMACAO(client.nome, format(nextVenc, "dd/MM/yyyy"));
+      // Generate specific approved message
+      const nextVencFormatted = format(nextVenc, "dd/MM/yyyy");
+      const message = `📌 Obrigado pela confiança!\n✅ Sua assinatura foi renovada com sucesso!\n🗓️ *PRÓXIMO VENCIMENTO:* ${nextVencFormatted}`;
       
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(message);
-        toast.info("Mensagem de confirmação copiada!");
-      }
-
+      setRenewalMessage(message);
       fetchData();
     } catch (error: any) {
       toast.error("Erro ao renovar: " + error.message);
+    }
+  };
+
+  const copyRenewalMessage = async () => {
+    if (!renewalMessage) return;
+    try {
+      await navigator.clipboard.writeText(renewalMessage);
+      toast.info("Mensagem de confirmação copiada!");
+    } catch (err) {
+      toast.error("Erro ao copiar mensagem.");
     }
   };
 
