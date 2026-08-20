@@ -256,9 +256,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                 await sendMessage(chatId, 'Ninguém vence hoje.');
               } else {
                 for (const c of today) {
-                  const fullClient = await findClientByName(c.nome);
-                  const detailed = fullClient[0];
-                  if (detailed) await sendClientCompact(chatId, detailed);
+                  // NOVO: Usar estritamente o objeto 'c' iterado para garantir isolamento
+                  await sendClientCompact(chatId, c);
                 }
               }
               return new Response('OK');
