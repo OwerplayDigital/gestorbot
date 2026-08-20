@@ -173,7 +173,9 @@ export const listExpiredClients = async () => {
 };
 
 export const listClientsExpiringToday = async () => {
-  const today = new Date().toISOString().split('T')[0];
+  const { toZonedTime, format: formatTz } = await import('date-fns-tz');
+  const today = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd');
+  
   const { data, error } = await supabaseAdmin
     .from("clientes")
     .select("id, nome, vencimento, whatsapp")
@@ -334,8 +336,14 @@ export const renewClient = async (
     }
   }
 
-  const today = new Date();
+  const { toZonedTime, format: formatTz } = await import('date-fns-tz');
+  const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
+  
+  const today = new Date(nowBr);
   today.setHours(0, 0, 0, 0);
+  
+  // O banco armazena apenas data (YYYY-MM-DD), ao ler transformamos em um objeto Date de meio-dia 
+  // para evitar problemas de timezone na conversão da string
   const currentVenc = client.vencimento ? new Date(client.vencimento + 'T12:00:00') : today;
   
   // Regra de data: Se vencido, Hoje + 30 dias. Se em dia, Vencimento + 30 dias.
@@ -362,7 +370,7 @@ export const renewClient = async (
       desconto: client.desconto,
       vencimento_anterior: vencimentoAnterior,
       novo_vencimento: calculatedNewVencimento || newVencimento,
-      data_renovacao: new Date().toISOString(),
+      data_renovacao: nowBr.toISOString(),
     });
 
   if (renewRecordError) {
@@ -380,7 +388,7 @@ export const renewClient = async (
       entrada: valorEntrada,
       custo: totalCusto,
       valor: valorEntrada - totalCusto, // 'valor' agora representa o lucro líquido para compatibilidade legada
-      data: new Date().toISOString().split('T')[0] ?? null,
+      data: formatTz(nowBr, 'yyyy-MM-dd'),
       descricao: `Renovação cliente ${clientId}`,
     });
 

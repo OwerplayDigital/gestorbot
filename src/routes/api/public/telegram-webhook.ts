@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { toZonedTime, format as formatTz } from 'date-fns-tz';
 import { 
   getAuthorizedUser, 
   listPlans, 
@@ -100,10 +101,8 @@ const mainMenu = {
 };
 
 function formatBRDate(date: Date): string {
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
+  const brDate = toZonedTime(date, 'America/Sao_Paulo');
+  return formatTz(brDate, 'dd/MM/yyyy');
 }
 
 function cleanPhone(phone: string): string {
@@ -375,7 +374,8 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
               const { data: c } = await supabaseAdmin.from('clientes').select('vencimento').eq('id', id).single();
               if (c) {
                 const currentVenc = new Date(c.vencimento + 'T12:00:00');
-                const today = new Date();
+                const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
+                const today = new Date(nowBr);
                 today.setHours(0, 0, 0, 0);
                 
                 // Regra visual no Bot: se vencido, Hoje + 30. Se em dia, Vencimento + 30.

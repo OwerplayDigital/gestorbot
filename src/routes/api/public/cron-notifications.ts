@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
+import { toZonedTime, format as formatTz } from 'date-fns-tz'
 
 async function sendMessage(chatId: number, text: string, replyMarkup?: any) {
   const TELEGRAM_TOKEN = process.env['TELEGRAM_BOT_TOKEN'] || '';
@@ -22,12 +23,8 @@ async function sendMessage(chatId: number, text: string, replyMarkup?: any) {
 }
 
 function formatBRDate(date: Date): string {
-  // Ajuste para fuso de Brasília (UTC-3)
-  const brDate = new Date(date.getTime() - (3 * 60 * 60 * 1000));
-  const day = String(brDate.getUTCDate()).padStart(2, '0');
-  const month = String(brDate.getUTCMonth() + 1).padStart(2, '0');
-  const year = brDate.getUTCFullYear();
-  return `${day}/${month}/${year}`;
+  const brDate = toZonedTime(date, 'America/Sao_Paulo');
+  return formatTz(brDate, 'dd/MM/yyyy');
 }
 
 export const Route = createFileRoute('/api/public/cron-notifications')({
@@ -39,10 +36,9 @@ export const Route = createFileRoute('/api/public/cron-notifications')({
         // Para simplificar a validação conforme pedido ("não dispare o resumo fora desse horário"),
         // vamos checar se a hora atual está na janela permitida (08:30 às 08:35 BRT).
         
-        const now = new Date();
-        const brTime = new Date(now.getTime() - (3 * 60 * 60 * 1000));
-        const hour = brTime.getUTCHours();
-        const minutes = brTime.getUTCMinutes();
+        const brTime = toZonedTime(new Date(), 'America/Sao_Paulo');
+        const hour = brTime.getHours();
+        const minutes = brTime.getMinutes();
         
         // Checar se a requisição vem do botão de teste (usando um query param)
         const url = new URL(request.url);
@@ -63,7 +59,7 @@ export const Route = createFileRoute('/api/public/cron-notifications')({
         console.log("Executando rotina de notificações via Cron...");
         
         // Data atual em Brasília para o filtro de vencimento
-        const today = brTime.toISOString().split('T')[0];
+        const today = formatTz(brTime, 'yyyy-MM-dd');
         
         const { data: authUsers, error: authError } = await supabaseAdmin
           .from("telegram_authorized_users")
