@@ -167,21 +167,13 @@ export const getClientsSummary = async () => {
 };
 
 export const listExpiredClients = async () => {
-  const { toZonedTime, format: formatTz } = await import('date-fns-tz');
+  const { toZonedTime } = await import('date-fns-tz');
   const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
   nowBr.setHours(0, 0, 0, 0);
-  const todayStr = formatTz(nowBr, 'yyyy-MM-dd');
   
-  // Buscamos todos para filtrar em memória devido ao formato DD/MM/YYYY no banco
   const { data, error } = await supabaseAdmin
     .from("clientes")
-    .select(`
-      id, 
-      nome, 
-      vencimento, 
-      whatsapp,
-      servidores_ids
-    `);
+    .select("*");
 
   if (error) {
     console.error("Erro Supabase (expired select):", error);
@@ -192,25 +184,15 @@ export const listExpiredClients = async () => {
     if (!d || typeof d !== 'string') return null;
     const parts = d.split(/[/-]/);
     if (parts.length !== 3) return null;
-    
-    const s0 = parts[0];
-    const s1 = parts[1];
-    const s2 = parts[2];
+    const s0 = parts[0], s1 = parts[1], s2 = parts[2];
     if (s0 === undefined || s1 === undefined || s2 === undefined) return null;
-
-    const p0 = Number(s0);
-    const p1 = Number(s1);
-    const p2 = Number(s2);
-
+    const p0 = Number(s0), p1 = Number(s1), p2 = Number(s2);
     let resultDate: Date | null = null;
     if (d.includes('/') || (d.includes('-') && s0.length === 2)) {
-      // DD/MM/YYYY
       resultDate = new Date(p2, p1 - 1, p0);
     } else if (d.includes('-') && s0.length === 4) {
-      // YYYY-MM-DD
       resultDate = new Date(p0, p1 - 1, p2);
     }
-
     if (resultDate && !isNaN(resultDate.getTime())) {
       resultDate.setHours(0, 0, 0, 0);
       return resultDate;
@@ -218,51 +200,14 @@ export const listExpiredClients = async () => {
     return null;
   };
 
-  console.log(`[DIAGNOSTICO] Total clientes banco: ${data?.length || 0}`);
-  if (data && data.length > 0) {
-    console.log(`[DIAGNOSTICO] Amostra (vencimento): ${data.slice(0, 3).map(c => c.vencimento).join(', ')}`);
-  }
-  console.log(`[DIAGNOSTICO] HOJE (Brasil): ${todayStr}`);
-
-  const filteredData = (data || [])
+  const expired = (data || [])
     .filter((c: any) => {
       const vencDate = parseDate(c.vencimento);
-      const isExpired = vencDate && vencDate < nowBr;
-      return isExpired;
+      return vencDate && vencDate < nowBr;
     })
-    .sort((a: any, b: any) => {
-      const dateA = parseDate(a.vencimento);
-      const dateB = parseDate(b.vencimento);
-      return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
-    });
+    .sort((a: any, b: any) => (parseDate(a.vencimento)?.getTime() || 0) - (parseDate(b.vencimento)?.getTime() || 0));
   
-  console.log(`[DIAGNOSTICO] Clientes após filtro (vencidos): ${filteredData.length}`);
-  
-  // Buscar nomes dos servidores para os clientes filtrados
-  const result = await Promise.all(filteredData.map(async (c: any) => {
-    const serverKey = Object.keys(c).find(k => /servidor|server/i.test(k) && c[k] !== null && c[k] !== undefined);
-    const valorServidor = serverKey ? c[serverKey] : null;
-
-    let servidores: any[] = [];
-    if (valorServidor) {
-      if (typeof valorServidor === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(valorServidor)) {
-        servidores = [{ name: valorServidor }];
-      } else {
-        const rawIds = Array.isArray(valorServidor) ? valorServidor : [valorServidor];
-        const validIds = rawIds.filter(id => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
-        if (validIds.length > 0) {
-          const { data: sData } = await supabaseAdmin
-            .from('servidores_iptv')
-            .select('id, name')
-            .in('id', validIds);
-          servidores = sData || [];
-        }
-      }
-    }
-    return { ...c, servidores };
-  }));
-
-  return result;
+  return expired;
 };
 
 export const listClientsExpiringToday = async () => {
