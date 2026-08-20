@@ -733,9 +733,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
           if (state?.action === 'buscar_cliente') {
             const results = await findClientByName(text);
             if (results.length === 0) {
-              await sendMessage(chatId, "Nenhum cliente encontrado.", {
-                inline_keyboard: [[{ text: "Menu Principal", callback_data: "back_to_main" }]]
-              });
+              await sendMessage(chatId, "Nenhum cliente encontrado.");
             } else {
               for (const c of results) {
                 await sendClientFicha(chatId, c);
