@@ -142,7 +142,7 @@ export const listServers = async () => {
 export const getClientsSummary = async () => {
   const { data: allClients, error } = await supabaseAdmin
     .from("clientes")
-    .select("status");
+    .select("status, vencimento");
 
   if (error) {
     console.error("Erro Supabase (summary select):", error);
