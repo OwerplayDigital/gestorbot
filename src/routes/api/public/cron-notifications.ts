@@ -61,7 +61,7 @@ export const Route = createFileRoute('/api/public/cron-notifications')({
         // Data atual em Brasília para o filtro de vencimento
         const today = formatTz(brTime, 'yyyy-MM-dd');
         
-        let authUsers = [];
+        let authUsers: { telegram_chat_id: string | number; user_id: string }[] = [];
         const { data: dbAuthUsers, error: authError } = await supabaseAdmin
           .from("telegram_authorized_users")
           .select("telegram_chat_id, user_id");
