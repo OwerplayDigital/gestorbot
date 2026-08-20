@@ -325,6 +325,15 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                     .in('id', c.servidores_ids);
                   servidores = sData || [];
                 }
+                // Adicionamos fallback para 'plans' também
+                if (!c.plans && c.plano_id) {
+                   const { data: pData } = await supabaseAdmin
+                    .from('plans')
+                    .select('id, name, price')
+                    .eq('id', c.plano_id)
+                    .maybeSingle();
+                   c.plans = pData;
+                }
                 return { ...c, servidores };
               }));
 
