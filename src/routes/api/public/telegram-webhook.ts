@@ -413,8 +413,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   );
                   await sendMessage(chatId, `<b>Assinatura Renovada!</b>\nO caixa foi atualizado automaticamente.`, {
                     inline_keyboard: [
-                    [{ text: "Enviar Comprovante", url: `https://wa.me/${phone}?text=${encodedReceipt}` }],
-                    [{ text: "Menu Principal", callback_data: "back_to_main" }]
+                    [{ text: "Enviar Comprovante", url: `https://wa.me/${phone}?text=${encodedReceipt}` }]
                   ]
                 });
               }
