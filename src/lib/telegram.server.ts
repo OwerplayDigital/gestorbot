@@ -175,7 +175,13 @@ export const listExpiredClients = async () => {
   // Buscamos todos para filtrar em memória devido ao formato DD/MM/YYYY no banco
   const { data, error } = await supabaseAdmin
     .from("clientes")
-    .select("id, nome, vencimento, whatsapp");
+    .select(`
+      id, 
+      nome, 
+      vencimento, 
+      whatsapp,
+      servidores_ids
+    `);
 
   if (error) {
     console.error("Erro Supabase (expired select):", error);
@@ -232,7 +238,20 @@ export const listExpiredClients = async () => {
   
   console.log(`[DIAGNOSTICO] Clientes após filtro (vencidos): ${filteredData.length}`);
   
-  return filteredData;
+  // Buscar nomes dos servidores para os clientes filtrados
+  const result = await Promise.all(filteredData.map(async (c) => {
+    let servidores: any[] = [];
+    if (c.servidores_ids && c.servidores_ids.length > 0) {
+      const { data: sData } = await supabaseAdmin
+        .from('servidores_iptv')
+        .select('id, name')
+        .in('id', c.servidores_ids);
+      servidores = sData || [];
+    }
+    return { ...c, servidores };
+  }));
+
+  return result;
 };
 
 export const listClientsExpiringToday = async () => {
@@ -242,14 +261,35 @@ export const listClientsExpiringToday = async () => {
   
   const { data, error } = await supabaseAdmin
     .from("clientes")
-    .select("id, nome, vencimento, whatsapp")
+    .select(`
+      id, 
+      nome, 
+      vencimento, 
+      whatsapp,
+      servidores_ids,
+      plans:plans(id, name, price)
+    `)
     .eq("vencimento", today as string);
 
   if (error) {
     console.error("Erro Supabase (today select):", error);
     throw new Error("Erro ao listar clientes vencendo hoje.");
   }
-  return data;
+
+  // Buscar nomes dos servidores
+  const result = await Promise.all(data.map(async (c) => {
+    let servidores: any[] = [];
+    if (c.servidores_ids && c.servidores_ids.length > 0) {
+      const { data: sData } = await supabaseAdmin
+        .from('servidores_iptv')
+        .select('id, name')
+        .in('id', c.servidores_ids);
+      servidores = sData || [];
+    }
+    return { ...c, servidores };
+  }));
+
+  return result;
 };
 
 export const findClientByName = async (name: string) => {

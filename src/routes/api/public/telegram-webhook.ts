@@ -121,9 +121,10 @@ async function sendClientCompact(chatId: number, c: any) {
   const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || ''));
   const phone = cleanPhone(c.whatsapp || '');
   
+  const nomeServidor = c.servidores?.[0]?.name || c.servidor?.name || c.servidor || c.nome_servidor || 'Não informado';
   const msg = `👤 Cliente: ${c.nome}\n` +
               `📅 Vencimento: ${brDate}\n` +
-              `🖥️ Servidor: ${c.servidores?.[0]?.name || 'N/A'}`;
+              `🖥️ Servidor: ${nomeServidor}`;
   
   await sendMessage(chatId, msg, {
     inline_keyboard: [
@@ -271,7 +272,7 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
 
               const { data: clients, error } = await supabaseAdmin
                 .from("clientes")
-                .select("*");
+                .select("*, servidores_ids");
 
               if (error) {
                 console.error("Erro ao buscar vencidos no webhook:", error);
@@ -315,11 +316,24 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   return (dA?.getTime() || 0) - (dB?.getTime() || 0);
                 });
 
-              if (expired.length === 0) {
+              // Buscar nomes dos servidores para os vencidos
+              const expiredWithServers = await Promise.all(expired.map(async (c: any) => {
+                let servidores: any[] = [];
+                if (c.servidores_ids && c.servidores_ids.length > 0) {
+                  const { data: sData } = await supabaseAdmin
+                    .from('servidores_iptv')
+                    .select('id, name')
+                    .in('id', c.servidores_ids);
+                  servidores = sData || [];
+                }
+                return { ...c, servidores };
+              }));
+
+              if (expiredWithServers.length === 0) {
                 await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vencidos encontrados: 0\n\nNenhum cliente vencido.`);
               } else {
-                await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vencidos encontrados: ${expired.length}`);
-                for (const c of expired) {
+                await sendMessage(chatId, `🔍 [SISTEMA] Hoje: ${todayStr} | Vencidos encontrados: ${expiredWithServers.length}`);
+                for (const c of expiredWithServers) {
                   // Reusando a lógica de exibição compacta
                   const vDate = parseDate(c.vencimento);
                   const brDate = vDate ? formatBRDate(vDate) : 'N/A';
@@ -328,12 +342,11 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
                   const encodedCobranca = encodeURIComponent(BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl));
                   const phone = cleanPhone(c.whatsapp || '');
                   
-                  const servers = (c as any).servidores || [];
-                  const serverName = Array.isArray(servers) && servers[0] ? servers[0].name : 'N/A';
+                  const nomeServidor = (c as any).servidores?.[0]?.name || (c as any).servidor?.name || (c as any).servidor || (c as any).nome_servidor || 'Não informado';
 
                   const msg = `👤 Cliente: ${c.nome}\n` +
                               `📅 Vencimento: ${brDate}\n` +
-                              `🖥️ Servidor: ${serverName}`;
+                              `🖥️ Servidor: ${nomeServidor}`;
                   
                   await sendMessage(chatId, msg, {
                     inline_keyboard: [
