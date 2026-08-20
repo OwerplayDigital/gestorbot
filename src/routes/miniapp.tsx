@@ -59,6 +59,9 @@ function MiniAppComponent() {
   // Edit Modal State
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Client>>({});
+  
+  // Renewal Message State
+  const [renewalMessage, setRenewalMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
