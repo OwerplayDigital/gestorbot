@@ -112,8 +112,8 @@ function Dashboard() {
             .order("nome"),
           supabase.from("clientes")
             .select("id, nome, vencimento, valor, status")
-            .eq("status", "vencido")
-            .order("vencimento", { ascending: false })
+            .lt("vencimento", todayStr)
+            .order("vencimento", { ascending: true })
         ]);
 
         const clients = clientsRes.data ?? [];
@@ -123,8 +123,8 @@ function Dashboard() {
         const vencidos = vencidosRes.data ?? [];
 
         const totalClients = clients.length;
-        const activeClients = clients.filter(c => c.status === "ativo").length;
-        const totalVencidos = clients.filter(c => c.status === "vencido").length;
+        const activeClients = clients.filter((c: any) => c.status === "ativo").length;
+        const totalVencidos = vencidos.length;
 
         const currentMonthTransactions = transactions.filter(t => {
           if (!t.data) return false;

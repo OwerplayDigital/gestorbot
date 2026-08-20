@@ -142,7 +142,7 @@ export const listServers = async () => {
 export const getClientsSummary = async () => {
   const { data: allClients, error } = await supabaseAdmin
     .from("clientes")
-    .select("status");
+    .select("status, vencimento");
 
   if (error) {
     console.error("Erro Supabase (summary select):", error);
@@ -150,19 +150,24 @@ export const getClientsSummary = async () => {
   }
 
   const total = allClients.length;
-  const ativos = allClients.filter(c => c.status === 'ativo').length;
-  const vencidos = allClients.filter(c => c.status === 'vencido').length;
+  const ativos = allClients.filter((c: any) => c.status === 'ativo').length;
+  
+  const { toZonedTime, format: formatTz } = await import('date-fns-tz');
+  const today = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd');
+  const vencidos = allClients.filter((c: any) => c.vencimento && c.vencimento < today).length;
 
   return { total, ativos, vencidos };
 };
 
 export const listExpiredClients = async () => {
+  const { toZonedTime, format: formatTz } = await import('date-fns-tz');
+  const today = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd');
+  
   const { data, error } = await supabaseAdmin
     .from("clientes")
     .select("id, nome, vencimento, whatsapp")
-    .eq("status", "vencido")
-    .order('vencimento', { ascending: true })
-    .limit(15);
+    .lt("vencimento", today)
+    .order('vencimento', { ascending: true });
 
   if (error) {
     console.error("Erro Supabase (expired select):", error);
