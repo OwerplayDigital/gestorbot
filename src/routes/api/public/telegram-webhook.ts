@@ -93,21 +93,35 @@ async function answerCallbackQuery(callbackQueryId: string, text?: string) {
 
 async function enrichClients(clients: any[]) {
   return await Promise.all(clients.map(async (c: any) => {
-    // Captura flexível de IDs de servidores (UUIDs)
-    const rawIds = c.servidores_ids 
-      || (c.servidor_id ? [c.servidor_id] : null)
-      || (c.servidor_iptv_id ? [c.servidor_iptv_id] : null);
+    // 1. INSPEÇÃO E CAPTURA DINÂMICA
+    const serverKey = Object.keys(c).find(k => /servidor|server/i.test(k) && c[k] !== null && c[k] !== undefined);
+    const valorServidor = serverKey ? c[serverKey] : null;
 
-    if (rawIds && Array.isArray(rawIds) && rawIds.length > 0) {
-      const { data: sData } = await supabaseAdmin
-        .from('servidores_iptv')
-        .select('id, name, nome')
-        .in('id', rawIds);
-      c.servidores = sData || [];
-    } else if (c.servidor && typeof c.servidor === 'string') {
-      // Fallback para nome direto se for string
-      c.servidores = [{ name: c.servidor }];
+    if (valorServidor) {
+      // 2. TRATAMENTO DO VALOR ENCONTRADO
+      if (typeof valorServidor === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(valorServidor)) {
+        // Se for texto direto (e não UUID), usa como nome
+        c.servidores = [{ name: valorServidor }];
+      } else {
+        // Se for UUID ou Array de UUIDs, busca no banco
+        const rawIds = Array.isArray(valorServidor) ? valorServidor : [valorServidor];
+        const validIds = rawIds.filter(id => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+        
+        if (validIds.length > 0) {
+          const { data: sData } = await supabaseAdmin
+            .from('servidores_iptv')
+            .select('id, name, nome')
+            .in('id', validIds);
+          c.servidores = sData || [];
+        }
+      }
     }
+    
+    // Fallback caso não encontre nada nas chaves mapeadas
+    if (!c.servidores || c.servidores.length === 0) {
+      c._debug_fields = Object.keys(c).join(', ');
+    }
+    
     return c;
   }));
 }
@@ -149,7 +163,8 @@ async function sendClientCompact(chatId: number, c: any) {
 
   const msg = `👤 Cliente: ${c.nome}\n` +
               `📅 Vencimento: ${brDate}\n` +
-              `📡 Servidor: ${nomeServidor}`;
+              `📡 Servidor: ${nomeServidor}` +
+              (nomeServidor === 'Não informado' && c._debug_fields ? `\n🔍 [CAMPOS DISPONÍVEIS]: ${c._debug_fields}` : '');
   
   await sendMessage(chatId, msg, {
     inline_keyboard: [
@@ -190,7 +205,8 @@ async function sendClientFicha(chatId: number, c: any) {
               `WhatsApp: ${c.whatsapp || 'N/A'}\n` +
               `Plano: ${planName}\n` +
               `Valor: R$ ${valorFinal}\n` +
-              `Status: ${c.status}`;
+              `Status: ${c.status}` +
+              (serverNames === 'N/A' && c._debug_fields ? `\n\n🔍 [CAMPOS DISPONÍVEIS]: ${c._debug_fields}` : '');
   
   await sendMessage(chatId, msg, {
     inline_keyboard: [

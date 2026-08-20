@@ -240,20 +240,24 @@ export const listExpiredClients = async () => {
   
   // Buscar nomes dos servidores para os clientes filtrados
   const result = await Promise.all(filteredData.map(async (c: any) => {
-    // Captura flexível de IDs de servidores ou fallbacks para nomes/colunas extras
-    const rawIds = c.servidores_ids 
-      || (c.servidor_id ? [c.servidor_id] : null)
-      || (c.servidor_iptv_id ? [c.servidor_iptv_id] : null);
+    const serverKey = Object.keys(c).find(k => /servidor|server/i.test(k) && c[k] !== null && c[k] !== undefined);
+    const valorServidor = serverKey ? c[serverKey] : null;
 
     let servidores: any[] = [];
-    if (rawIds && Array.isArray(rawIds) && rawIds.length > 0) {
-      const { data: sData } = await supabaseAdmin
-        .from('servidores_iptv')
-        .select('id, name')
-        .in('id', rawIds);
-      servidores = sData || [];
-    } else if (c.servidor && typeof c.servidor === 'string') {
-      servidores = [{ name: c.servidor }];
+    if (valorServidor) {
+      if (typeof valorServidor === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(valorServidor)) {
+        servidores = [{ name: valorServidor }];
+      } else {
+        const rawIds = Array.isArray(valorServidor) ? valorServidor : [valorServidor];
+        const validIds = rawIds.filter(id => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+        if (validIds.length > 0) {
+          const { data: sData } = await supabaseAdmin
+            .from('servidores_iptv')
+            .select('id, name')
+            .in('id', validIds);
+          servidores = sData || [];
+        }
+      }
     }
     return { ...c, servidores };
   }));
@@ -326,13 +330,24 @@ export const listClientsExpiringToday = async () => {
 
   // Buscar nomes dos servidores e planos
   const result = await Promise.all(filtered.map(async (c: any) => {
+    const serverKey = Object.keys(c).find(k => /servidor|server/i.test(k) && c[k] !== null && c[k] !== undefined);
+    const valorServidor = serverKey ? c[serverKey] : null;
+
     let servidores: any[] = [];
-    if (c.servidores_ids && c.servidores_ids.length > 0) {
-      const { data: sData } = await supabaseAdmin
-        .from('servidores_iptv')
-        .select('id, name')
-        .in('id', c.servidores_ids);
-      servidores = sData || [];
+    if (valorServidor) {
+      if (typeof valorServidor === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(valorServidor)) {
+        servidores = [{ name: valorServidor }];
+      } else {
+        const rawIds = Array.isArray(valorServidor) ? valorServidor : [valorServidor];
+        const validIds = rawIds.filter(id => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+        if (validIds.length > 0) {
+          const { data: sData } = await supabaseAdmin
+            .from('servidores_iptv')
+            .select('id, name')
+            .in('id', validIds);
+          servidores = sData || [];
+        }
+      }
     }
     
     // Adicionar carregamento do plano
@@ -376,14 +391,25 @@ export const findClientByName = async (name: string) => {
   }
   
   // Buscar nomes dos servidores separadamente se houver IDs
-  const result = await Promise.all(data.map(async (c) => {
+  const result = await Promise.all(data.map(async (c: any) => {
+    const serverKey = Object.keys(c).find(k => /servidor|server/i.test(k) && c[k] !== null && c[k] !== undefined);
+    const valorServidor = serverKey ? c[serverKey] : null;
+
     let servidores: any[] = [];
-    if (c.servidores_ids && c.servidores_ids.length > 0) {
-      const { data: sData } = await supabaseAdmin
-        .from('servidores_iptv')
-        .select('id, name')
-        .in('id', c.servidores_ids);
-      servidores = sData || [];
+    if (valorServidor) {
+      if (typeof valorServidor === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(valorServidor)) {
+        servidores = [{ name: valorServidor }];
+      } else {
+        const rawIds = Array.isArray(valorServidor) ? valorServidor : [valorServidor];
+        const validIds = rawIds.filter(id => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+        if (validIds.length > 0) {
+          const { data: sData } = await supabaseAdmin
+            .from('servidores_iptv')
+            .select('id, name')
+            .in('id', validIds);
+          servidores = sData || [];
+        }
+      }
     }
     return { ...c, servidores };
   }));
