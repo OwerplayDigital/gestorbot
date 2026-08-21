@@ -11,9 +11,10 @@ import gestorLogo from "@/assets/gestor-logo.png.asset.json";
 import { z } from "zod";
 
 const searchSchema = z.object({
-  admin: z.string().optional().catch(undefined),
-  redirect: z.string().optional().catch(undefined),
+  admin: z.string().optional(),
+  redirect: z.string().optional(),
 });
+
 
 
 
