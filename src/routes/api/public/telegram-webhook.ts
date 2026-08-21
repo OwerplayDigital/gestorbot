@@ -858,6 +858,11 @@ async function handleTelegramEvent(body: any): Promise<Response> {
           if (!msg) return new Response('OK');
           const chatId = msg.chat.id;
           const text = msg.text || '';
+          const messageId = msg.message_id;
+          
+          // Rastrear todas as mensagens recebidas para que possam ser apagadas se forem comandos ou parte de um fluxo
+          await trackBotMessage(chatId, messageId);
+
           
           // Tentar vínculo automático se for o admin
           await (await import('@/lib/telegram.server')).bindAdminIfMatching(chatId);
