@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,16 +8,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import gestorLogo from "@/assets/gestor-logo.png.asset.json";
-import { z } from "zod";
-
-const searchSchema = z.object({
-  admin: z.string().optional().catch(undefined),
-  redirect: z.string().optional().catch(undefined),
-});
-
 
 export const Route = createFileRoute("/")({
-  validateSearch: (search) => searchSchema.parse(search),
   component: Index,
 });
 
