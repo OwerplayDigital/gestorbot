@@ -25,7 +25,7 @@ export const getAuthorizedUser = async (chatId: number) => {
 
   if (allowedId && userId) {
     if (chatId.toString() !== allowedId) {
-      console.warn(`Chat ID ${chatId} vinculado a ${userId} mas não consta em TELEGRAM_ALLOWED_USER_ID`);
+      console.warn(`Chat ID ${chatId} bloqueado: Não consta em TELEGRAM_ALLOWED_USER_ID`);
       return null;
     }
   }
