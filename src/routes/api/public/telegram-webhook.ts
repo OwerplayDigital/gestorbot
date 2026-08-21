@@ -98,7 +98,7 @@ const mainMenu = {
     [{ text: 'Vence Hoje', callback_data: 'vencendo_hoje' }, { text: 'Vencidos', callback_data: 'vencidos' }],
     [{ text: 'Cadastrar', callback_data: 'new_client_fast' }, { text: 'Buscar', callback_data: 'search_direct' }],
     [{ text: 'Servidores', callback_data: 'list_servers' }, { text: 'Planos', callback_data: 'list_plans' }],
-    [{ text: 'Financeiro', callback_data: 'financeiro' }]
+    [{ text: 'Financeiro', callback_data: 'financeiro' }, { text: '🌐 Painel Web', url: 'https://gestorbot.lovable.app' }]
   ]
 };
 
