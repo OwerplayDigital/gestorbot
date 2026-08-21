@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,14 +10,18 @@ import { User } from "@supabase/supabase-js";
 import gestorLogo from "@/assets/gestor-logo.png.asset.json";
 import { z } from "zod";
 
+const searchSchema = z.object({
+  admin: z.any().optional(),
+  redirect: z.any().optional(),
+});
+
 export const Route = createFileRoute("/")({
+  validateSearch: (search) => searchSchema.parse(search),
   component: Index,
 });
 
-
 function Index() {
   const navigate = useNavigate();
-  
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -25,11 +29,18 @@ function Index() {
   const [password, setPassword] = useState("");
   const [signingIn, setSigningIn] = useState(false);
 
-  // Acesso liberado apenas via porta secreta (?admin=true)
-  const isSecretDoorOpen = typeof window !== 'undefined' && window.location.search.includes('admin=true');
-
+  // Acesso liberado apenas via porta secreta (?admin=true) no parâmetro raw
+  const [isSecretDoorOpen, setIsSecretDoorOpen] = useState(false);
 
   useEffect(() => {
+    // Checagem manual via URL para evitar conflitos de tipagem do TanStack Router
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('admin') === 'true') {
+        setIsSecretDoorOpen(true);
+      }
+    }
+
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -86,7 +97,6 @@ function Index() {
 
   // Tela de Manutenção / Mockup (Padrão)
   if (!isSecretDoorOpen) {
-    console.log("Porta fechada. Renderizando manutenção.");
     return (
       <div className="flex flex-col min-h-screen items-center justify-center bg-background p-4 text-center">
         <img src={gestorLogo.url} alt="Logo" className="h-20 w-20 rounded-xl mb-6 shadow-2xl" />
@@ -97,8 +107,6 @@ function Index() {
       </div>
     );
   }
-
-  console.log("Porta aberta! Renderizando login.");
 
   // Tela de Login (Porta Secreta)
   return (
@@ -136,7 +144,6 @@ function Index() {
                 className="bg-muted/50"
               />
             </div>
-
             <Button type="submit" className="w-full font-bold" disabled={signingIn}>
               {signingIn ? "Validando..." : "Entrar"}
             </Button>
@@ -146,6 +153,3 @@ function Index() {
     </div>
   );
 }
-
-
-
