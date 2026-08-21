@@ -638,7 +638,7 @@ export const resetGlobalFinancialHistory = async (userId: string) => {
  */
 export const trackBotMessage = async (chatId: number, messageId: number) => {
   try {
-    await supabaseAdmin
+    await (supabaseAdmin as any)
       .from('telegram_message_logs')
       .insert({
         telegram_chat_id: chatId,
@@ -650,32 +650,26 @@ export const trackBotMessage = async (chatId: number, messageId: number) => {
   }
 };
 
-/**
- * Retrieves tracked message IDs for a specific chat.
- */
 export const getBotMessages = async (chatId: number) => {
   try {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await (supabaseAdmin as any)
       .from('telegram_message_logs')
       .select('message_id')
       .eq('telegram_chat_id', chatId)
       .order('created_at', { ascending: false })
-      .limit(50); // Limit to recent messages
+      .limit(50);
 
     if (error) throw error;
-    return data?.map(m => m.message_id) || [];
+    return (data as any[])?.map(m => m.message_id) || [];
   } catch (err) {
     console.error("Error getting messages:", err);
     return [];
   }
 };
 
-/**
- * Clears tracked message IDs from the database.
- */
 export const clearBotMessages = async (chatId: number) => {
   try {
-    await supabaseAdmin
+    await (supabaseAdmin as any)
       .from('telegram_message_logs')
       .delete()
       .eq('telegram_chat_id', chatId);
@@ -683,3 +677,4 @@ export const clearBotMessages = async (chatId: number) => {
     console.error("Error clearing messages:", err);
   }
 };
+
