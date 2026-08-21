@@ -8,7 +8,8 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { Menu } from "lucide-react";
+import { Menu, ChartBar } from "lucide-react";
+import gestorLogo from "@/assets/gestor-logo.png.asset.json";
 
 import { Toaster } from "@/components/ui/sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -132,7 +133,7 @@ function RootShell({ children }: { children: ReactNode }) {
                   <SheetContent side="left" className="w-[280px]">
                     <SheetHeader>
                       <SheetTitle className="text-left flex items-center gap-2">
-                        <img src="/favicon.png" alt="Logo" className="h-6 w-6" />
+                        <img src={gestorLogo.url} alt="Logo" className="h-6 w-6 rounded-md object-cover" />
                         Owerplay Gestor
                       </SheetTitle>
                     </SheetHeader>
@@ -144,7 +145,7 @@ function RootShell({ children }: { children: ReactNode }) {
                   </SheetContent>
                 </Sheet>
                 <Link to="/dashboard" className="flex items-center gap-2 font-bold tracking-tighter text-lg">
-                  <img src="/favicon.png" alt="Logo" className="h-7 w-7" />
+                  <img src={gestorLogo.url} alt="Logo" className="h-7 w-7 rounded-md object-cover" />
                   <span className="inline-block">Owerplay Gestor</span>
                 </Link>
               </div>
