@@ -630,3 +630,56 @@ export const resetGlobalFinancialHistory = async (userId: string) => {
 
   return { success: true };
 };
+// --- Message Tracking & Cleanup ---
+
+/**
+ * Tracks a message ID sent by the bot or a command from the user for later cleanup.
+ * We store this in a table to persist across serverless executions.
+ */
+export const trackBotMessage = async (chatId: number, messageId: number) => {
+  try {
+    await supabaseAdmin
+      .from('telegram_message_logs')
+      .insert({
+        telegram_chat_id: chatId,
+        message_id: messageId,
+        created_at: new Date().toISOString()
+      });
+  } catch (err) {
+    console.error("Error tracking message:", err);
+  }
+};
+
+/**
+ * Retrieves tracked message IDs for a specific chat.
+ */
+export const getBotMessages = async (chatId: number) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('telegram_message_logs')
+      .select('message_id')
+      .eq('telegram_chat_id', chatId)
+      .order('created_at', { ascending: false })
+      .limit(50); // Limit to recent messages
+
+    if (error) throw error;
+    return data?.map(m => m.message_id) || [];
+  } catch (err) {
+    console.error("Error getting messages:", err);
+    return [];
+  }
+};
+
+/**
+ * Clears tracked message IDs from the database.
+ */
+export const clearBotMessages = async (chatId: number) => {
+  try {
+    await supabaseAdmin
+      .from('telegram_message_logs')
+      .delete()
+      .eq('telegram_chat_id', chatId);
+  } catch (err) {
+    console.error("Error clearing messages:", err);
+  }
+};
