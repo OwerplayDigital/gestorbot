@@ -10,18 +10,22 @@ export const Route = createFileRoute("/_authenticated")({
         throw redirect({
           to: "/",
           search: {
+            admin: 'false',
             redirect: location.href,
           },
         });
+
       }
     } catch (error) {
       console.error("Erro na verificação de autenticação:", error);
       throw redirect({
         to: "/",
         search: {
+          admin: 'false',
           redirect: location.href,
         },
       });
+
     }
   },
   component: () => <Outlet />,
