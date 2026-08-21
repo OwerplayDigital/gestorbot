@@ -135,7 +135,7 @@ function Dashboard() {
           transactionsRes, 
           serversRes,
         ] = await Promise.all([
-          supabase.from("clientes").select("id, status"),
+          supabase.from("clientes").select("id, nome, vencimento, valor, status"),
           supabase.from("transacoes").select("*, clientes(nome), servidores_iptv(name)").order("created_at", { ascending: false }),
           supabase.from("servidores_iptv").select("id, name"),
         ]);
@@ -144,8 +144,7 @@ function Dashboard() {
         const transactions = transactionsRes.data ?? [];
         const servers = serversRes.data ?? [];
 
-
-        const vencidos = rawVencidos
+        const vencidos = clients
           .filter((c: any) => {
             const vencDate = parseDate(c.vencimento);
             return vencDate && vencDate < nowBr;
@@ -155,6 +154,11 @@ function Dashboard() {
             const dateB = parseDate(b.vencimento);
             return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
           });
+          
+        const expiringToday = clients.filter((c: any) => {
+          const vencDate = parseDate(c.vencimento);
+          return vencDate && formatTz(vencDate, "yyyy-MM-dd") === todayStr;
+        });
 
         const totalClients = clients.length;
         const activeClients = clients.filter((c: any) => c.status === "ativo").length;
@@ -194,11 +198,9 @@ function Dashboard() {
         });
 
         const expiringWithServers = expiringToday.map((c: any) => {
-          const planPrice = Number(c.plans?.price ?? 0);
-          const base = planPrice > 0 ? planPrice : Number(c.valor ?? 0);
           return {
             ...c,
-            valorFinal: Math.max(0, base - Number(c.desconto || 0)),
+            valorFinal: Number(c.valor ?? 0),
             serverName: servers.find(s => c.servidores_ids?.includes(s.id))?.name || "N/A"
           };
         });
