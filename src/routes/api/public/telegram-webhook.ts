@@ -104,7 +104,7 @@ async function answerCallbackQuery(callbackQueryId: string, text?: string) {
 const quickLinks = {
   inline_keyboard: [
     [
-      { text: '🌐 Gestor Web', url: 'https://gestorbot.lovable.app/?admin=true' },
+      { text: '🌐 Gestor', url: 'https://gestorbot.lovable.app/?admin=true' },
       { text: '🖥️ Uniplay', url: 'https://searchdefense.top/#/login' }
     ],
     [
@@ -116,12 +116,12 @@ const quickLinks = {
 
 const mainMenu = {
   inline_keyboard: [
-    [{ text: 'Vence Hoje', callback_data: 'vencendo_hoje' }, { text: 'Vencidos', callback_data: 'vencidos' }],
-    [{ text: 'Cadastrar', callback_data: 'new_client_fast' }, { text: 'Buscar', callback_data: 'search_direct' }],
-    [{ text: 'Servidores', callback_data: 'list_servers' }, { text: 'Planos', callback_data: 'list_plans' }],
-    [{ text: 'Financeiro', callback_data: 'financeiro' }, { text: '🧹 Limpar Tela', callback_data: 'limpar_chat' }],
+    [{ text: '📅 Vence Hoje', callback_data: 'vencendo_hoje' }, { text: '❌ Vencidos', callback_data: 'vencidos' }],
+    [{ text: '➕ Cadastrar', callback_data: 'new_client_fast' }, { text: '🔍 Buscar', callback_data: 'search_direct' }],
+    [{ text: '💻 Servidores', callback_data: 'list_servers' }, { text: '📋 Planos', callback_data: 'list_plans' }],
+    [{ text: '💰 Financeiro', callback_data: 'financeiro' }, { text: '🧹 Limpar Tela', callback_data: 'limpar_chat' }],
     [
-      { text: '🌐 Gestor Web', url: 'https://gestorbot.lovable.app/?admin=true' },
+      { text: '🌐 Gestor', url: 'https://gestorbot.lovable.app/?admin=true' },
       { text: '🖥️ Uniplay', url: 'https://searchdefense.top/#/login' }
     ],
     [
@@ -938,7 +938,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
             }
 
             if (command === '/links') {
-              await sendMessage(chatId, "🔗 Acesso Rápido - Painéis", quickLinks);
+              await sendMessage(chatId, "🔗 *Acesso Rápido - Painéis*", quickLinks);
               return new Response('OK');
             }
 
