@@ -133,29 +133,18 @@ function Dashboard() {
         const [
           clientsRes, 
           transactionsRes, 
-          serversRes, 
-          expiringTodayRes,
-          vencidosRes
+          serversRes,
         ] = await Promise.all([
-          supabase.from("clientes").select("id, status"),
+          supabase.from("clientes").select("id, nome, vencimento, valor, status"),
           supabase.from("transacoes").select("*, clientes(nome), servidores_iptv(name)").order("created_at", { ascending: false }),
           supabase.from("servidores_iptv").select("id, name"),
-          supabase.from("clientes")
-            .select("id, nome, vencimento, valor, desconto, servidores_ids, plano_id, plans(price)")
-            .eq("vencimento", todayStr)
-            .order("nome"),
-          supabase.from("clientes")
-            .select("id, nome, vencimento, valor, status")
         ]);
 
         const clients = clientsRes.data ?? [];
         const transactions = transactionsRes.data ?? [];
         const servers = serversRes.data ?? [];
-        const expiringToday = expiringTodayRes.data ?? [];
-        const rawVencidos = vencidosRes.data ?? [];
 
-
-        const vencidos = rawVencidos
+        const vencidos = clients
           .filter((c: any) => {
             const vencDate = parseDate(c.vencimento);
             return vencDate && vencDate < nowBr;
@@ -165,6 +154,11 @@ function Dashboard() {
             const dateB = parseDate(b.vencimento);
             return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
           });
+          
+        const expiringToday = clients.filter((c: any) => {
+          const vencDate = parseDate(c.vencimento);
+          return vencDate && formatTz(vencDate, "yyyy-MM-dd") === todayStr;
+        });
 
         const totalClients = clients.length;
         const activeClients = clients.filter((c: any) => c.status === "ativo").length;
@@ -204,11 +198,9 @@ function Dashboard() {
         });
 
         const expiringWithServers = expiringToday.map((c: any) => {
-          const planPrice = Number(c.plans?.price ?? 0);
-          const base = planPrice > 0 ? planPrice : Number(c.valor ?? 0);
           return {
             ...c,
-            valorFinal: Math.max(0, base - Number(c.desconto || 0)),
+            valorFinal: Number(c.valor ?? 0),
             serverName: servers.find(s => c.servidores_ids?.includes(s.id))?.name || "N/A"
           };
         });
@@ -360,115 +352,6 @@ function Dashboard() {
       </section>
 
 
-      {/* FEED: Vencendo Hoje */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between px-2">
-          <h2 className="text-xl font-black tracking-tighter flex items-center gap-2">
-            <Activity className="h-5 w-5 text-owerplay-cyan" />
-            VENCENDO HOJE
-          </h2>
-          <Badge variant="outline" className="bg-owerplay-cyan/10 border-owerplay-cyan/20 text-owerplay-cyan">
-            {stats?.expiringTodayCount} CLIENTES
-          </Badge>
-        </div>
-
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar por nome..." 
-            className="pl-10 rounded-2xl bg-card border-muted/20"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-3">
-          {filteredExpiring.length === 0 ? (
-            <div className="text-center py-8 bg-card/50 border border-dashed rounded-3xl">
-              <p className="text-sm text-muted-foreground">Nenhum vencimento para hoje.</p>
-            </div>
-          ) : (
-            filteredExpiring.map((c: any) => {
-              const brDate = c.vencimento ? format(parseDate(c.vencimento)!, "dd/MM/yyyy") : "--/--/----";
-              const initials = c.nome?.substring(0, 2).toUpperCase() || "??";
-              const primeiroNome = c.nome?.split(' ')[0] || '';
-              const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
-              const msgCobranca = BOT_TEMPLATES.COBRANCA(primeiroNome, brDate, paymentUrl);
-              const phone = c.whatsapp?.replace(/\D/g, '');
-              const whatsappUrl = `https://wa.me/${phone?.startsWith('55') ? phone : '55' + phone}?text=${encodeURIComponent(msgCobranca)}`;
-
-              return (
-                <Card key={c.id} className="bg-card border-muted/10 rounded-3xl overflow-hidden group hover:border-owerplay-cyan/30 transition-colors">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-owerplay-cyan/10 flex items-center justify-center text-owerplay-cyan font-black text-lg">
-                      {initials}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="font-bold text-sm truncate">{c.nome}</h3>
-                        <Badge variant="outline" className="text-[9px] bg-owerplay-cyan/5 text-owerplay-cyan border-owerplay-cyan/20 px-1">
-                          {c.serverName}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
-                          {brDate}
-                        </span>
-                        <span className="text-sm font-black text-white">
-                          {formatBRL(c.valorFinal)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className="h-10 w-10 rounded-2xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white"
-                        asChild
-                      >
-                        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                          <Phone size={18} />
-                        </a>
-                      </Button>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-10 w-10 rounded-2xl bg-owerplay-cyan/10 text-owerplay-cyan hover:bg-owerplay-cyan hover:text-background"
-                          >
-                            <MessageSquare size={18} />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Mensagem de Cobrança</DialogTitle>
-                            <DialogDescription>
-                              Copie a mensagem abaixo para enviar ao cliente.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="mt-4 p-4 rounded-2xl bg-muted/50 border border-muted text-sm font-medium whitespace-pre-wrap selection:bg-owerplay-cyan/30">
-                            {msgCobranca}
-                          </div>
-                          <Button 
-                            className="w-full mt-4 bg-owerplay-cyan text-background font-bold"
-                            onClick={() => {
-                              navigator.clipboard.writeText(msgCobranca);
-                              toast.success("Mensagem copiada para a área de transferência!");
-                            }}
-                          >
-                            Copiar Texto
-                          </Button>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-        </div>
-      </section>
 
       <section className="space-y-6 pt-4 border-t">
         <div className="flex flex-col gap-2">
