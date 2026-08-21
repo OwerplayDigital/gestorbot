@@ -951,7 +951,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
 
             if (command === '/limpar') {
               // Rastrear a própria mensagem de comando para apagá-la
-              await trackBotMessage(chatId, msg.message_id);
+              // A mensagem já foi rastreada no início do handler
               
               const messages = await getBotMessages(chatId);
               let deletedCount = 0;
