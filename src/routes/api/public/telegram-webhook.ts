@@ -205,8 +205,16 @@ async function handleTelegramEvent(body: any): Promise<Response> {
           if (body.callback_query) {
             const cb = body.callback_query;
             const chatId = cb.message.chat.id;
+            const fromId = cb.from.id; // ID do remetente
             const messageId = cb.message.message_id;
             const data = cb.data;
+
+            // Segurança: Verificar se o remetente é o administrador autorizado
+            const allowedId = process.env['TELEGRAM_ALLOWED_USER_ID'] || process.env['TELEGRAM_ADMIN_ID'];
+            if (!allowedId || fromId.toString() !== allowedId) {
+              console.warn(`Tentativa de interação bloqueada: User ID ${fromId}`);
+              return new Response('Unauthorized', { status: 403 });
+            }
             const state = userState.get(chatId);
             
             // Responder imediatamente para parar o loading do Telegram
