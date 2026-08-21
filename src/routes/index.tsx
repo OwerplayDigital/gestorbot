@@ -39,7 +39,8 @@ function Index() {
   const [signingIn, setSigningIn] = useState(false);
 
   // Acesso liberado apenas via porta secreta (?admin=true)
-  const isSecretDoorOpen = search.admin === "true";
+  const isSecretDoorOpen = typeof window !== 'undefined' && window.location.search.includes('admin=true');
+
 
   useEffect(() => {
     const checkSession = async () => {
