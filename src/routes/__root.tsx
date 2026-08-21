@@ -114,6 +114,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const isCheckoutPage = router.state.location.pathname.startsWith('/pagar/');
+  const isMaintenancePage = router.state.location.pathname === '/';
 
   return (
     <html lang="pt-BR" className="dark">
@@ -122,8 +123,8 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body className="antialiased">
         <div className="flex flex-col min-h-screen">
-          {/* Header Mobile-First - Hidden on Checkout Page */}
-          {!isCheckoutPage && (
+          {/* Header Mobile-First - Hidden on Checkout and Maintenance Pages */}
+          {!isCheckoutPage && !isMaintenancePage && (
             <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <div className="container flex h-14 items-center px-4 gap-3">
                 <Sheet>
