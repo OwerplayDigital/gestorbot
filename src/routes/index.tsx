@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -7,19 +7,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
+import gestorLogo from "@/assets/gestor-logo.png.asset.json";
+import { z } from "zod";
+
+const searchSchema = z.object({
+  admin: z.string().optional(),
+});
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search) => searchSchema.parse(search),
   component: Index,
 });
 
 function Index() {
   const navigate = useNavigate();
+  const search = useSearch({ from: "/" });
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signingIn, setSigningIn] = useState(false);
+
+  // Acesso liberado apenas via porta secreta (?admin=true)
+  const isSecretDoorOpen = search.admin === "true";
 
   useEffect(() => {
     const checkSession = async () => {
@@ -63,10 +74,6 @@ function Index() {
     setSigningIn(false);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -80,12 +87,29 @@ function Index() {
     return null;
   }
 
+  // Tela de Manutenção / Mockup (Padrão)
+  if (!isSecretDoorOpen) {
+    return (
+      <div className="flex flex-col min-h-screen items-center justify-center bg-background p-4 text-center">
+        <img src={gestorLogo.url} alt="Logo" className="h-20 w-20 rounded-xl mb-6 shadow-2xl" />
+        <h1 className="text-2xl font-bold tracking-tighter mb-2">Sistema em Manutenção</h1>
+        <p className="text-muted-foreground text-sm max-w-[250px]">
+          Estamos realizando atualizações importantes. Voltaremos em breve.
+        </p>
+      </div>
+    );
+  }
+
+  // Tela de Login (Porta Secreta)
   return (
     <div className="flex flex-col min-h-screen items-center justify-center bg-background p-4">
-      <Card className="max-w-md w-full">
+      <Card className="max-w-md w-full border-primary/20 shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Gestão IPTV</CardTitle>
-          <CardDescription>Acesse o painel administrativo</CardDescription>
+          <div className="flex justify-center mb-4">
+            <img src={gestorLogo.url} alt="Logo" className="h-12 w-12 rounded-lg" />
+          </div>
+          <CardTitle className="text-2xl font-bold">Acesso Restrito</CardTitle>
+          <CardDescription>Identifique-se para continuar</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleLogin} className="space-y-4">
@@ -94,10 +118,11 @@ function Index() {
               <Input 
                 id="email" 
                 type="email" 
-                placeholder="admin@exemplo.com" 
+                placeholder="seu-email@exemplo.com" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="bg-muted/50"
               />
             </div>
             <div className="space-y-2">
@@ -108,20 +133,18 @@ function Index() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="bg-muted/50"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={signingIn}>
-              {signingIn ? "Entrando..." : "Entrar"}
+            <Button type="submit" className="w-full font-bold" disabled={signingIn}>
+              {signingIn ? "Validando..." : "Entrar"}
             </Button>
           </form>
         </CardContent>
       </Card>
-      
-      <div className="mt-8 text-xs text-muted-foreground max-w-sm text-center">
-        Painel de acesso para o administrador do sistema.
-      </div>
     </div>
   );
 }
+
 
 
