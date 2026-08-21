@@ -938,7 +938,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
             }
 
             if (command === '/links') {
-              await sendMessage(chatId, "🔗 Acesso Rápido - Painéis", quickLinks);
+              await sendMessage(chatId, "🔗 *Acesso Rápido - Painéis*", quickLinks);
               return new Response('OK');
             }
 
