@@ -12,7 +12,9 @@ import { z } from "zod";
 
 const searchSchema = z.object({
   admin: z.string().optional(),
+  redirect: z.string().optional(),
 });
+
 
 export const Route = createFileRoute("/")({
   validateSearch: (search) => searchSchema.parse(search),
