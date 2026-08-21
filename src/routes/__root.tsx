@@ -36,7 +36,7 @@ function NotFoundComponent() {
         <div className="mt-6">
           <Link
             to="/"
-            search={{ admin: 'false' }}
+
 
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
@@ -142,7 +142,7 @@ function RootShell({ children }: { children: ReactNode }) {
                     <nav className="flex flex-col gap-4 mt-8">
                       <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Dashboard</Link>
                       <Link to="/settings" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Configurações</Link>
-                      <Link to="/" search={{ admin: 'false' }} className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Sair</Link>
+                      <Link to="/" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Sair</Link>
                     </nav>
                   </SheetContent>
                 </Sheet>
