@@ -15,9 +15,12 @@ import {
   listClientsExpiringToday,
   renewClient,
   getClientById,
-  BOT_TEMPLATES
-
+  BOT_TEMPLATES,
+  trackBotMessage,
+  getBotMessages,
+  clearBotMessages
 } from '@/lib/telegram.server';
+
 
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env['TELEGRAM_BOT_TOKEN']}`;
@@ -45,7 +48,7 @@ const userState = new Map<number, UserState>();
 
 async function sendMessage(chatId: number, text: string, replyMarkup?: any) {
   try {
-    await fetch(`${TELEGRAM_API}/sendMessage`, {
+    const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -55,10 +58,15 @@ async function sendMessage(chatId: number, text: string, replyMarkup?: any) {
         parse_mode: 'HTML'
       }),
     });
+    const data = await res.json();
+    if (data.ok && data.result?.message_id) {
+      await trackBotMessage(chatId, data.result.message_id);
+    }
   } catch (err) {
     console.error("Erro ao enviar mensagem:", err);
   }
 }
+
 
 async function editMessage(chatId: number, messageId: number, text: string, replyMarkup?: any) {
   try {
@@ -850,6 +858,11 @@ async function handleTelegramEvent(body: any): Promise<Response> {
           if (!msg) return new Response('OK');
           const chatId = msg.chat.id;
           const text = msg.text || '';
+          const messageId = msg.message_id;
+          
+          // Rastrear todas as mensagens recebidas para que possam ser apagadas se forem comandos ou parte de um fluxo
+          await trackBotMessage(chatId, messageId);
+
           
           // Tentar vínculo automático se for o admin
           await (await import('@/lib/telegram.server')).bindAdminIfMatching(chatId);
@@ -935,6 +948,38 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                const event = { callback_query: { id: 'cmd', data: 'financeiro', message: msg } };
                return handleTelegramEvent(event);
             }
+
+            if (command === '/limpar') {
+              // Rastrear a própria mensagem de comando para apagá-la
+              // A mensagem já foi rastreada no início do handler
+              
+              const messages = await getBotMessages(chatId);
+              let deletedCount = 0;
+
+              for (const mId of messages) {
+                try {
+                  const res = await fetch(`${TELEGRAM_API}/deleteMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      chat_id: chatId,
+                      message_id: mId
+                    }),
+                  });
+                  const resData = await res.json();
+                  if (resData.ok) deletedCount++;
+                } catch (e) {
+                  // Silenciosamente ignorar erros (mensagens > 48h ou já apagadas)
+                }
+              }
+
+              await clearBotMessages(chatId);
+              
+              // Opcional: Enviar uma confirmação temporária que se auto-apaga seria legal, 
+              // mas para "deixar o chat completamente limpo", não enviamos nada.
+              return new Response('OK');
+            }
+
           }
 
           if (text === 'Voltar') {
