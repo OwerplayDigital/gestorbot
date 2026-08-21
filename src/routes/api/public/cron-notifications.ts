@@ -87,6 +87,13 @@ export const Route = createFileRoute('/api/public/cron-notifications')({
         let totalSent = 0;
 
         for (const user of authUsers) {
+          // Segurança adicional: Apenas enviar para IDs autorizados nas variáveis de ambiente
+          const allowedId = process.env['TELEGRAM_ALLOWED_USER_ID'] || process.env['TELEGRAM_ADMIN_ID'];
+          if (allowedId && user.telegram_chat_id.toString() !== allowedId) {
+            console.warn(`Tentativa de envio de notificação para ID não autorizado: ${user.telegram_chat_id}`);
+            continue;
+          }
+
           const { data: clientes, error: clientError } = await supabaseAdmin
             .from("clientes")
             .select("id, nome")
