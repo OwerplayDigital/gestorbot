@@ -101,6 +101,19 @@ async function answerCallbackQuery(callbackQueryId: string, text?: string) {
   }
 }
 
+const quickLinks = {
+  inline_keyboard: [
+    [
+      { text: '🌐 Gestor Web', url: 'https://gestorbot.lovable.app/?admin=true' },
+      { text: '🖥️ Uniplay', url: 'https://searchdefense.top/#/login' }
+    ],
+    [
+      { text: '🐐 Goat', url: 'https://goatnt.com/' },
+      { text: '⚡ P2braz', url: 'https://painel.fun/lock?redirect=%2Fusers' }
+    ]
+  ]
+};
+
 const mainMenu = {
   inline_keyboard: [
     [{ text: 'Vence Hoje', callback_data: 'vencendo_hoje' }, { text: 'Vencidos', callback_data: 'vencidos' }],
@@ -109,6 +122,7 @@ const mainMenu = {
     [{ text: 'Financeiro', callback_data: 'financeiro' }, { text: 'Painel', url: 'https://gestorbot.lovable.app/?admin=true' }]
   ]
 };
+
 
 function formatBRDate(date: Date): string {
   const brDate = toZonedTime(date, 'America/Sao_Paulo');
