@@ -119,7 +119,15 @@ const mainMenu = {
     [{ text: 'Vence Hoje', callback_data: 'vencendo_hoje' }, { text: 'Vencidos', callback_data: 'vencidos' }],
     [{ text: 'Cadastrar', callback_data: 'new_client_fast' }, { text: 'Buscar', callback_data: 'search_direct' }],
     [{ text: 'Servidores', callback_data: 'list_servers' }, { text: 'Planos', callback_data: 'list_plans' }],
-    [{ text: 'Financeiro', callback_data: 'financeiro' }, { text: 'Painel', url: 'https://gestorbot.lovable.app/?admin=true' }]
+    [{ text: 'Financeiro', callback_data: 'financeiro' }, { text: '🧹 Limpar Tela', callback_data: 'limpar_chat' }],
+    [
+      { text: '🌐 Gestor Web', url: 'https://gestorbot.lovable.app/?admin=true' },
+      { text: '🖥️ Uniplay', url: 'https://searchdefense.top/#/login' }
+    ],
+    [
+      { text: '🐐 Goat', url: 'https://goatnt.com/' },
+      { text: '⚡ P2braz', url: 'https://painel.fun/lock?redirect=%2Fusers' }
+    ]
   ]
 };
 
