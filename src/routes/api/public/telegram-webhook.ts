@@ -934,12 +934,11 @@ async function handleTelegramEvent(body: any): Promise<Response> {
             if (command === '/start') {
               userState.delete(chatId);
               await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
-              await sendMessage(chatId, "🔗 <b>Acesso Rápido - Painéis</b>", quickLinks);
               return new Response('OK');
             }
 
             if (command === '/links') {
-              await sendMessage(chatId, "🔗 <b>Acesso Rápido - Painéis</b>", quickLinks);
+              await sendMessage(chatId, "🔗 Acesso Rápido - Painéis", quickLinks);
               return new Response('OK');
             }
 
