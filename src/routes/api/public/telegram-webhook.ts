@@ -1047,6 +1047,16 @@ export const Route = createFileRoute('/api/public/telegram-webhook')({
     handlers: {
       POST: async ({ request }): Promise<Response> => {
         const body = await request.json();
+        
+        // Segurança: Verificar se o remetente é o administrador autorizado
+        const allowedId = process.env['TELEGRAM_ALLOWED_USER_ID'] || process.env['TELEGRAM_ADMIN_ID'];
+        const fromId = body.message?.from?.id || body.callback_query?.from?.id;
+        
+        if (fromId && (!allowedId || fromId.toString() !== allowedId)) {
+          console.warn(`Interação bloqueada: User ID ${fromId}`);
+          return new Response('Unauthorized', { status: 403 });
+        }
+        
         return handleTelegramEvent(body);
       }
     }
