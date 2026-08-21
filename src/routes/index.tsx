@@ -99,6 +99,7 @@ function Index() {
 
   // Tela de Manutenção / Mockup (Padrão)
   if (!isSecretDoorOpen) {
+    console.log("Porta fechada. Renderizando manutenção.");
     return (
       <div className="flex flex-col min-h-screen items-center justify-center bg-background p-4 text-center">
         <img src={gestorLogo.url} alt="Logo" className="h-20 w-20 rounded-xl mb-6 shadow-2xl" />
@@ -109,6 +110,8 @@ function Index() {
       </div>
     );
   }
+
+  console.log("Porta aberta! Renderizando login.");
 
   // Tela de Login (Porta Secreta)
   return (
@@ -146,6 +149,7 @@ function Index() {
                 className="bg-muted/50"
               />
             </div>
+
             <Button type="submit" className="w-full font-bold" disabled={signingIn}>
               {signingIn ? "Validando..." : "Entrar"}
             </Button>
