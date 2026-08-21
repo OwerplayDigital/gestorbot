@@ -290,6 +290,21 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               return new Response('OK');
             }
 
+            if (data === 'limpar_chat') {
+              const messages = await getBotMessages(chatId);
+              for (const mId of messages) {
+                try {
+                  await fetch(`${TELEGRAM_API}/deleteMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, message_id: mId }),
+                  });
+                } catch (e) {}
+              }
+              await clearBotMessages(chatId);
+              return new Response('OK');
+            }
+
             if (data === 'vencendo_hoje') {
               const { toZonedTime } = await import('date-fns-tz');
               const hoje = toZonedTime(new Date(), 'America/Sao_Paulo');
