@@ -95,10 +95,7 @@ export const Route = createFileRoute('/api/public/cron-notifications')({
 
           if (clientError || !clientes || clientes.length === 0) continue;
 
-          const brDateStr = formatBRDate(new Date());
-          const msg = `🔔 <b>LEMBRETE DIÁRIO DE VENCIMENTOS (${brDateStr})</b>\n\n` +
-                      `Você tem <b>${clientes.length}</b> cliente(s) vencendo hoje:\n\n` +
-                      `Clique no cliente abaixo para cobrar ou renovar:`;
+          const msg = `🗓️ <b>Vencem hoje:</b>`;
           
           const buttons = clientes.map(c => ([{ 
             text: `👤 ${c.nome}`, 
