@@ -241,6 +241,27 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_message_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_id: number
+          telegram_chat_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_id: number
+          telegram_chat_id: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_id?: number
+          telegram_chat_id?: number
+        }
+        Relationships: []
+      }
       transacoes: {
         Row: {
           cliente_id: string | null
