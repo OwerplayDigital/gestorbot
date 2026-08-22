@@ -193,6 +193,15 @@ async function sendClientFicha(chatId: number, c: any) {
   
   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
   
+  const devices = await listDevicesByClient(c.id);
+  let devicesText = '';
+  if (devices && devices.length > 0) {
+    devicesText = '\n\n📺 <b>Dispositivos:</b>\n';
+    devices.forEach(d => {
+      devicesText += `• ${d.app_nome}: <code>${d.mac_address}</code>${d.app_key ? ` | <code>${d.app_key}</code>` : ''}\n`;
+    });
+  }
+  
   // Garantindo que as mensagens usem quebras duplas e encoding correto
   const msgCobranca = BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || '');
   const encodedCobranca = encodeURIComponent(msgCobranca);
