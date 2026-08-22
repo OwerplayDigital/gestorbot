@@ -606,10 +606,10 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               const id = data.split(':')[1];
               await editMessage(chatId, messageId, "<b>Editar Cliente</b>\nSelecione o que deseja alterar:", {
                 inline_keyboard: [
-                  [{ text: "🖥️ Servidor", callback_data: `edit_serv:${id}` }, { text: "📅 Data", callback_data: `edit_venc:${id}` }],
-                  [{ text: "📋 Plano", callback_data: `edit_plan:${id}` }, { text: "💰 Valor/Desconto", callback_data: `edit_desc:${id}` }],
-                  [{ text: "👤 Nome", callback_data: `edit_name:${id}` }, { text: "📱 Telefone", callback_data: `edit_wpp:${id}` }],
-                  [{ text: "🔙 Voltar", callback_data: `view_client_id:${id}` }]
+                  [{ text: "📝 Nome", callback_data: `edit_name:${id}` }, { text: "📱 WhatsApp", callback_data: `edit_wpp:${id}` }],
+                  [{ text: "📅 Vencimento", callback_data: `edit_venc:${id}` }, { text: "📡 Servidor", callback_data: `edit_serv:${id}` }],
+                  [{ text: "📋 Plano", callback_data: `edit_plan:${id}` }, { text: "💰 Valor", callback_data: `edit_desc:${id}` }],
+                  [{ text: "⬅️ Voltar", callback_data: `view_client_id:${id}` }]
                 ]
               });
               return new Response('OK');
@@ -776,7 +776,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
             }
             else if (data.startsWith('edit_desc:')) {
               userState.set(chatId, { action: 'editar_desconto', step: 1, data: { id: data.split(':')[1] } as any });
-              await sendMessage(chatId, "Digite o novo valor do desconto (R$):");
+              await sendMessage(chatId, "Digite o novo valor personalizado da mensalidade (R$):");
             }
             else if (data.startsWith('edit_wpp:')) {
               userState.set(chatId, { action: 'editar_whatsapp', step: 1, data: { id: data.split(':')[1] } as any });
