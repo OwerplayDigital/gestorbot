@@ -18,7 +18,9 @@ import {
   BOT_TEMPLATES,
   trackBotMessage,
   getBotMessages,
-  clearBotMessages
+  clearBotMessages,
+  createDevice,
+  listDevicesByClient
 } from '@/lib/telegram.server';
 
 
@@ -39,9 +41,14 @@ type ClientRegistrationData = {
 };
 
 type UserState = {
-  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp' | 'renovar_cliente' | 'editar_servidor' | 'editar_nome';
+  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp' | 'renovar_cliente' | 'editar_servidor' | 'editar_nome' | 'cadastrar_app';
   step: number;
-  data: Partial<ClientRegistrationData>;
+  data: Partial<ClientRegistrationData> & {
+    app_nome?: string;
+    mac_address?: string;
+    app_key?: string;
+    cliente_id?: string;
+  };
 };
 
 const userState = new Map<number, UserState>();
@@ -119,7 +126,8 @@ const mainMenu = {
     [{ text: '📅 Vence Hoje', callback_data: 'vencendo_hoje' }, { text: '❌ Vencidos', callback_data: 'vencidos' }],
     [{ text: '➕ Cadastrar', callback_data: 'new_client_fast' }, { text: '🔍 Buscar', callback_data: 'search_direct' }],
     [{ text: '💻 Servidores', callback_data: 'list_servers' }, { text: '📋 Planos', callback_data: 'list_plans' }],
-    [{ text: '💰 Financeiro', callback_data: 'financeiro' }, { text: '🧹 Limpar Tela', callback_data: 'limpar_chat' }],
+    [{ text: '📺 Cadastrar App', callback_data: 'cadastrar_app_init' }, { text: '💰 Financeiro', callback_data: 'financeiro' }],
+    [{ text: '🧹 Limpar Tela', callback_data: 'limpar_chat' }],
     [
       { text: '🌐 Gestor', url: 'https://gestorbot.lovable.app/?admin=true' },
       { text: '🖥️ Uniplay', url: 'https://searchdefense.top/#/login' }
@@ -185,6 +193,15 @@ async function sendClientFicha(chatId: number, c: any) {
   
   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
   
+  const devices = await listDevicesByClient(c.id);
+  let devicesText = '';
+  if (devices && devices.length > 0) {
+    devicesText = '\n\n📺 <b>Dispositivos:</b>\n';
+    devices.forEach(d => {
+      devicesText += `• ${d.app_nome}: <code>${d.mac_address}</code>${d.app_key ? ` | <code>${d.app_key}</code>` : ''}\n`;
+    });
+  }
+  
   // Garantindo que as mensagens usem quebras duplas e encoding correto
   const msgCobranca = BOT_TEMPLATES.COBRANCA(primeiroNome || '', brDate || '', paymentUrl || '');
   const encodedCobranca = encodeURIComponent(msgCobranca);
@@ -199,7 +216,7 @@ async function sendClientFicha(chatId: number, c: any) {
               `WhatsApp: ${c.whatsapp || 'N/A'}\n` +
               `Plano: ${planName}\n` +
               `Valor: R$ ${valorFinal}\n` +
-              `Status: ${c.status}`;
+              `Status: ${c.status}${devicesText}`;
   
   await sendMessage(chatId, msg, {
     inline_keyboard: [
@@ -250,6 +267,12 @@ async function handleTelegramEvent(body: any): Promise<Response> {
             // Responder imediatamente para parar o loading do Telegram
             await answerCallbackQuery(cb.id);
             
+            if (data === 'cadastrar_app_init') {
+              userState.set(chatId, { action: 'cadastrar_app', step: 1, data: {} });
+              await sendMessage(chatId, "Digite o nome do cliente para localizar o dispositivo:");
+              return new Response('OK');
+            }
+
             if (data === 'search_retry' || data === 'new_client_fast' || data === 'search_direct') {
               if (data === 'new_client_fast') {
                 userState.set(chatId, { action: 'cadastrar_cliente', step: 1, data: {} });
@@ -505,6 +528,50 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                 await supabaseAdmin.from('clientes').delete().eq('id', id).eq('user_id', userId);
                 await sendMessage(chatId, "✅ Cliente excluído com sucesso.");
                 await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
+              }
+              return new Response('OK');
+            }
+
+            if (data.startsWith('dev_client:')) {
+              const id = data.split(':')[1];
+              userState.set(chatId, { action: 'cadastrar_app', step: 2, data: { cliente_id: id } });
+              await sendMessage(chatId, "Escolha o Aplicativo:", {
+                inline_keyboard: [
+                  [{ text: '📺 IBO Player', callback_data: 'app_choice:IBO Player' }, { text: '📺 IBO Pro', callback_data: 'app_choice:IBO Pro' }],
+                  [{ text: '➕ Outro', callback_data: 'app_choice:Outro' }]
+                ]
+              });
+              return new Response('OK');
+            }
+
+            if (data.startsWith('app_choice:')) {
+              const app = data.split(':')[1];
+              const state = userState.get(chatId);
+              if (state && state.action === 'cadastrar_app') {
+                state.data.app_nome = app;
+                state.step = 3;
+                await sendMessage(chatId, `App selecionado: ${app}\n\nAgora digite o MAC Address:`);
+              }
+              return new Response('OK');
+            }
+
+            if (data === 'skip_key') {
+              const state = userState.get(chatId);
+              if (state && state.action === 'cadastrar_app') {
+                state.data.app_key = null as any;
+                // Salvar dispositivo
+                const userId = await getAuthorizedUser(chatId);
+                if (userId && state.data.cliente_id && state.data.app_nome && state.data.mac_address) {
+                  await createDevice({
+                    cliente_id: state.data.cliente_id,
+                    app_nome: state.data.app_nome,
+                    mac_address: state.data.mac_address,
+                    app_key: null
+                  });
+                  await sendMessage(chatId, "✅ Dispositivo cadastrado com sucesso!");
+                  userState.delete(chatId);
+                  await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
+                }
               }
               return new Response('OK');
             }
@@ -944,6 +1011,27 @@ async function handleTelegramEvent(body: any): Promise<Response> {
 
 
             // Mapeamento direto de comandos para handlers de callback já existentes
+            if (command === '/cadastrar_app') {
+              userState.set(chatId, { action: 'cadastrar_app', step: 1, data: {} });
+              await sendMessage(chatId, "Digite o nome do cliente para localizar o dispositivo:");
+              return new Response('OK');
+            }
+
+            if (command === '/limpar') {
+              const messages = await getBotMessages(chatId);
+              for (const mId of messages) {
+                try {
+                  await fetch(`${TELEGRAM_API}/deleteMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, message_id: mId }),
+                  });
+                } catch (e) {}
+              }
+              await clearBotMessages(chatId);
+              return new Response('OK');
+            }
+
             if (command === '/hoje') {
                const event = { callback_query: { id: 'cmd', data: 'vencendo_hoje', message: msg } };
                return handleTelegramEvent(event);
@@ -1025,6 +1113,51 @@ async function handleTelegramEvent(body: any): Promise<Response> {
 
           }
 
+          const st = userState.get(chatId);
+          if (st && st.action === 'cadastrar_app') {
+            if (st.step === 1) {
+              const clients = await findClientByName(text.trim());
+              if (clients.length === 0) {
+                await sendMessage(chatId, "❌ Cliente não encontrado. Tente novamente:");
+              } else if (clients.length === 1) {
+                const c = clients[0];
+                if (!c) return new Response('OK');
+                if (st.data) st.data.cliente_id = c.id;
+                st.step = 2;
+                await sendMessage(chatId, `Cliente encontrado: ${c.nome}\n\nEscolha o Aplicativo:`, {
+                  inline_keyboard: [
+                    [{ text: '📺 IBO Player', callback_data: 'app_choice:IBO Player' }, { text: '📺 IBO Pro', callback_data: 'app_choice:IBO Pro' }],
+                    [{ text: '➕ Outro', callback_data: 'app_choice:Outro' }]
+                  ]
+                });
+              } else {
+                const buttons = clients.map(c => ([{ text: c.nome, callback_data: `dev_client:${c.id}` }]));
+                await sendMessage(chatId, "Vários clientes encontrados. Selecione um:", { inline_keyboard: buttons });
+              }
+            } else if (st.step === 3) {
+              if (st.data) st.data.mac_address = text.trim();
+              st.step = 4;
+              await sendMessage(chatId, "Digite a KEY/Chave ou clique no botão abaixo para pular:", {
+                inline_keyboard: [[{ text: "⏭️ Pular / Sem Key", callback_data: "skip_key" }]]
+              });
+            } else if (st.step === 4) {
+              if (st.data) st.data.app_key = text.trim();
+              const userId = await getAuthorizedUser(chatId);
+              if (userId && st.data?.cliente_id && st.data?.app_nome && st.data?.mac_address) {
+                await createDevice({
+                  cliente_id: st.data.cliente_id,
+                  app_nome: st.data.app_nome,
+                  mac_address: st.data.mac_address,
+                  app_key: st.data.app_key || null
+                });
+                await sendMessage(chatId, "✅ Dispositivo cadastrado com sucesso!");
+                userState.delete(chatId);
+                await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
+              }
+            }
+            return new Response('OK');
+          }
+
           if (text === 'Voltar') {
             userState.delete(chatId);
             await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
@@ -1032,7 +1165,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
           }
 
           if (state?.action === 'editar_nome') {
-            if (state.data.id && text.trim()) {
+            if (state.data?.id && text.trim()) {
               await supabaseAdmin.from('clientes').update({ nome: text.trim() }).eq('id', state.data.id);
               await sendMessage(chatId, "✅ Nome atualizado com sucesso!");
               const client = await getClientById(state.data.id);
