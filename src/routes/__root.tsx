@@ -142,7 +142,6 @@ function RootShell({ children }: { children: ReactNode }) {
                     </SheetHeader>
                     <nav className="flex flex-col gap-4 mt-8">
                       <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Dashboard</Link>
-                      <Link to="/clientes" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Clientes</Link>
                       <Link to="/settings" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Configurações</Link>
                       <Link to="/" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Sair</Link>
                     </nav>
