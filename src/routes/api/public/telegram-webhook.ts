@@ -258,6 +258,12 @@ async function handleTelegramEvent(body: any): Promise<Response> {
             // Responder imediatamente para parar o loading do Telegram
             await answerCallbackQuery(cb.id);
             
+            if (data === 'cadastrar_app_init') {
+              userState.set(chatId, { action: 'cadastrar_app', step: 1, data: {} });
+              await sendMessage(chatId, "Digite o nome do cliente para localizar o dispositivo:");
+              return new Response('OK');
+            }
+
             if (data === 'search_retry' || data === 'new_client_fast' || data === 'search_direct') {
               if (data === 'new_client_fast') {
                 userState.set(chatId, { action: 'cadastrar_cliente', step: 1, data: {} });
