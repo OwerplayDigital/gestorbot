@@ -770,7 +770,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
                     [{ text: `Salvar: ${br}`, callback_data: "evenc_save" }],
-                    [{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]
+                    [{ text: "🔙 Voltar", callback_data: `edit_client_full:${id}` }]
                   ]
 
                 });
@@ -789,7 +789,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               userState.set(chatId, { action: 'editar_servidor', step: 1, data: { id } as any });
               const servers = await listServers();
               const buttons = servers.map(s => ([{ text: s.name, callback_data: `eserv_sel:${s.id}:${s.name}` }]));
-              buttons.push([{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]);
+              buttons.push([{ text: "🔙 Voltar", callback_data: `edit_client_full:${id}` }]);
               await editMessage(chatId, messageId, "<b>Alterar Servidor</b>\nSelecione o novo servidor para este cliente:", { inline_keyboard: buttons });
 
             }
@@ -825,7 +825,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
                     [{ text: `Salvar: ${br}`, callback_data: "evenc_save" }],
-                    [{ text: "🔙 Voltar", callback_data: `client_menu:${state.data.id}` }]
+                    [{ text: "🔙 Voltar", callback_data: `edit_client_full:${state.data.id}` }]
                   ]
 
                 });
@@ -844,7 +844,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               userState.set(chatId, { action: 'editar_plano', step: 1, data: { id } as any });
               const plans = await listPlans();
               const buttons = plans.map(p => ([{ text: `${p.name} (R$${p.price})`, callback_data: `eplan_sel:${p.id}:${p.name}` }]));
-              buttons.push([{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]);
+              buttons.push([{ text: "🔙 Voltar", callback_data: `edit_client_full:${id}` }]);
               await editMessage(chatId, messageId, "<b>Alterar Plano</b>\nSelecione o novo plano para este cliente:", { inline_keyboard: buttons });
             }
             else if (state?.action === 'editar_plano' && data.startsWith('eplan_sel:')) {
