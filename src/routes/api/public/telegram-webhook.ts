@@ -1113,8 +1113,9 @@ async function handleTelegramEvent(body: any): Promise<Response> {
 
           }
 
-          if (state?.action === 'cadastrar_app') {
-            const s = state as any;
+          const s = userState.get(chatId);
+          if (s && s.action === 'cadastrar_app') {
+            const stateAny = s as any;
             if (s.step === 1) {
               const clients = await findClientByName(text.trim());
               if (clients.length === 0) {
