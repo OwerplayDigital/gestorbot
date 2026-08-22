@@ -1002,6 +1002,27 @@ async function handleTelegramEvent(body: any): Promise<Response> {
 
 
             // Mapeamento direto de comandos para handlers de callback já existentes
+            if (command === '/cadastrar_app') {
+              userState.set(chatId, { action: 'cadastrar_app', step: 1, data: {} });
+              await sendMessage(chatId, "Digite o nome do cliente para localizar o dispositivo:");
+              return new Response('OK');
+            }
+
+            if (command === '/limpar') {
+              const messages = await getBotMessages(chatId);
+              for (const mId of messages) {
+                try {
+                  await fetch(`${TELEGRAM_API}/deleteMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, message_id: mId }),
+                  });
+                } catch (e) {}
+              }
+              await clearBotMessages(chatId);
+              return new Response('OK');
+            }
+
             if (command === '/hoje') {
                const event = { callback_query: { id: 'cmd', data: 'vencendo_hoje', message: msg } };
                return handleTelegramEvent(event);
