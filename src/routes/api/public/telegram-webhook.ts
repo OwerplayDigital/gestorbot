@@ -229,10 +229,8 @@ async function sendClientFicha(chatId: number, c: any) {
         { text: "Editar", callback_data: `edit_client_full:${c.id}` }
       ],
       [
-        { text: "Excluir", callback_data: `delete_client_confirm:${c.id}` },
-        { text: "Mudar Plano", callback_data: `edit_plan:${c.id}` }
+        { text: "Excluir", callback_data: `delete_client_confirm:${c.id}` }
       ]
-
     ]
   });
 }
@@ -604,6 +602,40 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               return new Response('OK');
             }
 
+            if (data.startsWith('edit_client_full:')) {
+              const id = data.split(':')[1];
+              await editMessage(chatId, messageId, "<b>Editar Cliente</b>\nSelecione o que deseja alterar:", {
+                inline_keyboard: [
+                  [{ text: "🖥️ Alterar Servidor", callback_data: `edit_serv:${id}` }],
+                  [{ text: "📅 Alterar Data/Vencimento", callback_data: `edit_venc:${id}` }],
+                  [{ text: "📋 Alterar Plano", callback_data: `edit_plan:${id}` }],
+                  [{ text: "💰 Alterar Valor/Desconto", callback_data: `edit_desc:${id}` }],
+                  [{ text: "👤 Alterar Nome/Telefone", callback_data: `edit_name_wpp_menu:${id}` }],
+                  [{ text: "🔙 Voltar", callback_data: `view_client_id:${id}` }]
+                ]
+              });
+              return new Response('OK');
+            }
+
+            if (data.startsWith('edit_name_wpp_menu:')) {
+              const id = data.split(':')[1];
+              await editMessage(chatId, messageId, "<b>Editar Nome/Telefone</b>\nO que deseja alterar?", {
+                inline_keyboard: [
+                  [{ text: "👤 Alterar Nome", callback_data: `edit_name:${id}` }],
+                  [{ text: "📱 Alterar WhatsApp", callback_data: `edit_wpp:${id}` }],
+                  [{ text: "🔙 Voltar", callback_data: `edit_client_full:${id}` }]
+                ]
+              });
+              return new Response('OK');
+            }
+
+            if (data.startsWith('view_client_id:')) {
+              const id = data.split(':')[1];
+              const client = await getClientById(id);
+              if (client) await sendClientFicha(chatId, client);
+              return new Response('OK');
+            }
+
             if (data.startsWith('edit_name:')) {
               userState.set(chatId, { action: 'editar_nome' as any, step: 1, data: { id: data.split(':')[1] } as any });
               await sendMessage(chatId, "Digite o novo nome do cliente:");
@@ -676,7 +708,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
                     [{ text: `Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
-                    [{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]
+                    [{ text: "🔙 Voltar", callback_data: `view_client_id:${id}` }]
                   ]
 
                 });
@@ -699,7 +731,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
                     [{ text: `Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
-                    [{ text: "🔙 Voltar", callback_data: `client_menu:${state.data.id}` }]
+                    [{ text: "🔙 Voltar", callback_data: `view_client_id:${state.data.id}` }]
                   ]
 
                 });
@@ -719,7 +751,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   await sendMessage(chatId, `<b>Assinatura Renovada!</b>\nO caixa foi atualizado automaticamente.`, {
                     inline_keyboard: [
                     [{ text: "Enviar Comprovante", url: `https://wa.me/${phone}?text=${encodedReceipt}` }],
-                    [{ text: "🔙 Voltar ao Menu", callback_data: `client_menu:${state.data.id}` }]
+                    [{ text: "🔙 Voltar ao Menu", callback_data: `view_client_id:${state.data.id}` }]
                   ]
 
                 });
@@ -738,7 +770,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
                     [{ text: `Salvar: ${br}`, callback_data: "evenc_save" }],
-                    [{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]
+                    [{ text: "🔙 Voltar", callback_data: `edit_client_full:${id}` }]
                   ]
 
                 });
@@ -757,7 +789,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               userState.set(chatId, { action: 'editar_servidor', step: 1, data: { id } as any });
               const servers = await listServers();
               const buttons = servers.map(s => ([{ text: s.name, callback_data: `eserv_sel:${s.id}:${s.name}` }]));
-              buttons.push([{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]);
+              buttons.push([{ text: "🔙 Voltar", callback_data: `edit_client_full:${id}` }]);
               await editMessage(chatId, messageId, "<b>Alterar Servidor</b>\nSelecione o novo servidor para este cliente:", { inline_keyboard: buttons });
 
             }
@@ -793,7 +825,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
                     [{ text: `Salvar: ${br}`, callback_data: "evenc_save" }],
-                    [{ text: "🔙 Voltar", callback_data: `client_menu:${state.data.id}` }]
+                    [{ text: "🔙 Voltar", callback_data: `edit_client_full:${state.data.id}` }]
                   ]
 
                 });
@@ -812,7 +844,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               userState.set(chatId, { action: 'editar_plano', step: 1, data: { id } as any });
               const plans = await listPlans();
               const buttons = plans.map(p => ([{ text: `${p.name} (R$${p.price})`, callback_data: `eplan_sel:${p.id}:${p.name}` }]));
-              buttons.push([{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]);
+              buttons.push([{ text: "🔙 Voltar", callback_data: `edit_client_full:${id}` }]);
               await editMessage(chatId, messageId, "<b>Alterar Plano</b>\nSelecione o novo plano para este cliente:", { inline_keyboard: buttons });
             }
             else if (state?.action === 'editar_plano' && data.startsWith('eplan_sel:')) {
