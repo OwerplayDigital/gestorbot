@@ -247,6 +247,7 @@ function parseBRDate(brDate: string): string | null {
 async function handleTelegramEvent(body: any): Promise<Response> {
   try {
     if (!body) return new Response('OK');
+
           
           if (body.callback_query) {
             const cb = body.callback_query;
