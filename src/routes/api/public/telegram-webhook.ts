@@ -606,10 +606,10 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               const id = data.split(':')[1];
               await editMessage(chatId, messageId, "<b>Editar Cliente</b>\nSelecione o que deseja alterar:", {
                 inline_keyboard: [
-                  [{ text: "🖥️ Servidor", callback_data: `edit_serv:${id}` }, { text: "📅 Data", callback_data: `edit_venc:${id}` }],
-                  [{ text: "📋 Plano", callback_data: `edit_plan:${id}` }, { text: "💰 Valor/Desconto", callback_data: `edit_desc:${id}` }],
-                  [{ text: "👤 Nome", callback_data: `edit_name:${id}` }, { text: "📱 Telefone", callback_data: `edit_wpp:${id}` }],
-                  [{ text: "🔙 Voltar", callback_data: `view_client_id:${id}` }]
+                  [{ text: "📝 Nome", callback_data: `edit_name:${id}` }, { text: "📱 WhatsApp", callback_data: `edit_wpp:${id}` }],
+                  [{ text: "📅 Vencimento", callback_data: `edit_venc:${id}` }, { text: "📡 Servidor", callback_data: `edit_serv:${id}` }],
+                  [{ text: "📋 Plano", callback_data: `edit_plan:${id}` }, { text: "💰 Valor", callback_data: `edit_desc:${id}` }],
+                  [{ text: "⬅️ Voltar", callback_data: `view_client_id:${id}` }]
                 ]
               });
               return new Response('OK');
@@ -776,7 +776,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
             }
             else if (data.startsWith('edit_desc:')) {
               userState.set(chatId, { action: 'editar_desconto', step: 1, data: { id: data.split(':')[1] } as any });
-              await sendMessage(chatId, "Digite o novo valor do desconto (R$):");
+              await sendMessage(chatId, "Digite o novo valor personalizado da mensalidade (R$):");
             }
             else if (data.startsWith('edit_wpp:')) {
               userState.set(chatId, { action: 'editar_whatsapp', step: 1, data: { id: data.split(':')[1] } as any });
@@ -1230,10 +1230,16 @@ async function handleTelegramEvent(body: any): Promise<Response> {
           }
 
           if (state?.action === 'editar_desconto') {
-            const val = parseFloat(text.replace(',', '.'));
-            if (!isNaN(val) && state.data.id) {
-              await supabaseAdmin.from('clientes').update({ desconto: val }).eq('id', state.data.id);
-              await sendMessage(chatId, "Desconto atualizado!");
+            const valInput = parseFloat(text.replace(',', '.'));
+            if (!isNaN(valInput) && state.data.id) {
+              const { data: clientData } = await supabaseAdmin.from('clientes').select('plano_id').eq('id', state.data.id).single();
+              const { data: planData } = await supabaseAdmin.from('plans').select('price').eq('id', clientData?.plano_id || '').single();
+              
+              const planPrice = Number(planData?.price || 0);
+              const newDesconto = Math.max(0, planPrice - valInput);
+              
+              await supabaseAdmin.from('clientes').update({ desconto: newDesconto }).eq('id', state.data.id);
+              await sendMessage(chatId, `✅ Valor personalizado atualizado para R$ ${valInput.toFixed(2).replace('.', ',')}!`);
               const client = await getClientById(state.data.id);
               if (client) await sendClientFicha(chatId, client);
             }
