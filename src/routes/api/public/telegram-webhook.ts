@@ -1135,9 +1135,9 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               if (userId && state.data.cliente_id && state.data.app_nome && state.data.mac_address) {
                 await createDevice({
                   cliente_id: state.data.cliente_id,
-                  app_nome: state.data.app_nome!,
+                  app_nome: state.data.app_nome,
                   mac_address: state.data.mac_address,
-                  app_key: state.data.app_key
+                  app_key: state.data.app_key || null
                 });
                 await sendMessage(chatId, "✅ Dispositivo cadastrado com sucesso!");
                 userState.delete(chatId);
