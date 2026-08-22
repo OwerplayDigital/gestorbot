@@ -538,7 +538,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               await sendMessage(chatId, "Escolha o Aplicativo:", {
                 inline_keyboard: [
                   [{ text: '📺 IBO Player', callback_data: 'app_choice:IBO Player' }, { text: '📺 IBO Pro', callback_data: 'app_choice:IBO Pro' }],
-                  [{ text: '➕ Outro', callback_data: 'app_choice:Outro' }]
+                  [{ text: '📺 Bob Player', callback_data: 'app_choice:Bob Player' }, { text: '➕ Outro', callback_data: 'app_choice:Outro' }]
                 ]
               });
               return new Response('OK');
@@ -1127,7 +1127,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                 await sendMessage(chatId, `Cliente encontrado: ${c.nome}\n\nEscolha o Aplicativo:`, {
                   inline_keyboard: [
                     [{ text: '📺 IBO Player', callback_data: 'app_choice:IBO Player' }, { text: '📺 IBO Pro', callback_data: 'app_choice:IBO Pro' }],
-                    [{ text: '➕ Outro', callback_data: 'app_choice:Outro' }]
+                    [{ text: '📺 Bob Player', callback_data: 'app_choice:Bob Player' }, { text: '➕ Outro', callback_data: 'app_choice:Outro' }]
                   ]
                 });
               } else {
