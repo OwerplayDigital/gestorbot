@@ -94,8 +94,8 @@ function Index() {
       <div className="flex flex-col min-h-screen items-center justify-center bg-background p-4 text-center">
         <img src={gestorLogo.url} alt="Logo" className="h-20 w-20 rounded-xl mb-6 shadow-2xl" />
         <h1 className="text-2xl font-bold tracking-tighter mb-2">Sistema em Manutenção</h1>
-        <p className="text-muted-foreground text-sm max-w-[250px]">
-          ADICIONAR MÓDULO DE DISPOSITIVOS/APPS NO BOT DO TELEGRAM
+        <p className="text-muted-foreground text-sm max-w-[250px] whitespace-pre-wrap">
+          {`ADICIONAR MÓDULO DE DISPOSITIVOS/APPS NO BOT DO TELEGRAM
 
 1. BANCO DE DADOS (SUPABASE):
    - Crie uma tabela chamada "dispositivos" vinculada à tabela de clientes (cliente_id).
@@ -111,13 +111,13 @@ function Index() {
    - Salvar as informações na tabela "dispositivos".
 
 3. CONSULTA E FORMATAÇÃO DE CÓPIA RÁPIDA (MONOSPACE):
-   - Quando o usuário consultar os dados do cliente ou seus dispositivos, exiba as informações do aplicativo formatadas em código Monospace (usando a tag <code> do Telegram ou formato markdown `texto`), permitindo copiar com um único toque.
+   - Quando o usuário consultar os dados do cliente ou seus dispositivos, exiba as informações do aplicativo formatadas em código Monospace (usando a tag <code> do Telegram ou formato markdown \`texto\`), permitindo copiar com um único toque.
    - Exemplo de retorno:
      📱 Dispositivo do Cliente
      👤 Cliente: Nome do Cliente
      📺 App: IBO Player
-     🔑 MAC: `00:1A:79:AB:CD:EF`
-     🔓 KEY: `123456` (exibir a linha de KEY apenas se ela existir)
+     🔑 MAC: \`00:1A:79:AB:CD:EF\`
+     🔓 KEY: \`123456\` (exibir a linha de KEY apenas se ela existir)`}
         </p>
       </div>
     );
