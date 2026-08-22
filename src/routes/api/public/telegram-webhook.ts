@@ -549,7 +549,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
             if (data === 'skip_key') {
               const state = userState.get(chatId);
               if (state && state.action === 'cadastrar_app') {
-                state.data.app_key = undefined;
+                state.data.app_key = null as any;
                 // Salvar dispositivo
                 const userId = await getAuthorizedUser(chatId);
                 if (userId && state.data.cliente_id && state.data.app_nome && state.data.mac_address) {
