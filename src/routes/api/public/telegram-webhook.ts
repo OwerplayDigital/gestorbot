@@ -708,7 +708,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
                     [{ text: `Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
-                    [{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]
+                    [{ text: "🔙 Voltar", callback_data: `view_client_id:${id}` }]
                   ]
 
                 });
@@ -731,7 +731,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
                     [{ text: `Confirmar Renovação: ${br}`, callback_data: "erenew_confirm" }],
-                    [{ text: "🔙 Voltar", callback_data: `client_menu:${state.data.id}` }]
+                    [{ text: "🔙 Voltar", callback_data: `view_client_id:${state.data.id}` }]
                   ]
 
                 });
@@ -751,7 +751,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   await sendMessage(chatId, `<b>Assinatura Renovada!</b>\nO caixa foi atualizado automaticamente.`, {
                     inline_keyboard: [
                     [{ text: "Enviar Comprovante", url: `https://wa.me/${phone}?text=${encodedReceipt}` }],
-                    [{ text: "🔙 Voltar ao Menu", callback_data: `client_menu:${state.data.id}` }]
+                    [{ text: "🔙 Voltar ao Menu", callback_data: `view_client_id:${state.data.id}` }]
                   ]
 
                 });
