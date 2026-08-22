@@ -216,7 +216,7 @@ async function sendClientFicha(chatId: number, c: any) {
               `WhatsApp: ${c.whatsapp || 'N/A'}\n` +
               `Plano: ${planName}\n` +
               `Valor: R$ ${valorFinal}\n` +
-              `Status: ${c.status}`;
+              `Status: ${c.status}${devicesText}`;
   
   await sendMessage(chatId, msg, {
     inline_keyboard: [
