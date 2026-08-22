@@ -229,10 +229,8 @@ async function sendClientFicha(chatId: number, c: any) {
         { text: "Editar", callback_data: `edit_client_full:${c.id}` }
       ],
       [
-        { text: "Excluir", callback_data: `delete_client_confirm:${c.id}` },
-        { text: "Mudar Plano", callback_data: `edit_plan:${c.id}` }
+        { text: "Excluir", callback_data: `delete_client_confirm:${c.id}` }
       ]
-
     ]
   });
 }
@@ -601,6 +599,40 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   ]
                 });
               }
+              return new Response('OK');
+            }
+
+            if (data.startsWith('edit_client_full:')) {
+              const id = data.split(':')[1];
+              await editMessage(chatId, messageId, "<b>Editar Cliente</b>\nSelecione o que deseja alterar:", {
+                inline_keyboard: [
+                  [{ text: "🖥️ Alterar Servidor", callback_data: `edit_serv:${id}` }],
+                  [{ text: "📅 Alterar Data/Vencimento", callback_data: `edit_venc:${id}` }],
+                  [{ text: "📋 Alterar Plano", callback_data: `edit_plan:${id}` }],
+                  [{ text: "💰 Alterar Valor/Desconto", callback_data: `edit_desc:${id}` }],
+                  [{ text: "👤 Alterar Nome/Telefone", callback_data: `edit_name_wpp_menu:${id}` }],
+                  [{ text: "🔙 Voltar", callback_data: `view_client_id:${id}` }]
+                ]
+              });
+              return new Response('OK');
+            }
+
+            if (data.startsWith('edit_name_wpp_menu:')) {
+              const id = data.split(':')[1];
+              await editMessage(chatId, messageId, "<b>Editar Nome/Telefone</b>\nO que deseja alterar?", {
+                inline_keyboard: [
+                  [{ text: "👤 Alterar Nome", callback_data: `edit_name:${id}` }],
+                  [{ text: "📱 Alterar WhatsApp", callback_data: `edit_wpp:${id}` }],
+                  [{ text: "🔙 Voltar", callback_data: `edit_client_full:${id}` }]
+                ]
+              });
+              return new Response('OK');
+            }
+
+            if (data.startsWith('view_client_id:')) {
+              const id = data.split(':')[1];
+              const client = await getClientById(id);
+              if (client) await sendClientFicha(chatId, client);
               return new Response('OK');
             }
 
