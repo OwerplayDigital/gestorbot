@@ -95,7 +95,29 @@ function Index() {
         <img src={gestorLogo.url} alt="Logo" className="h-20 w-20 rounded-xl mb-6 shadow-2xl" />
         <h1 className="text-2xl font-bold tracking-tighter mb-2">Sistema em Manutenção</h1>
         <p className="text-muted-foreground text-sm max-w-[250px]">
-          Estamos realizando atualizações importantes. Voltaremos em breve.
+          ADICIONAR MÓDULO DE DISPOSITIVOS/APPS NO BOT DO TELEGRAM
+
+1. BANCO DE DADOS (SUPABASE):
+   - Crie uma tabela chamada "dispositivos" vinculada à tabela de clientes (cliente_id).
+   - Campos: id, cliente_id, app_nome, mac_address, app_key, created_at.
+
+2. NOVO FLUXO NO BOT DO TELEGRAM (/cadastrar_app):
+   - Adicione o comando /cadastrar_app e um botão no menu do bot para vincular aplicativo a um cliente.
+   - Passo 1: O bot solicita o nome do cliente para localizar no banco.
+   - Passo 2: O bot exibe um teclado inline com os botões:
+     [ 📺 IBO Player ]  [ 📺 IBO Pro ]  [ ➕ Outro ]
+   - Passo 3: Após a escolha do app, o bot solicita o MAC Address.
+   - Passo 4: O bot solicita a KEY/Chave com a opção de clicar em um botão inline "[ ⏭️ Pular / Sem Key ]".
+   - Salvar as informações na tabela "dispositivos".
+
+3. CONSULTA E FORMATAÇÃO DE CÓPIA RÁPIDA (MONOSPACE):
+   - Quando o usuário consultar os dados do cliente ou seus dispositivos, exiba as informações do aplicativo formatadas em código Monospace (usando a tag <code> do Telegram ou formato markdown `texto`), permitindo copiar com um único toque.
+   - Exemplo de retorno:
+     📱 Dispositivo do Cliente
+     👤 Cliente: Nome do Cliente
+     📺 App: IBO Player
+     🔑 MAC: `00:1A:79:AB:CD:EF`
+     🔓 KEY: `123456` (exibir a linha de KEY apenas se ela existir)
         </p>
       </div>
     );
