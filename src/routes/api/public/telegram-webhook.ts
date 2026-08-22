@@ -1104,8 +1104,8 @@ async function handleTelegramEvent(body: any): Promise<Response> {
 
           }
 
-          if (state?.action === 'cadastrar_app') {
-            if (state.step === 1) {
+          if (state && state.action === 'cadastrar_app') {
+            if (state && state.step === 1) {
               const clients = await findClientByName(text.trim());
               if (clients.length === 0) {
                 await sendMessage(chatId, "❌ Cliente não encontrado. Tente novamente:");
