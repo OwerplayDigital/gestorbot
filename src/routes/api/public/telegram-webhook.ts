@@ -1125,16 +1125,16 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                 await sendMessage(chatId, "Vários clientes encontrados. Selecione um:", { inline_keyboard: buttons });
               }
             } else if (state.step === 3) {
-              state.data.mac_address = text.trim();
+              if (state.data) state.data.mac_address = text.trim();
               state.step = 4;
               await sendMessage(chatId, "Digite a KEY/Chave ou clique no botão abaixo para pular:", {
                 inline_keyboard: [[{ text: "⏭️ Pular / Sem Key", callback_data: "skip_key" }]]
               });
             } else if (state.step === 4) {
-              state.data.app_key = text.trim();
+              if (state.data) state.data.app_key = text.trim();
               // Salvar dispositivo
               const userId = await getAuthorizedUser(chatId);
-              if (userId && state.data.cliente_id && state.data.app_nome && state.data.mac_address) {
+              if (userId && state.data && state.data.cliente_id && state.data.app_nome && state.data.mac_address) {
                 await createDevice({
                   cliente_id: state.data.cliente_id,
                   app_nome: state.data.app_nome,
