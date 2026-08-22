@@ -829,6 +829,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                 if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
               }
               userState.delete(chatId);
+            }
             else if (data === 'back_to_main') {
                await sendMessage(chatId, "Clientes:", mainMenu);
                userState.delete(chatId);
