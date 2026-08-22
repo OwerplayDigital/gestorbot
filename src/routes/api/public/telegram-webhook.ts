@@ -603,17 +603,6 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               return new Response('OK');
             }
 
-              const id = data.split(':')[1];
-              await editMessage(chatId, messageId, "<b>Editar Nome/Telefone</b>\nO que deseja alterar?", {
-                inline_keyboard: [
-                  [{ text: "👤 Alterar Nome", callback_data: `edit_name:${id}` }],
-                  [{ text: "📱 Alterar WhatsApp", callback_data: `edit_wpp:${id}` }],
-                  [{ text: "🔙 Voltar", callback_data: `edit_client_full:${id}` }]
-                ]
-              });
-              return new Response('OK');
-            }
-
             if (data.startsWith('view_client_id:')) {
               const id = data.split(':')[1];
               const client = await getClientById(id);
