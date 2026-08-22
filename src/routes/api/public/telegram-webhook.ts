@@ -1104,6 +1104,49 @@ async function handleTelegramEvent(body: any): Promise<Response> {
 
           }
 
+          if (state?.action === 'cadastrar_app') {
+            if (state.step === 1) {
+              const clients = await findClientByName(text.trim());
+              if (clients.length === 0) {
+                await sendMessage(chatId, "❌ Cliente não encontrado. Tente novamente:");
+              } else if (clients.length === 1) {
+                state.data.cliente_id = clients[0].id;
+                state.step = 2;
+                await sendMessage(chatId, `Cliente encontrado: ${clients[0].nome}\n\nEscolha o Aplicativo:`, {
+                  inline_keyboard: [
+                    [{ text: '📺 IBO Player', callback_data: 'app_choice:IBO Player' }, { text: '📺 IBO Pro', callback_data: 'app_choice:IBO Pro' }],
+                    [{ text: '➕ Outro', callback_data: 'app_choice:Outro' }]
+                  ]
+                });
+              } else {
+                const buttons = clients.map(c => ([{ text: c.nome, callback_data: `dev_client:${c.id}` }]));
+                await sendMessage(chatId, "Vários clientes encontrados. Selecione um:", { inline_keyboard: buttons });
+              }
+            } else if (state.step === 3) {
+              state.data.mac_address = text.trim();
+              state.step = 4;
+              await sendMessage(chatId, "Digite a KEY/Chave ou clique no botão abaixo para pular:", {
+                inline_keyboard: [[{ text: "⏭️ Pular / Sem Key", callback_data: "skip_key" }]]
+              });
+            } else if (state.step === 4) {
+              state.data.app_key = text.trim();
+              // Salvar dispositivo
+              const userId = await getAuthorizedUser(chatId);
+              if (userId && state.data.cliente_id && state.data.app_nome && state.data.mac_address) {
+                await createDevice({
+                  cliente_id: state.data.cliente_id,
+                  app_nome: state.data.app_nome!,
+                  mac_address: state.data.mac_address,
+                  app_key: state.data.app_key
+                });
+                await sendMessage(chatId, "✅ Dispositivo cadastrado com sucesso!");
+                userState.delete(chatId);
+                await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
+              }
+            }
+            return new Response('OK');
+          }
+
           if (text === 'Voltar') {
             userState.delete(chatId);
             await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
