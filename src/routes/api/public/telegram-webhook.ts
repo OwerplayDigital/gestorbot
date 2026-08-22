@@ -1116,13 +1116,13 @@ async function handleTelegramEvent(body: any): Promise<Response> {
           const s = userState.get(chatId);
           if (s && s.action === 'cadastrar_app') {
             const stateAny = s as any;
-            if (s.step === 1) {
+            if (stateAny.step === 1) {
               const clients = await findClientByName(text.trim());
               if (clients.length === 0) {
                 await sendMessage(chatId, "❌ Cliente não encontrado. Tente novamente:");
               } else if (clients.length === 1) {
-                if (s.data) s.data.cliente_id = clients[0].id;
-                s.step = 2;
+                if (stateAny.data) stateAny.data.cliente_id = clients[0].id;
+                stateAny.step = 2;
                 await sendMessage(chatId, `Cliente encontrado: ${clients[0].nome}\n\nEscolha o Aplicativo:`, {
                   inline_keyboard: [
                     [{ text: '📺 IBO Player', callback_data: 'app_choice:IBO Player' }, { text: '📺 IBO Pro', callback_data: 'app_choice:IBO Pro' }],
@@ -1133,21 +1133,21 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                 const buttons = clients.map(c => ([{ text: c.nome, callback_data: `dev_client:${c.id}` }]));
                 await sendMessage(chatId, "Vários clientes encontrados. Selecione um:", { inline_keyboard: buttons });
               }
-            } else if (s.step === 3) {
-              if (s.data) s.data.mac_address = text.trim();
-              s.step = 4;
+            } else if (stateAny.step === 3) {
+              if (stateAny.data) stateAny.data.mac_address = text.trim();
+              stateAny.step = 4;
               await sendMessage(chatId, "Digite a KEY/Chave ou clique no botão abaixo para pular:", {
                 inline_keyboard: [[{ text: "⏭️ Pular / Sem Key", callback_data: "skip_key" }]]
               });
-            } else if (s.step === 4) {
-              if (s.data) s.data.app_key = text.trim();
+            } else if (stateAny.step === 4) {
+              if (stateAny.data) stateAny.data.app_key = text.trim();
               const userId = await getAuthorizedUser(chatId);
-              if (userId && s.data?.cliente_id && s.data?.app_nome && s.data?.mac_address) {
+              if (userId && stateAny.data?.cliente_id && stateAny.data?.app_nome && stateAny.data?.mac_address) {
                 await createDevice({
-                  cliente_id: s.data.cliente_id,
-                  app_nome: s.data.app_nome,
-                  mac_address: s.data.mac_address,
-                  app_key: s.data.app_key || null
+                  cliente_id: stateAny.data.cliente_id,
+                  app_nome: stateAny.data.app_nome,
+                  mac_address: stateAny.data.mac_address,
+                  app_key: stateAny.data.app_key || null
                 });
                 await sendMessage(chatId, "✅ Dispositivo cadastrado com sucesso!");
                 userState.delete(chatId);
