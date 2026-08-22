@@ -985,7 +985,9 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               await editMessage(chatId, messageId, "❌ Cadastro cancelado.", mainMenu);
             }
 
-          }
+          return new Response('OK');
+        }
+
 
 
           const msg = body.message;
