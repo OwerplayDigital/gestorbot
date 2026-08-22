@@ -678,3 +678,41 @@ export const clearBotMessages = async (chatId: number) => {
   }
 };
 
+export const createDevice = async (clientData: { 
+  cliente_id: string; 
+  app_nome: string; 
+  mac_address: string; 
+  app_key?: string; 
+}) => {
+  const { data, error } = await supabaseAdmin
+    .from("dispositivos")
+    .insert({
+      cliente_id: clientData.cliente_id,
+      app_nome: clientData.app_nome,
+      mac_address: clientData.mac_address,
+      app_key: clientData.app_key,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Erro Supabase (dispositivos insert):", error);
+    throw error;
+  }
+  return data;
+};
+
+export const listDevicesByClient = async (clientId: string) => {
+  const { data, error } = await supabaseAdmin
+    .from("dispositivos")
+    .select("*")
+    .eq("cliente_id", clientId);
+
+  if (error) {
+    console.error("Erro Supabase (dispositivos select):", error);
+    return [];
+  }
+  return data || [];
+};
+
+
