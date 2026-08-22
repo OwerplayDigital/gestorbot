@@ -96,6 +96,18 @@ function Index() {
         <h1 className="text-2xl font-bold tracking-tighter mb-2">Sistema em Manutenção</h1>
         <p className="text-muted-foreground text-sm max-w-[250px]">
           Estamos realizando atualizações importantes. Voltaremos em breve.
+          <pre className="mt-8 p-4 bg-muted/50 rounded-lg text-[10px] text-left whitespace-pre-wrap font-mono opacity-80 border border-primary/10 select-all">
+            AJUSTAR LAYOUT DO TECLADO INLINE NO TELEGRAM{"\n\n"}
+            Ajuste a disposição dos botões do menu principal (/start) para manter o alinhamento visual em pares organizados:{"\n\n"}
+            Linha 1: [ 📅 Vence Hoje ] [ ❌ Vencidos ]{"\n"}
+            Linha 2: [ ➕ Cadastrar ] [ 🔍 Buscar ]{"\n"}
+            Linha 3: [ 📺 Cadastrar App ] [ 🖥️ Servidores ]{"\n"}
+            Linha 4: [ 📋 Planos ] [ 💰 Financeiro ]{"\n"}
+            Linha 5: [ 🧹 Limpar Tela ]{"\n"}
+            Linha 6: [ 🌐 Gestor ] [ 🖥️ Uniplay ]{"\n"}
+            Linha 7: [ 🐐 Goat ] [ ⚡ P2braz ]{"\n\n"}
+            Por favor, aplique esse novo Grid no arquivo do teclado do bot sem alterar nenhuma lógica dos comandos.
+          </pre>
         </p>
       </div>
     );
