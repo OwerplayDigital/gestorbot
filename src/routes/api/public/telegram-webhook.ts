@@ -1110,11 +1110,9 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               if (clients.length === 0) {
                 await sendMessage(chatId, "❌ Cliente não encontrado. Tente novamente:");
               } else if (clients.length === 1) {
-                const st = state as any;
-                if (st && st.data) {
-                  st.data.cliente_id = clients[0].id;
-                  st.step = 2;
-                }
+                const sAny = state as any;
+                if (sAny.data) sAny.data.cliente_id = clients[0].id;
+                sAny.step = 2;
                 await sendMessage(chatId, `Cliente encontrado: ${clients[0].nome}\n\nEscolha o Aplicativo:`, {
                   inline_keyboard: [
                     [{ text: '📺 IBO Player', callback_data: 'app_choice:IBO Player' }, { text: '📺 IBO Pro', callback_data: 'app_choice:IBO Pro' }],
