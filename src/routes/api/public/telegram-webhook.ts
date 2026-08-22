@@ -247,6 +247,7 @@ function parseBRDate(brDate: string): string | null {
 async function handleTelegramEvent(body: any): Promise<Response> {
   try {
     if (!body) return new Response('OK');
+
           
           if (body.callback_query) {
             const cb = body.callback_query;
@@ -588,40 +589,15 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               return new Response('OK');
             }
 
-            if (data.startsWith('edit_client_full:')) {
-              const id = data.split(':')[1];
-              if (id) {
-                await editMessage(chatId, messageId, "🛡️ <b>MENU DE EDIÇÃO</b>\nO que você deseja alterar?", {
-                  inline_keyboard: [
-                    [{ text: "📝 Nome", callback_data: `edit_name:${id}` }, { text: "📱 WhatsApp", callback_data: `edit_wpp:${id}` }],
-                    [{ text: "📅 Vencimento", callback_data: `edit_venc:${id}` }, { text: "📡 Servidor", callback_data: `edit_serv:${id}` }],
-                    [{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]
-                  ]
-                });
-              }
-              return new Response('OK');
-            }
 
             if (data.startsWith('edit_client_full:')) {
               const id = data.split(':')[1];
               await editMessage(chatId, messageId, "<b>Editar Cliente</b>\nSelecione o que deseja alterar:", {
                 inline_keyboard: [
-                  [{ text: "📝 Nome", callback_data: `edit_nome:${id}` }, { text: "📱 WhatsApp", callback_data: `edit_wpp:${id}` }],
+                  [{ text: "📝 Nome", callback_data: `edit_name:${id}` }, { text: "📱 WhatsApp", callback_data: `edit_wpp:${id}` }],
                   [{ text: "📅 Vencimento", callback_data: `edit_venc:${id}` }, { text: "📡 Servidor", callback_data: `edit_serv:${id}` }],
                   [{ text: "📋 Plano", callback_data: `edit_plan:${id}` }, { text: "💰 Valor", callback_data: `edit_desc:${id}` }],
                   [{ text: "⬅️ Voltar", callback_data: `view_client_id:${id}` }]
-                ]
-              });
-              return new Response('OK');
-            }
-
-            if (data.startsWith('edit_name_wpp_menu:')) {
-              const id = data.split(':')[1];
-              await editMessage(chatId, messageId, "<b>Editar Nome/Telefone</b>\nO que deseja alterar?", {
-                inline_keyboard: [
-                  [{ text: "👤 Alterar Nome", callback_data: `edit_name:${id}` }],
-                  [{ text: "📱 Alterar WhatsApp", callback_data: `edit_wpp:${id}` }],
-                  [{ text: "🔙 Voltar", callback_data: `edit_client_full:${id}` }]
                 ]
               });
               return new Response('OK');
@@ -801,8 +777,8 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   .select('nome')
                   .single();
                 
-                await editMessage(chatId, messageId, `Servidor atualizado para <b>${servName}</b>!`, mainMenu);
-                if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
+                await editMessage(chatId, messageId, `Servidor atualizado para <b>${servName}</b>!`);
+                if (updated) await sendClientFicha(chatId, updated);
               }
               userState.delete(chatId);
             }
@@ -831,8 +807,8 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                 const isoDate = state.data.vencimento_temp?.split('T')[0];
                 if (isoDate && state.data.id) {
                   const { data: updated } = await supabaseAdmin.from('clientes').update({ vencimento: isoDate }).eq('id', state.data.id).select('nome').single();
-                  await sendMessage(chatId, `Vencimento atualizado!`, mainMenu);
-                  if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
+                  await editMessage(chatId, messageId, `Vencimento atualizado!`);
+                  if (updated) await sendClientFicha(chatId, updated);
                 }
                 userState.delete(chatId);
               }
@@ -855,8 +831,8 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   .select('nome')
                   .single();
                 
-                await editMessage(chatId, messageId, `Plano atualizado para <b>${planName}</b>!`, mainMenu);
-                if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
+                await editMessage(chatId, messageId, `Plano atualizado para <b>${planName}</b>!`);
+                if (updated) await sendClientFicha(chatId, updated);
               }
               userState.delete(chatId);
             }
@@ -1009,8 +985,10 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               await editMessage(chatId, messageId, "❌ Cadastro cancelado.", mainMenu);
             }
 
-            return new Response('OK');
-          }
+          return new Response('OK');
+        }
+
+
 
           const msg = body.message;
           if (!msg) return new Response('OK');
@@ -1315,7 +1293,8 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                 inline_keyboard: [[{ text: `Confirmar: ${br}`, callback_data: "venc_confirm" }]]
               });
             }
-    }
+          }
+
     return new Response('OK');
   } catch (e) {
     console.error("ERRO WEBHOOK TELEGRAM:", e);
