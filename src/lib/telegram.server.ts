@@ -682,7 +682,7 @@ export const createDevice = async (clientData: {
   cliente_id: string; 
   app_nome: string; 
   mac_address: string; 
-  app_key?: string; 
+  app_key?: string | null; 
 }) => {
   const { data, error } = await supabaseAdmin
     .from("dispositivos")
@@ -690,7 +690,7 @@ export const createDevice = async (clientData: {
       cliente_id: clientData.cliente_id,
       app_nome: clientData.app_nome,
       mac_address: clientData.mac_address,
-      app_key: clientData.app_key,
+      app_key: clientData.app_key || null,
     })
     .select()
     .single();
