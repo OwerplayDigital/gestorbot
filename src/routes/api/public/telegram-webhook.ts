@@ -1154,7 +1154,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
           }
 
           if (state?.action === 'editar_nome') {
-            if (state.data.id && text.trim()) {
+            if (state.data?.id && text.trim()) {
               await supabaseAdmin.from('clientes').update({ nome: text.trim() }).eq('id', state.data.id);
               await sendMessage(chatId, "✅ Nome atualizado com sucesso!");
               const client = await getClientById(state.data.id);
