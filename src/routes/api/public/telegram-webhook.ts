@@ -787,8 +787,8 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   .select('nome')
                   .single();
                 
-                await editMessage(chatId, messageId, `Servidor atualizado para <b>${servName}</b>!`, mainMenu);
-                if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
+                await editMessage(chatId, messageId, `Servidor atualizado para <b>${servName}</b>!`);
+                if (updated) await sendClientFicha(chatId, updated);
               }
               userState.delete(chatId);
             }
