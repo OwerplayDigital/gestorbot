@@ -70,6 +70,41 @@ export type Database = {
           },
         ]
       }
+      dispositivos: {
+        Row: {
+          app_key: string | null
+          app_nome: string
+          cliente_id: string
+          created_at: string | null
+          id: string
+          mac_address: string
+        }
+        Insert: {
+          app_key?: string | null
+          app_nome: string
+          cliente_id: string
+          created_at?: string | null
+          id?: string
+          mac_address: string
+        }
+        Update: {
+          app_key?: string | null
+          app_nome?: string
+          cliente_id?: string
+          created_at?: string | null
+          id?: string
+          mac_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispositivos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_templates: {
         Row: {
           content: string
