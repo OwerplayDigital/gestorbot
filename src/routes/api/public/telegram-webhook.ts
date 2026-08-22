@@ -1293,7 +1293,8 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                 inline_keyboard: [[{ text: `Confirmar: ${br}`, callback_data: "venc_confirm" }]]
               });
             }
-    }
+          }
+
     return new Response('OK');
   } catch (e) {
     console.error("ERRO WEBHOOK TELEGRAM:", e);
