@@ -41,9 +41,14 @@ type ClientRegistrationData = {
 };
 
 type UserState = {
-  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp' | 'renovar_cliente' | 'editar_servidor' | 'editar_nome';
+  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp' | 'renovar_cliente' | 'editar_servidor' | 'editar_nome' | 'cadastrar_app';
   step: number;
-  data: Partial<ClientRegistrationData>;
+  data: Partial<ClientRegistrationData> & {
+    app_nome?: string;
+    mac_address?: string;
+    app_key?: string;
+    cliente_id?: string;
+  };
 };
 
 const userState = new Map<number, UserState>();
