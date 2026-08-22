@@ -41,7 +41,7 @@ type ClientRegistrationData = {
 };
 
 type UserState = {
-  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp' | 'renovar_cliente' | 'editar_servidor' | 'editar_nome' | 'cadastrar_app';
+  action: 'cadastrar_cliente' | 'buscar_cliente' | 'editar_vencimento' | 'editar_desconto' | 'editar_whatsapp' | 'renovar_cliente' | 'editar_servidor' | 'editar_nome' | 'cadastrar_app' | 'editar_plano';
   step: number;
   data: Partial<ClientRegistrationData> & {
     app_nome?: string;
@@ -229,7 +229,8 @@ async function sendClientFicha(chatId: number, c: any) {
         { text: "Editar", callback_data: `edit_client_full:${c.id}` }
       ],
       [
-        { text: "Excluir", callback_data: `delete_client_confirm:${c.id}` }
+        { text: "Excluir", callback_data: `delete_client_confirm:${c.id}` },
+        { text: "Mudar Plano", callback_data: `edit_plan:${c.id}` }
       ]
 
     ]
@@ -805,6 +806,29 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                 }
                 userState.delete(chatId);
               }
+            }
+            else if (data.startsWith('edit_plan:')) {
+              const id = data.split(':')[1];
+              userState.set(chatId, { action: 'editar_plano', step: 1, data: { id } as any });
+              const plans = await listPlans();
+              const buttons = plans.map(p => ([{ text: `${p.name} (R$${p.price})`, callback_data: `eplan_sel:${p.id}:${p.name}` }]));
+              buttons.push([{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]);
+              await editMessage(chatId, messageId, "<b>Alterar Plano</b>\nSelecione o novo plano para este cliente:", { inline_keyboard: buttons });
+            }
+            else if (state?.action === 'editar_plano' && data.startsWith('eplan_sel:')) {
+              const [_, planId, planName] = data.split(':');
+              if (planId && state.data.id) {
+                const { data: updated } = await supabaseAdmin
+                  .from('clientes')
+                  .update({ plano_id: planId })
+                  .eq('id', state.data.id)
+                  .select('nome')
+                  .single();
+                
+                await editMessage(chatId, messageId, `Plano atualizado para <b>${planName}</b>!`, mainMenu);
+                if (updated) await sendMessage(chatId, `Visualize novamente: /view_${updated.nome.replace(/\s+/g, '_')}`);
+              }
+              userState.delete(chatId);
             }
             else if (data === 'back_to_main') {
                await sendMessage(chatId, "Clientes:", mainMenu);
