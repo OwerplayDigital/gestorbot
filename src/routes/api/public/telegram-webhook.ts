@@ -606,7 +606,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               const id = data.split(':')[1];
               await editMessage(chatId, messageId, "<b>Editar Cliente</b>\nSelecione o que deseja alterar:", {
                 inline_keyboard: [
-                  [{ text: "📝 Nome", callback_data: `edit_name:${id}` }, { text: "📱 WhatsApp", callback_data: `edit_wpp:${id}` }],
+                  [{ text: "📝 Nome", callback_data: `edit_nome:${id}` }, { text: "📱 WhatsApp", callback_data: `edit_wpp:${id}` }],
                   [{ text: "📅 Vencimento", callback_data: `edit_venc:${id}` }, { text: "📡 Servidor", callback_data: `edit_serv:${id}` }],
                   [{ text: "📋 Plano", callback_data: `edit_plan:${id}` }, { text: "💰 Valor", callback_data: `edit_desc:${id}` }],
                   [{ text: "⬅️ Voltar", callback_data: `view_client_id:${id}` }]
