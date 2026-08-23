@@ -123,7 +123,7 @@ function Index() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-card border-border rounded-xl"
+                className="bg-card dark:bg-[#131B2E] border-border dark:border-slate-800 rounded-xl"
               />
             </div>
             <div className="space-y-2">
@@ -134,7 +134,7 @@ function Index() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-card border-border rounded-xl"
+                className="bg-card dark:bg-[#131B2E] border-border dark:border-slate-800 rounded-xl"
               />
             </div>
             <Button type="submit" className="w-full font-bold rounded-xl" disabled={signingIn}>
