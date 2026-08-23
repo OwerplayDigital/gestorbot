@@ -286,7 +286,8 @@ function Dashboard() {
         </div>
 
         <div className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
+          {/* Tabela para Desktop */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-muted/50 border-b border-border/50">
@@ -316,34 +317,101 @@ function Dashboard() {
                       <span className="text-sm font-black text-emerald-500">{formatBRL(t.lucro_liquido)}</span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all"
-                        onClick={async () => {
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-[350px] rounded-2xl">
+                          <DialogHeader>
+                            <DialogTitle className="text-center uppercase font-black tracking-tighter">Confirmar Exclusão</DialogTitle>
+                          </DialogHeader>
+                          <p className="text-center text-sm text-muted-foreground font-medium py-4">Deseja realmente excluir este registro de transação?</p>
+                          <div className="flex gap-2">
+                            <Button variant="outline" className="flex-1 rounded-xl font-bold" onClick={() => {}}>Cancelar</Button>
+                            <Button variant="destructive" className="flex-1 rounded-xl font-black uppercase" onClick={async () => {
+                              const { error } = await supabase.from('transacoes').delete().eq('id', t.id);
+                              if (error) {
+                                toast.error("Erro ao excluir registro");
+                              } else {
+                                toast.success("Registro removido");
+                              }
+                            }}>Excluir</Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Lista Compacta para Mobile */}
+          <div className="md:hidden divide-y divide-border/50">
+            {stats?.recentTransactions?.slice(0, 5).map((t: any) => (
+              <div key={t.id} className="p-4 flex flex-col gap-3 hover:bg-muted/30 transition-colors">
+                <div className="flex justify-between items-start">
+                  <div className="flex flex-col">
+                    <span className="font-black text-foreground text-sm tracking-tight uppercase">{t.clientes?.nome || "Cliente"}</span>
+                    <span className="text-[10px] text-muted-foreground font-bold">{t.servidores_iptv?.name || "IPTV"}</span>
+                  </div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:bg-rose-500/10">
+                        <Trash2 size={14} />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-[90vw] rounded-2xl">
+                      <DialogHeader>
+                        <DialogTitle className="text-center uppercase font-black tracking-tighter">Confirmar Exclusão</DialogTitle>
+                      </DialogHeader>
+                      <p className="text-center text-sm text-muted-foreground font-medium py-4">Deseja realmente excluir este registro de transação?</p>
+                      <div className="flex gap-2">
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="flex-1 rounded-xl font-bold">Cancelar</Button>
+                        </DialogTrigger>
+                        <Button variant="destructive" className="flex-1 rounded-xl font-black uppercase" onClick={async () => {
                           const { error } = await supabase.from('transacoes').delete().eq('id', t.id);
                           if (error) {
                             toast.error("Erro ao excluir registro");
                           } else {
                             toast.success("Registro removido");
                           }
-                        }}
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-                {(!stats?.recentTransactions || stats.recentTransactions.length === 0) && (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground font-medium text-sm">
-                      Nenhuma renovação registrada recentemente.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                        }}>Excluir</Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2 bg-muted/20 p-2 rounded-xl border border-border/50">
+                  <div className="flex flex-col">
+                    <span className="text-[8px] font-black text-muted-foreground uppercase">Plano</span>
+                    <span className="text-xs font-black text-foreground">{formatBRL(t.entrada)}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[8px] font-black text-muted-foreground uppercase">Custo</span>
+                    <span className="text-xs font-black text-rose-500">{formatBRL(t.custo)}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[8px] font-black text-muted-foreground uppercase">Lucro</span>
+                    <span className="text-xs font-black text-emerald-500">{formatBRL(t.lucro_liquido)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
+
+          {(!stats?.recentTransactions || stats.recentTransactions.length === 0) && (
+            <div className="px-6 py-12 text-center text-muted-foreground font-medium text-sm">
+              Nenhuma renovação registrada recentemente.
+            </div>
+          )}
         </div>
       </section>
 
