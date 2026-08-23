@@ -121,7 +121,7 @@ function Dashboard() {
         ] = await Promise.all([
           supabase.from("clientes").select("id, nome, vencimento, valor, status, servidores_ids"),
           supabase.from("transacoes").select("*, clientes(nome, servidores_ids), servidores_iptv(name)").order("created_at", { ascending: false }),
-          supabase.from("servidores_iptv").select("id, name"),
+          supabase.from("servidores_iptv").select("id, name, valor"),
         ]);
 
         const clients = clientsRes.data ?? [];
