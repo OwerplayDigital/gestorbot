@@ -37,8 +37,8 @@ function ClientesPage() {
   });
 
   const filteredClients = clients?.filter(c => 
-    c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.whatsapp?.includes(searchTerm)
+    (c.nome?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+    (c.whatsapp || "").includes(searchTerm)
   );
 
   const parseDate = (dateStr: string | null) => {
