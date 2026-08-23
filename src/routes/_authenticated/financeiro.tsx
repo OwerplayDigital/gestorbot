@@ -2,14 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
-  Search, 
   Download, 
   ChevronDown, 
   DollarSign, 
   TrendingUp, 
   TrendingDown,
   Calendar,
-  Filter
+  Users,
+  PieChart,
+  Activity
 } from "lucide-react";
 import { 
   format, 
@@ -20,10 +21,19 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toZonedTime } from "date-fns-tz";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  Cell
+} from "recharts";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -44,7 +54,6 @@ interface SelectedMonth {
 }
 
 function FinanceiroHistory() {
-  const [searchTerm, setSearchTerm] = useState("");
   const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
   
   const pastMonths = useMemo(() => {
@@ -84,30 +93,41 @@ function FinanceiroHistory() {
     }
   });
 
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter(t => 
-      (t.clientes?.nome?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (t.servidores_iptv?.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (t.descricao?.toLowerCase() || "").includes(searchTerm.toLowerCase())
-    );
-  }, [transactions, searchTerm]);
-
   const stats = useMemo(() => {
-    const entradas = filteredTransactions.reduce((acc, t) => acc + Number(t.entrada || 0), 0);
-    const saidas = filteredTransactions.reduce((acc, t) => acc + Number(t.custo || 0), 0);
+    const entradas = transactions.reduce((acc, t) => acc + Number(t.entrada || 0), 0);
+    const saidas = transactions.reduce((acc, t) => acc + Number(t.custo || 0), 0);
     const lucro = entradas - saidas;
     return { entradas, saidas, lucro };
-  }, [filteredTransactions]);
+  }, [transactions]);
+
+  const serverStats = useMemo(() => {
+    const serverMap: Record<string, { name: string, clients: Set<string>, receita: number, custo: number }> = {};
+    
+    transactions.forEach(t => {
+      const serverId = t.serv_id || 'painel';
+      const serverName = t.servidores_iptv?.name || 'Painel/Sistema';
+      
+      if (!serverMap[serverId]) {
+        serverMap[serverId] = { name: serverName, clients: new Set(), receita: 0, custo: 0 };
+      }
+      
+      if (t.cliente_id) serverMap[serverId].clients.add(t.cliente_id);
+      serverMap[serverId].receita += Number(t.entrada || 0);
+      serverMap[serverId].custo += Number(t.custo || 0);
+    });
+
+    return Object.values(serverMap).sort((a, b) => b.receita - a.receita);
+  }, [transactions]);
 
   const formatBRL = (val: number) => {
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
 
   const exportToCSV = () => {
-    if (filteredTransactions.length === 0) return;
+    if (transactions.length === 0) return;
 
     const headers = ["Data", "Cliente/Descrição", "Servidor", "Tipo", "Entrada", "Saída", "Lucro"];
-    const rows = filteredTransactions.map(t => [
+    const rows = transactions.map((t: any) => [
       t.created_at ? format(parseISO(t.created_at), "dd/MM/yyyy HH:mm") : "N/A",
       t.clientes?.nome || t.descricao || "N/A",
       t.servidores_iptv?.name || "Painel",
@@ -119,7 +139,7 @@ function FinanceiroHistory() {
 
     const csvContent = [
       headers.join(","),
-      ...rows.map(row => row.join(","))
+      ...rows.map((row: any) => row.join(","))
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -168,7 +188,7 @@ function FinanceiroHistory() {
             size="icon" 
             className="rounded-xl border-border bg-card shadow-sm"
             onClick={exportToCSV}
-            disabled={filteredTransactions.length === 0}
+            disabled={transactions.length === 0}
           >
             <Download size={18} />
           </Button>
@@ -217,84 +237,95 @@ function FinanceiroHistory() {
         </Card>
       </section>
 
-      {/* Tabela de Extrato */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-            <Input 
-              placeholder="Buscar por cliente ou servidor..." 
-              className="pl-10 rounded-xl border-border bg-card shadow-sm h-10 font-medium"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <Badge variant="secondary" className="h-10 px-4 rounded-xl border-border bg-card shadow-sm text-xs font-bold gap-2">
-            <Filter size={14} className="text-muted-foreground" />
-            {filteredTransactions.length} Transações
-          </Badge>
-        </div>
+      {/* Gráfico e Resumo por Servidor */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card className="rounded-2xl border-border bg-card shadow-sm overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-muted/20">
+            <div className="flex items-center gap-2">
+              <Activity className="text-primary" size={18} />
+              <CardTitle className="text-sm font-black uppercase tracking-tighter">Comparativo de Servidores</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="h-[300px] w-full">
+              {serverStats.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={serverStats}
+                    layout="vertical"
+                    margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                    barGap={8}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                    <XAxis type="number" hide />
+                    <YAxis 
+                      dataKey="name" 
+                      type="category" 
+                      axisLine={false} 
+                      tickLine={false}
+                      tick={{ fill: 'hsl(var(--foreground))', fontSize: 10, fontWeight: 900 }}
+                      width={80}
+                    />
+                    <Tooltip 
+                      cursor={{ fill: 'transparent' }}
+                      contentStyle={{ 
+                        borderRadius: '12px', 
+                        border: '1px solid hsl(var(--border))',
+                        backgroundColor: 'hsl(var(--card))',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}
+                      formatter={(value: number) => [formatBRL(value), 'Receita']}
+                    />
+                    <Bar dataKey="receita" radius={[0, 4, 4, 0]} maxBarSize={24}>
+                      {serverStats.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={`hsl(var(--primary) / ${1 - (index * 0.15)})`} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-muted-foreground font-medium italic">
+                  Sem dados para exibir
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-muted/50 border-b border-border/50">
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Data</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Cliente / Descrição</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Servidor</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Valor</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50">
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td colSpan={4} className="px-6 py-8 bg-muted/10"></td>
-                    </tr>
-                  ))
-                ) : filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((t) => (
-                    <tr key={t.id} className="hover:bg-muted/30 transition-colors group">
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-xs font-black text-foreground">{t.created_at ? format(parseISO(t.created_at), "dd/MM/yyyy") : "N/A"}</span>
-                          <span className="text-[10px] text-muted-foreground font-bold">{t.created_at ? format(parseISO(t.created_at), "HH:mm") : "N/A"}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-black text-foreground uppercase tracking-tight">
-                          {t.clientes?.nome || t.descricao || "N/A"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <Badge variant="outline" className="rounded-lg text-[10px] font-bold border-border bg-muted/20">
-                          {t.servidores_iptv?.name || "Painel"}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex flex-col items-end">
-                          <span className={`text-sm font-black ${(t.entrada || 0) > 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                            {(t.entrada || 0) > 0 ? `+ ${formatBRL(t.entrada || 0)}` : `- ${formatBRL(t.custo || 0)}`}
-                          </span>
-                          {(t.lucro_liquido || 0) > 0 && (t.entrada || 0) > 0 && (
-                            <span className="text-[9px] font-black text-emerald-600/60">Lucro: {formatBRL(t.lucro_liquido || 0)}</span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground font-medium">
-                      Nenhuma transação encontrada para este período ou filtro.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <Card className="rounded-2xl border-border bg-card shadow-sm overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-muted/20">
+            <div className="flex items-center gap-2">
+              <PieChart className="text-primary" size={18} />
+              <CardTitle className="text-sm font-black uppercase tracking-tighter">Performance por Servidor</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border/50">
+              {serverStats.length > 0 ? (
+                serverStats.map((srv, idx) => (
+                  <div key={idx} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Users size={16} className="text-primary" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-black uppercase tracking-tight text-foreground">{srv.name}</div>
+                        <div className="text-[9px] font-bold text-muted-foreground">{srv.clients.size} Clientes ativos</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-black text-foreground">{formatBRL(srv.receita)}</div>
+                      <div className="text-[9px] font-bold text-rose-500">Custo: {formatBRL(srv.custo)}</div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-8 text-center text-muted-foreground font-medium">Nenhum servidor registrado este mês.</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );
