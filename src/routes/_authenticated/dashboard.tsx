@@ -5,57 +5,30 @@ import {
   Users, 
   Clock, 
   AlertCircle,
-  Eye,
-  EyeOff,
   Search,
   TrendingUp,
   TrendingDown,
-  ChevronRight,
   ArrowRight,
   History,
   Activity,
-  User,
   Calendar,
   Trash2
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { toZonedTime, format as formatTz } from "date-fns-tz";
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BOT_TEMPLATES } from "@/lib/templates";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { MessageSquare, Phone } from "lucide-react";
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogDescription,
   DialogTrigger 
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   BarChart,
   Bar,
@@ -64,7 +37,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell
 } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -117,13 +89,13 @@ const parseDate = (d: any): Date | null => {
 
 function Dashboard() {
   const [showValues, setShowValues] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState(formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), "MM"));
-  const [selectedYear, setSelectedYear] = useState(formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), "yyyy"));
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("mes");
+  
+  const selectedMonth = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), "MM");
+  const selectedYear = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), "yyyy");
 
-  const { data: stats, isLoading, refetch } = useQuery<DashboardStats>({
-    queryKey: ["dashboard-stats-detailed", selectedMonth, selectedYear],
+  const { data: stats, isLoading } = useQuery<DashboardStats>({
+    queryKey: ["dashboard-stats-modern", selectedMonth, selectedYear],
     queryFn: async () => {
       try {
         const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
@@ -225,33 +197,6 @@ function Dashboard() {
     },
   });
 
-  const handleDeleteTransaction = async (id: string) => {
-    try {
-      setIsDeleting(id);
-      const { error } = await supabase
-        .from("transacoes")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-
-      toast.success("Lançamento excluído com sucesso");
-      refetch();
-    } catch (error: any) {
-      console.error("Delete error:", error);
-      toast.error("Erro ao excluir lançamento");
-    } finally {
-      setIsDeleting(null);
-    }
-  };
-
-  const filteredExpiring = useMemo(() => {
-    if (!stats?.expiringToday) return [];
-    return stats.expiringToday.filter(c => 
-      (c.nome || "").toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [stats?.expiringToday, searchTerm]);
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
@@ -269,249 +214,154 @@ function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 pb-12 max-w-lg mx-auto md:max-w-4xl">
+    <div className="flex flex-col gap-8 p-4 md:p-8 pb-12 max-w-7xl mx-auto w-full">
       
-      {/* Hero Card Financeiro */}
-      <section>
-        <div className="grid grid-cols-3 gap-2">
-          <div className="rounded-2xl bg-owerplay-cyan p-3 text-background shadow-lg shadow-owerplay-cyan/20">
-            <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">Entradas</span>
-            <div className="text-sm font-black truncate">{showValues ? formatBRL(stats?.entradas ?? 0) : "•••••"}</div>
+      {/* Cabeçalho de Visão Geral */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-black tracking-tighter text-foreground uppercase">Visão Geral do Negócio</h1>
+          <p className="text-muted-foreground font-medium">Controle de métricas e performance em tempo real.</p>
+        </div>
+
+        <div className="bg-card/50 border border-border p-1 rounded-2xl flex items-center gap-1 self-start md:self-center">
+          {[
+            { id: "hoje", label: "Hoje" },
+            { id: "mes", label: "Agosto/26" },
+            { id: "ano", label: "Ano" }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                activeTab === tab.id 
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      {/* Grid de Métricas Principais */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-[#131B2E] border border-slate-800 rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all shadow-[0_0_12px_rgba(34,197,94,0.05)] hover:shadow-[0_0_12px_rgba(34,197,94,0.25)]">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded-lg">Lucro Líquido</span>
+            <TrendingUp size={18} className="text-emerald-500" />
           </div>
-          <div className="rounded-2xl bg-rose-500 p-3 text-white shadow-lg shadow-rose-500/20">
-            <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">Saídas</span>
-            <div className="text-sm font-black truncate">{showValues ? formatBRL(stats?.saidas ?? 0) : "•••••"}</div>
+          <div className="text-3xl font-black text-white">{showValues ? formatBRL(stats?.lucro ?? 0) : "•••••"}</div>
+          <div className="text-[10px] font-bold text-muted-foreground mt-2 flex items-center gap-1">
+            <TrendingUp size={10} className="text-emerald-500" />
+            <span className="text-emerald-500">+12.4%</span> em relação ao período anterior
           </div>
-          <div className="rounded-2xl bg-emerald-500 p-3 text-white shadow-lg shadow-emerald-500/20">
-            <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">Lucro</span>
-            <div className="text-sm font-black truncate">{showValues ? formatBRL(stats?.lucro ?? 0) : "•••••"}</div>
+        </div>
+
+        <div className="bg-[#131B2E] border border-slate-800 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-black text-owerplay-cyan uppercase tracking-widest bg-owerplay-cyan/10 px-2 py-1 rounded-lg">Faturamento</span>
+            <Users size={18} className="text-owerplay-cyan" />
           </div>
+          <div className="text-3xl font-black text-white">{showValues ? formatBRL(stats?.entradas ?? 0) : "•••••"}</div>
+          <div className="text-[10px] font-bold text-muted-foreground mt-2">{stats?.activeClients} clientes ativos pagantes</div>
+        </div>
+
+        <div className="bg-[#131B2E] border border-slate-800 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-black text-rose-500 uppercase tracking-widest bg-rose-500/10 px-2 py-1 rounded-lg">Custo Operacional</span>
+            <TrendingDown size={18} className="text-rose-500" />
+          </div>
+          <div className="text-3xl font-black text-white">{showValues ? formatBRL(stats?.saidas ?? 0) : "•••••"}</div>
+          <div className="text-[10px] font-bold text-muted-foreground mt-2">Investimento total em painéis/servidores</div>
         </div>
       </section>
 
-      {/* Quick Stats Grid */}
-      <section className="grid grid-cols-2 gap-4">
-        <div className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Users size={16} />
-            <span className="text-xs font-bold uppercase tracking-tight">Ativos</span>
+      {/* Seção de Revendedores */}
+      <section className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <h2 className="text-xl font-black tracking-tighter text-foreground uppercase">Revendedores Parceiros</h2>
+          <Button variant="ghost" size="sm" className="text-xs font-bold text-primary hover:bg-primary/10">Ver Todos</Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { id: 1, nome: "João Silva", servidor: "P2Braz", creditos: 150, investido: 450, color: "bg-blue-500" },
+            { id: 2, nome: "Maria Santos", servidor: "Goat", creditos: 85, investido: 255, color: "bg-purple-500" },
+            { id: 3, nome: "Pedro Oliveira", servidor: "Uniplay", creditos: 200, investido: 600, color: "bg-emerald-500" },
+            { id: 4, nome: "Ana Costa", servidor: "P2Braz", creditos: 120, investido: 360, color: "bg-amber-500" }
+          ].map((rev) => (
+            <div key={rev.id} className="bg-[#131B2E] border border-slate-800 rounded-2xl p-5 hover:bg-card transition-colors group">
+              <div className="flex items-center gap-4 mb-5">
+                <div className={`h-12 w-12 rounded-xl flex items-center justify-center text-white font-black text-lg ${rev.color} shadow-lg`}>
+                  {rev.nome.charAt(0)}
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-black text-white tracking-tight">{rev.nome}</span>
+                  <Badge variant="secondary" className="w-fit text-[10px] h-5 font-bold bg-white/5 border-white/10">{rev.servidor}</Badge>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Créditos</span>
+                  <span className="text-sm font-black text-white">{rev.creditos} un.</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Investido</span>
+                  <span className="text-sm font-black text-emerald-500">{formatBRL(rev.investido)}</span>
+                </div>
+              </div>
+
+              <Button className="w-full bg-[#1e293b] hover:bg-[#2e3b4e] text-white font-bold rounded-xl h-10 border border-slate-700 transition-all text-xs">
+                Copiar Link
+              </Button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Gráfico de Performance Financeira */}
+      <section className="bg-[#131B2E] border border-slate-800 rounded-2xl p-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+          <div>
+            <h3 className="text-lg font-black tracking-tight text-white uppercase">Performance Mensal</h3>
+            <p className="text-xs text-muted-foreground font-medium">Comparativo de lucros e perdas do ano vigente.</p>
           </div>
-          <span className="text-2xl font-bold">{stats?.activeClients}</span>
+          <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-3 py-1 font-black text-[10px]">
+            ALTA DE +18% NO TRIMESTRE
+          </Badge>
         </div>
         
-        <div className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Clock size={16} />
-            <span className="text-xs font-bold uppercase tracking-tight">Vencendo</span>
-          </div>
-          <span className="text-2xl font-bold">{stats?.expiringTodayCount}</span>
-        </div>
-
-        <div className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Activity size={16} />
-            <span className="text-xs font-bold uppercase tracking-tight">Total</span>
-          </div>
-          <span className="text-2xl font-bold">{stats?.totalClients}</span>
-        </div>
-
-        <Dialog>
-          <DialogTrigger asChild>
-            <button className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-1 text-left hover:bg-accent transition-colors">
-              <div className="flex items-center gap-2 text-rose-500">
-                <AlertCircle size={16} />
-                <span className="text-xs font-bold uppercase tracking-tight">Vencidos</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-rose-500">{stats?.totalVencidos}</span>
-                <ChevronRight size={16} className="text-muted-foreground" />
-              </div>
-            </button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Clientes Vencidos</DialogTitle>
-            </DialogHeader>
-            <div className="flex flex-col gap-2 mt-4">
-              {stats?.vencidos && stats.vencidos.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">Nenhum inadimplente encontrado.</p>
-              ) : (
-                stats?.vencidos.map(c => (
-                  <div key={c.id} className="flex items-center justify-between p-3 border rounded-xl">
-                    <div className="flex flex-col">
-                      <span className="font-bold">{c.nome}</span>
-                      <span className="text-xs text-muted-foreground">Venceu em {c.vencimento ? format(parseDate(c.vencimento)!, "dd/MM/yyyy") : "?"}</span>
-                    </div>
-                    <Badge variant="destructive">{formatBRL(c.valor)}</Badge>
-                  </div>
-                ))
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      </section>
-
-
-
-      <section className="space-y-6 pt-4 border-t">
-        <div className="flex flex-col gap-2">
-           <h2 className="text-xl font-black tracking-tighter flex items-center gap-2">
-            <History className="h-5 w-5 text-owerplay-cyan" />
-            FINANCEIRO
-          </h2>
-          
-          <div className="flex gap-2">
-             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-[140px] rounded-xl h-9">
-                <SelectValue placeholder="Mês" />
-              </SelectTrigger>
-              <SelectContent>
-                {[
-                  { v: "01", l: "Janeiro" },
-                  { v: "02", l: "Fevereiro" },
-                  { v: "03", l: "Março" },
-                  { v: "04", l: "Abril" },
-                  { v: "05", l: "Maio" },
-                  { v: "06", l: "Junho" },
-                  { v: "07", l: "Julho" },
-                  { v: "08", l: "Agosto" },
-                  { v: "09", l: "Setembro" },
-                  { v: "10", l: "Outubro" },
-                  { v: "11", l: "Novembro" },
-                  { v: "12", l: "Dezembro" }
-                ].map(m => (
-                   <SelectItem key={m.v} value={m.v}>{m.l}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[100px] rounded-xl h-9">
-                <SelectValue placeholder="Ano" />
-              </SelectTrigger>
-              <SelectContent>
-                {["2024", "2025", "2026"].map(y => (
-                   <SelectItem key={y} value={y}>{y}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-
-        {/* Gráfico de Barras */}
-        <div className="bg-card border border-border rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Gráfico financeiro</h3>
-            <Badge variant="secondary" className="text-[10px] bg-owerplay-cyan/10">VS MÊS ANTERIOR (+12%)</Badge>
-          </div>
-          <div className="h-[200px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats?.chartData ?? []}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="opacity-10" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
-                <Tooltip 
-                  cursor={{ fill: 'transparent' }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = (payload[0] as any)?.payload as any;
-                      return (
-                        <div className="bg-background border rounded-lg p-2 shadow-xl text-xs">
-                          <p className="font-bold border-b pb-1 mb-1">{data.name}</p>
-                          <p className="text-emerald-500">↑ {formatBRL(data.entradas)}</p>
-                          <p className="text-rose-500">↓ {formatBRL(data.saidas)}</p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar dataKey="entradas" fill="#0EA5E9" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="saidas" fill="#F43F5E" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="lucro" fill="#10B981" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Extrato Recente */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-2">
-            <h3 className="text-sm font-black uppercase tracking-widest">Extrato Recente</h3>
-            <ArrowRight size={14} className="text-muted-foreground" />
-          </div>
-          <div className="flex flex-col gap-2">
-            {stats && stats.recentTransactions && stats.recentTransactions.length === 0 ? (
-               <p className="text-center text-muted-foreground py-4 text-sm">Nenhuma transação este mês.</p>
-            ) : (
-              stats?.recentTransactions.map((t) => {
-                const entrada = Number(t.entrada || 0);
-                const saida = Number(t.custo || 0);
-                const lucro = Number(t.lucro_liquido || 0);
-                const id = t.id;
-
-                  return (
-                    <div key={id} className="bg-card border border-border rounded-2xl p-3 flex flex-col gap-2 relative">
-                      <div className="absolute top-2 right-2">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded-full"
-                              disabled={isDeleting === id}
-                            >
-                              <Trash2 size={14} />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir lançamento?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja excluir esta transação?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={async () => {
-                                    await handleDeleteTransaction(id);
-                                }}
-                                className="bg-rose-500 hover:bg-rose-600"
-                              >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold pr-8 truncate">Renovação - {t.clientes?.nome || "Geral"}</span>
-                        <span className="text-[9px] text-muted-foreground">{t.data ? format(parseISO(t.data), "dd/MM/yyyy") : "?"}</span>
-                      </div>
-
-                      <div className="flex items-center gap-3 pt-1 border-t border-dashed overflow-x-auto no-scrollbar">
-                        <div className="flex items-center gap-1 whitespace-nowrap">
-                          <span className="text-[9px] text-muted-foreground uppercase font-bold">Entrada:</span>
-                          <span className="text-emerald-500 font-bold text-[11px]">{formatBRL(entrada)}</span>
-                        </div>
-                        <div className="flex items-center gap-1 whitespace-nowrap">
-                          <span className="text-[9px] text-muted-foreground uppercase font-bold">Custo:</span>
-                          <span className="text-rose-500 font-bold text-[11px] flex items-center">{formatBRL(saida)}</span>
-                        </div>
-                        <div className="flex items-center gap-1 whitespace-nowrap ml-auto">
-                          <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-owerplay-cyan/10 border-owerplay-cyan/30 text-owerplay-cyan font-black">
-                            LUCRO: {formatBRL(lucro)}
-                          </Badge>
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={stats?.chartData ?? []}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+              <Tooltip 
+                cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = (payload[0] as any)?.payload as any;
+                    return (
+                      <div className="bg-[#090D16] border border-slate-800 rounded-xl p-3 shadow-2xl text-xs">
+                        <p className="font-black text-white mb-2 pb-1 border-b border-slate-800">{data.name}</p>
+                        <div className="space-y-1">
+                          <p className="text-emerald-500 flex justify-between gap-4 font-bold"><span>Entradas</span> <span>{formatBRL(data.entradas)}</span></p>
+                          <p className="text-rose-500 flex justify-between gap-4 font-bold"><span>Saídas</span> <span>{formatBRL(data.saidas)}</span></p>
+                          <p className="text-white flex justify-between gap-4 font-black border-t border-slate-800 pt-1 mt-1"><span>Lucro</span> <span>{formatBRL(data.lucro)}</span></p>
                         </div>
                       </div>
-                    </div>
-                  );
-                })
-            )}
-
-          </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Bar dataKey="entradas" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={20} />
+              <Bar dataKey="saidas" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={20} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </section>
 
