@@ -191,19 +191,19 @@ function Dashboard() {
         const currentMonthIdx = nowBr.getMonth();
         const currentYearNum = nowBr.getFullYear();
         
-        // Calcular os últimos 6 meses (incluindo o atual)
-        const lastSixMonths = [];
-        for (let i = 5; i >= 0; i--) {
+        // Calcular os últimos 8 meses para garantir que Julho apareça bem (e o gráfico tenha densidade)
+        const lastEightMonths = [];
+        for (let i = 7; i >= 0; i--) {
           let mIdx = currentMonthIdx - i;
           let y = currentYearNum;
           if (mIdx < 0) {
             mIdx += 12;
             y -= 1;
           }
-          lastSixMonths.push({ mIdx, y, label: monthsLabels[mIdx] });
+          lastEightMonths.push({ mIdx, y, label: monthsLabels[mIdx] });
         }
 
-        const chartData = lastSixMonths.map(({ mIdx, y, label }) => {
+        const chartData = lastEightMonths.map(({ mIdx, y, label }) => {
           const monthTrans = transactions.filter(t => {
             if (!t.data) return false;
             const d = parseISO(t.data);
