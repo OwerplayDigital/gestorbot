@@ -232,6 +232,7 @@ export type Database = {
           painel_senha: string | null
           preco_venda_por_credito: number | null
           saldo_creditos: number | null
+          servidor: string | null
           servidor_principal_id: string | null
           updated_at: string | null
           user_id: string
@@ -247,6 +248,7 @@ export type Database = {
           painel_senha?: string | null
           preco_venda_por_credito?: number | null
           saldo_creditos?: number | null
+          servidor?: string | null
           servidor_principal_id?: string | null
           updated_at?: string | null
           user_id: string
@@ -262,6 +264,7 @@ export type Database = {
           painel_senha?: string | null
           preco_venda_por_credito?: number | null
           saldo_creditos?: number | null
+          servidor?: string | null
           servidor_principal_id?: string | null
           updated_at?: string | null
           user_id?: string
