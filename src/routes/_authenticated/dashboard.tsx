@@ -274,15 +274,15 @@ function Dashboard() {
       {/* Hero Card Financeiro */}
       <section>
         <div className="grid grid-cols-3 gap-2">
-          <div className="rounded-2xl bg-owerplay-cyan p-3 text-background shadow-lg shadow-owerplay-cyan/20">
+          <div className="rounded-2xl bg-owerplay-cyan p-3 text-background shadow-lg shadow-owerplay-cyan/20 ring-1 ring-white/20">
             <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">Entradas</span>
             <div className="text-sm font-black truncate">{showValues ? formatBRL(stats?.entradas ?? 0) : "•••••"}</div>
           </div>
-          <div className="rounded-2xl bg-rose-500 p-3 text-white shadow-lg shadow-rose-500/20">
+          <div className="rounded-2xl bg-rose-500 p-3 text-white shadow-lg shadow-rose-500/20 ring-1 ring-white/10">
             <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">Saídas</span>
             <div className="text-sm font-black truncate">{showValues ? formatBRL(stats?.saidas ?? 0) : "•••••"}</div>
           </div>
-          <div className="rounded-2xl bg-emerald-500 p-3 text-white shadow-lg shadow-emerald-500/20">
+          <div className="rounded-2xl bg-emerald-500 p-3 text-white shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-400/30">
             <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">Lucro</span>
             <div className="text-sm font-black truncate">{showValues ? formatBRL(stats?.lucro ?? 0) : "•••••"}</div>
           </div>
@@ -291,7 +291,7 @@ function Dashboard() {
 
       {/* Quick Stats Grid */}
       <section className="grid grid-cols-2 gap-4">
-        <div className="bg-card border rounded-2xl p-4 flex flex-col gap-1">
+        <div className="bg-card border rounded-2xl p-4 flex flex-col gap-1 hover:shadow-md transition-shadow">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Users size={16} />
             <span className="text-xs font-bold uppercase tracking-tight">Ativos</span>
@@ -299,7 +299,7 @@ function Dashboard() {
           <span className="text-2xl font-bold">{stats?.activeClients}</span>
         </div>
         
-        <div className="bg-card border rounded-2xl p-4 flex flex-col gap-1">
+        <div className="bg-card border rounded-2xl p-4 flex flex-col gap-1 hover:shadow-md transition-shadow">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Clock size={16} />
             <span className="text-xs font-bold uppercase tracking-tight">Vencendo</span>
@@ -307,7 +307,7 @@ function Dashboard() {
           <span className="text-2xl font-bold">{stats?.expiringTodayCount}</span>
         </div>
 
-        <div className="bg-card border rounded-2xl p-4 flex flex-col gap-1">
+        <div className="bg-card border rounded-2xl p-4 flex flex-col gap-1 hover:shadow-md transition-shadow">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Activity size={16} />
             <span className="text-xs font-bold uppercase tracking-tight">Total</span>
