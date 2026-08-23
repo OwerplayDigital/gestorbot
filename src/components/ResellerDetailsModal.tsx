@@ -169,16 +169,17 @@ export function ResellerDetailsModal({
             )}
           </div>
 
-          <DialogFooter className="p-4 border-t border-slate-800 bg-slate-900/20">
+          <DialogFooter className="p-4 border-t border-slate-100 bg-slate-50">
             <Button 
               variant="ghost" 
               onClick={onClose} 
-              className="w-full rounded-xl font-black uppercase tracking-widest text-[10px] gap-2"
+              className="w-full rounded-xl font-black uppercase tracking-widest text-[10px] gap-2 text-slate-400 hover:text-slate-600"
             >
               <ArrowLeft size={14} />
               Voltar
             </Button>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
 
