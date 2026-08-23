@@ -507,9 +507,14 @@ function Dashboard() {
           </Badge>
         </div>
         
-        <div className="h-[350px] w-full">
+        <div className="h-[220px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={stats?.chartData ?? []} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <BarChart 
+              data={stats?.chartData ?? []} 
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              barGap={4}
+              barCategoryGap="20%"
+            >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border" opacity={0.5} />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
               <YAxis 
@@ -538,9 +543,9 @@ function Dashboard() {
                 }}
               />
               <Legend verticalAlign="top" align="right" height={36} iconType="circle" />
-              <Bar name="Entradas" dataKey="entradas" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} />
-              <Bar name="Saídas" dataKey="saidas" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={30} />
-              <Bar name="Lucro" dataKey="lucro" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={30} />
+              <Bar name="Entradas" dataKey="entradas" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Bar name="Saídas" dataKey="saidas" fill="#ef4444" radius={[4, 4, 0, 0]} />
+              <Bar name="Lucro" dataKey="lucro" fill="#22c55e" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
