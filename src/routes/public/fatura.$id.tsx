@@ -78,11 +78,11 @@ function PublicFaturaPage() {
         <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
           <div className="flex flex-col gap-1">
             <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Relatório Mensal</span>
-            <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{reseller.nome}</h1>
+            <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{(reseller as any)?.nome}</h1>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
               <div className="flex items-center gap-1.5">
                 <Server size={12} className="text-slate-400" />
-                <span className="text-xs font-bold text-slate-500 uppercase">{reseller.servidor || "Uniplay"}</span>
+                <span className="text-xs font-bold text-slate-500 uppercase">{(reseller as any)?.servidor || "Uniplay"}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Calendar size={12} className="text-slate-400" />
