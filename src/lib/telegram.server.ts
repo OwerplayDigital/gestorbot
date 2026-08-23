@@ -550,13 +550,11 @@ export const renewClient = async (
       tipo: 'entrada',
       entrada: valorEntrada,
       custo: totalCusto,
-      lucro_liquido: valorEntrada - totalCusto,
-      valor: valorEntrada - totalCusto,
-      data: formatTz(nowBr, 'yyyy-MM-dd HH:mm:ss'),
+      valor: valorEntrada,
+      data: formatTz(nowBr, 'yyyy-MM-dd'),
       descricao: `Renovação cliente ${clientId}`,
       serv_id: client.servidores_ids?.[0] || null
     });
-
 
   if (transError) {
     console.error("Erro ao registrar transação unificada:", transError);
