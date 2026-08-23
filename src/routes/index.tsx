@@ -104,7 +104,7 @@ function Index() {
   // Tela de Login (Porta Secreta)
   return (
     <div className="flex flex-col min-h-screen items-center justify-center bg-background p-4">
-      <Card className="max-w-md w-full border-border rounded-2xl shadow-2xl">
+      <Card className="max-w-md w-full bg-card dark:bg-[#131B2E] border-border dark:border-slate-800 rounded-2xl shadow-2xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <img src={gestorLogo.url} alt="Logo" className="h-12 w-12 rounded-lg" />
