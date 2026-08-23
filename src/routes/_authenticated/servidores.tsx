@@ -19,7 +19,7 @@ function ServidoresPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("revendedores" as any)
-        .select("*, servidores_iptv(name)")
+        .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
@@ -66,7 +66,7 @@ function ServidoresPage() {
               <div className="space-y-2 pt-2 border-t border-border/50">
                 <div className="flex justify-between text-xs">
                   <span className="font-bold text-muted-foreground uppercase">Servidor:</span>
-                  <span className="font-black text-foreground">{rev.servidores_iptv?.name || "N/A"}</span>
+                  <span className="font-black text-foreground">{rev.servidor || "N/A"}</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="font-bold text-muted-foreground uppercase">Custo:</span>
