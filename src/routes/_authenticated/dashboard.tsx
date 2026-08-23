@@ -512,8 +512,8 @@ function Dashboard() {
             <BarChart 
               data={stats?.chartData ?? []} 
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              barGap={4}
-              barCategoryGap="20%"
+              barGap={2}
+              barCategoryGap="15%"
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border" opacity={0.5} />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
