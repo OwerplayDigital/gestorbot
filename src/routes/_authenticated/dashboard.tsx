@@ -171,7 +171,7 @@ function Dashboard() {
           const monthTrans = transactions.filter(t => {
             if (!t.data) return false;
             const d = parseISO(t.data);
-            return format(d, "MM") === monthStr && format(d, "yyyy") === selectedYear;
+            return format(d, "MM") === monthStr && format(d, "yyyy") === currentYear;
           });
           const ent = monthTrans.reduce((a, b) => a + Number(b.entrada ?? 0), 0);
           const sai = monthTrans.reduce((a, b) => a + Number(b.custo ?? 0), 0);
