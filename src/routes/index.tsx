@@ -104,7 +104,7 @@ function Index() {
   // Tela de Login (Porta Secreta)
   return (
     <div className="flex flex-col min-h-screen items-center justify-center bg-background p-4">
-      <Card className="max-w-md w-full border-primary/20 shadow-2xl">
+      <Card className="max-w-md w-full border-border rounded-2xl shadow-2xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <img src={gestorLogo.url} alt="Logo" className="h-12 w-12 rounded-lg" />
@@ -123,7 +123,7 @@ function Index() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-muted/50"
+                className="bg-card border-border rounded-xl"
               />
             </div>
             <div className="space-y-2">
@@ -134,10 +134,10 @@ function Index() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-muted/50"
+                className="bg-card border-border rounded-xl"
               />
             </div>
-            <Button type="submit" className="w-full font-bold" disabled={signingIn}>
+            <Button type="submit" className="w-full font-bold rounded-xl" disabled={signingIn}>
               {signingIn ? "Validando..." : "Entrar"}
             </Button>
           </form>

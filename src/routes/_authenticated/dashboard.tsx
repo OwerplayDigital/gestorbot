@@ -291,7 +291,7 @@ function Dashboard() {
 
       {/* Quick Stats Grid */}
       <section className="grid grid-cols-2 gap-4">
-        <div className="bg-card border rounded-2xl p-4 flex flex-col gap-1">
+        <div className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-1">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Users size={16} />
             <span className="text-xs font-bold uppercase tracking-tight">Ativos</span>
@@ -299,7 +299,7 @@ function Dashboard() {
           <span className="text-2xl font-bold">{stats?.activeClients}</span>
         </div>
         
-        <div className="bg-card border rounded-2xl p-4 flex flex-col gap-1">
+        <div className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-1">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Clock size={16} />
             <span className="text-xs font-bold uppercase tracking-tight">Vencendo</span>
@@ -307,7 +307,7 @@ function Dashboard() {
           <span className="text-2xl font-bold">{stats?.expiringTodayCount}</span>
         </div>
 
-        <div className="bg-card border rounded-2xl p-4 flex flex-col gap-1">
+        <div className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-1">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Activity size={16} />
             <span className="text-xs font-bold uppercase tracking-tight">Total</span>
@@ -317,7 +317,7 @@ function Dashboard() {
 
         <Dialog>
           <DialogTrigger asChild>
-            <button className="bg-card border rounded-2xl p-4 flex flex-col gap-1 text-left hover:bg-accent transition-colors">
+            <button className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-1 text-left hover:bg-accent transition-colors">
               <div className="flex items-center gap-2 text-rose-500">
                 <AlertCircle size={16} />
                 <span className="text-xs font-bold uppercase tracking-tight">Vencidos</span>
@@ -400,7 +400,7 @@ function Dashboard() {
 
 
         {/* Gráfico de Barras */}
-        <div className="bg-card border rounded-3xl p-6">
+        <div className="bg-card border border-border rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Gráfico financeiro</h3>
             <Badge variant="secondary" className="text-[10px] bg-owerplay-cyan/10">VS MÊS ANTERIOR (+12%)</Badge>
@@ -451,7 +451,7 @@ function Dashboard() {
                 const id = t.id;
 
                   return (
-                    <div key={id} className="bg-card border rounded-2xl p-3 flex flex-col gap-2 relative">
+                    <div key={id} className="bg-card border border-border rounded-2xl p-3 flex flex-col gap-2 relative">
                       <div className="absolute top-2 right-2">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
