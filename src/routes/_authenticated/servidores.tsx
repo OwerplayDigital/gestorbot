@@ -15,6 +15,7 @@ export const Route = createFileRoute("/_authenticated/servidores")({
 
 function ServidoresPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedReseller, setSelectedReseller] = useState<any>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
@@ -85,7 +86,11 @@ function ServidoresPage() {
           {revendedores.map((rev: any) => (
             <div 
               key={rev.id} 
-              className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group"
+              className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group cursor-pointer"
+              onClick={() => {
+                setSelectedReseller(rev);
+                setIsDetailsOpen(true);
+              }}
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex flex-col">
@@ -121,25 +126,15 @@ function ServidoresPage() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setSelectedReseller(rev);
-                    setIsDetailsOpen(true);
+                    setIsEditModalOpen(true);
                   }}
                   className="w-full rounded-xl font-black uppercase text-[10px] tracking-widest gap-2 border-slate-700 hover:bg-slate-800"
                 >
                   <Pencil size={12} />
                   Perfil / Editar
-                </Button>
-                <Button 
-                  size="icon"
-                  variant="outline"
-                  className="rounded-xl border-slate-700 hover:bg-slate-800 shrink-0"
-                  onClick={() => {
-                    setSelectedReseller(rev);
-                    setIsDetailsOpen(true);
-                  }}
-                >
-                  <ExternalLink size={14} />
                 </Button>
               </div>
             </div>
