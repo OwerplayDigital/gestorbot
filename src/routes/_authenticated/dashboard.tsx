@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
@@ -368,7 +368,9 @@ function Dashboard() {
       <section className="space-y-6">
         <div className="flex items-center justify-between px-2">
           <h2 className="text-xl font-black tracking-tighter text-foreground uppercase">Extrato Recente</h2>
-          <Button variant="ghost" size="sm" className="text-xs font-bold text-primary hover:bg-primary/10 transition-colors">Ver Histórico</Button>
+          <Link to="/financeiro">
+            <Button variant="ghost" size="sm" className="text-xs font-bold text-primary hover:bg-primary/10 transition-colors">Ver Histórico</Button>
+          </Link>
         </div>
 
         <div className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
