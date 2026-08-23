@@ -578,7 +578,7 @@ function Dashboard() {
                 </Pie>
                 <Tooltip 
                   content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
+                    if (active && payload && payload.length && payload[0]) {
                       const data = payload[0].payload;
                       return (
                         <div className="bg-card dark:bg-[#090D16] border border-border dark:border-slate-800 rounded-xl p-3 shadow-2xl text-xs">
