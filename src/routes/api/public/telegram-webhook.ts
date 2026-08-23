@@ -163,7 +163,7 @@ async function sendClientCompact(chatId: number, c: any) {
   
   const phone = cleanPhone(c.whatsapp || '');
   
-  const nomeServidor = c.servidores?.[0]?.name || c.servidores_iptv?.name || c.servidor?.name || c.servidor || c.nome_servidor || 'Não informado';
+  const nomeServidor = c.servidores?.[0]?.name || c.servidores_iptv?.name || c.servidor?.name || 'Não informado';
   const msg = `👤 Cliente: ${c.nome}\n` +
               `📅 Vencimento: ${brDate}\n` +
               `🖥️ Servidor: ${nomeServidor}`;
@@ -212,7 +212,7 @@ async function sendClientFicha(chatId: number, c: any) {
   const phone = cleanPhone(c.whatsapp || '');
   const msg = `👤 Cliente: ${c.nome}\n` +
               `📅 Vencimento: ${brDate}\n` +
-              `🖥️ Servidor: ${serverNames}\n` +
+              `🖥️ Servidor: ${c.servidores_iptv?.name || serverNames}\n` +
               `WhatsApp: ${c.whatsapp || 'N/A'}\n` +
               `Plano: ${planName}\n` +
               `Valor: R$ ${valorFinal}\n` +
