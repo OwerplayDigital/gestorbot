@@ -104,8 +104,9 @@ function Dashboard() {
     queryFn: async () => {
       try {
         const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
-        nowBr.setHours(0, 0, 0, 0);
         const todayStr = formatTz(nowBr, "yyyy-MM-dd");
+        const currentMonth = formatTz(nowBr, "MM");
+        const currentYear = formatTz(nowBr, "yyyy");
         
         const [
           clientsRes, 
