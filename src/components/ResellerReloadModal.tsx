@@ -43,12 +43,13 @@ export function ResellerReloadModal({
   
   const { register, handleSubmit, reset, setValue } = useForm<ReloadFormValues>({
     values: {
-      data: new Date().toISOString().split('T')[0],
-      servidor: currentServer || "",
+      data: new Date().toISOString().split('T')[0] as string,
+      servidor: (currentServer || "") as string,
       quantidade_creditos: 0,
       custo: 0
     }
   });
+
 
 
 
