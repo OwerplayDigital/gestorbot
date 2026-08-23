@@ -100,7 +100,7 @@ function Dashboard() {
   const selectedYear = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), "yyyy");
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
-    queryKey: ["dashboard-stats-modern", selectedMonth, selectedYear],
+    queryKey: ["dashboard-stats-modern", activeTab],
     queryFn: async () => {
       try {
         const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
