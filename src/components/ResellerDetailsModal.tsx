@@ -135,7 +135,7 @@ export function ResellerDetailsModal({
             <div className="grid grid-cols-2 gap-3 mt-6">
               <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Créditos (mês atual)</span>
-                <span className="text-xl font-black text-slate-900">{stats.totalCredits} CR</span>
+                <span className="text-xl font-black text-slate-900">{stats.totalCredits}</span>
               </div>
               <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Custo Total (mês atual)</span>
