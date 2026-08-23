@@ -83,9 +83,9 @@ function FinanceiroHistory() {
           *,
           clientes(
             nome,
-            servidores_iptv(name)
+            servidores_iptv(id, name)
           ),
-          servidores_iptv(name)
+          servidores_iptv(id, name)
         `)
         .gte("created_at", start.toISOString())
         .lte("created_at", end.toISOString())
@@ -97,6 +97,7 @@ function FinanceiroHistory() {
   });
 
   const stats = useMemo(() => {
+    // Totais somados diretamente das transações sem filtros extras
     const entradas = transactions.reduce((acc: number, t: any) => acc + Number(t.entrada || 0), 0);
     const saidas = transactions.reduce((acc: number, t: any) => acc + Number(t.custo || 0), 0);
     const lucro = entradas - saidas;
@@ -110,20 +111,22 @@ function FinanceiroHistory() {
       let serverId = t.serv_id;
       let serverName = t.servidores_iptv?.name;
 
+      // Se não tem vínculo direto na transação, tenta via cliente
       if (!serverId && t.clientes) {
         const clientServers = t.clientes.servidores_iptv;
         if (clientServers) {
           const srv = Array.isArray(clientServers) ? clientServers[0] : clientServers;
           if (srv) {
-            serverId = srv.id || 'painel';
+            serverId = srv.id;
             serverName = srv.name;
           }
         }
       }
 
+      // Fallback seguro: agrupa como "Outros / Importados" se ainda for nulo
       if (!serverId) {
-        serverId = 'painel';
-        serverName = 'Painel/Sistema';
+        serverId = 'outros';
+        serverName = 'Outros / Importados';
       }
       
       if (!serverMap[serverId]) {
