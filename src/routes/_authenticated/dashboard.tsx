@@ -205,7 +205,7 @@ function Dashboard() {
           lastTenMonths.push({ mIdx, y, label: monthsLabels[mIdx] });
         }
 
-        const chartData = lastTenMonths.map(({ mIdx, y, label }: { mIdx: number, y: number, label: string }) => {
+        const chartData = lastTenMonths.map(({ mIdx, y, label }: { mIdx: number, y: number, label: string | undefined }) => {
           const monthTrans = transactions.filter(t => {
             if (!t.data) return false;
             const d = parseISO(t.data);
