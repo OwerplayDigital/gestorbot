@@ -79,14 +79,7 @@ function FinanceiroHistory() {
       
       const { data, error } = await supabase
         .from("transacoes")
-        .select(`
-          *,
-          clientes(
-            nome,
-            servidores_iptv(id, name)
-          ),
-          servidores_iptv(id, name)
-        `)
+        .select(`*`)
         .gte("created_at", start.toISOString())
         .lte("created_at", end.toISOString())
         .order("created_at", { ascending: false });
@@ -97,7 +90,7 @@ function FinanceiroHistory() {
   });
 
   const stats = useMemo(() => {
-    // Totais somados diretamente das transações sem filtros extras
+    // Soma direta sem depender de JOINS ou vínculos externos
     const entradas = transactions.reduce((acc: number, t: any) => acc + Number(t.entrada || 0), 0);
     const saidas = transactions.reduce((acc: number, t: any) => acc + Number(t.custo || 0), 0);
     const lucro = entradas - saidas;
@@ -108,29 +101,12 @@ function FinanceiroHistory() {
     const serverMap: Record<string, { name: string, clients: Set<string>, receita: number, custo: number }> = {};
     
     transactions.forEach((t: any) => {
-      let serverId = t.serv_id;
-      let serverName = t.servidores_iptv?.name;
-
-      // Se não tem vínculo direto na transação, tenta via cliente
-      if (!serverId && t.clientes) {
-        const clientServers = t.clientes.servidores_iptv;
-        if (clientServers) {
-          const srv = Array.isArray(clientServers) ? clientServers[0] : clientServers;
-          if (srv) {
-            serverId = srv.id;
-            serverName = srv.name;
-          }
-        }
-      }
-
-      // Fallback seguro: agrupa como "Outros / Importados" se ainda for nulo
-      if (!serverId) {
-        serverId = 'outros';
-        serverName = 'Outros / Importados';
-      }
+      // Se não houver servidor vinculado, agrupa em "Importados / Diversos"
+      let serverName = t.serv_name || 'Servidores Diversos / Importados';
+      let serverId = t.serv_id || 'diversos';
       
       if (!serverMap[serverId]) {
-        serverMap[serverId] = { name: serverName!, clients: new Set(), receita: 0, custo: 0 };
+        serverMap[serverId] = { name: serverName, clients: new Set(), receita: 0, custo: 0 };
       }
       
       if (t.cliente_id) serverMap[serverId]!.clients.add(t.cliente_id);
