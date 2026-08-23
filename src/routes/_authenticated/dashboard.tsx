@@ -368,17 +368,21 @@ function Dashboard() {
           <div className="md:hidden divide-y divide-border/50">
             {stats?.recentTransactions?.slice(0, 5).map((t: any) => (
               <div key={t.id} className="p-3 flex flex-col gap-1.5 hover:bg-muted/30 transition-colors">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-2 flex-wrap flex-1 mr-2">
-                    <span className="font-black text-foreground text-sm tracking-tight uppercase leading-tight">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+                    <span className="font-black text-foreground text-sm tracking-tight uppercase leading-tight truncate max-w-[140px] shrink">
                       {t.clientes?.nome || "Cliente"}
                     </span>
-                    <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] px-1.5 py-0 font-black h-4 uppercase">
-                      {t.resolvedServerName}
-                    </Badge>
+                    <div className="flex gap-1 overflow-x-auto no-scrollbar shrink-0">
+                      {t.resolvedServerName.split(',').map((s: string, idx: number) => (
+                        <Badge key={idx} className="bg-primary/10 text-primary border-primary/20 text-[8px] px-1 py-0 font-black h-3.5 uppercase whitespace-nowrap">
+                          {s.trim()}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[10px] text-muted-foreground font-black uppercase">
+                  <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                    <span className="text-[9px] text-muted-foreground font-black uppercase whitespace-nowrap">
                       {t.data ? format(parseISO(t.data), "dd/MM/yyyy") : "-"}
                     </span>
                     <Dialog>
