@@ -255,11 +255,11 @@ function Dashboard() {
 
         const serverMap = new Map();
         currentMonthTrans.forEach((t: any) => {
-          const directServerName = t.servidores_iptv?.name;
-          const clientServerIds = t.clientes?.servidores_ids;
-          let name = directServerName;
+          const client = clients.find(c => c.id === t.cliente_id);
+          const clientServerIds = client?.servidores_ids;
+          let name = null;
           
-          if (!name && clientServerIds && clientServerIds.length > 0) {
+          if (clientServerIds && clientServerIds.length > 0) {
             const fallbackServer = servers.find(s => s.id === clientServerIds[0]);
             if (fallbackServer) {
               name = fallbackServer.name;
@@ -269,7 +269,6 @@ function Dashboard() {
           if (!name) name = "Painel";
 
           const current = serverMap.get(name) || { name, count: 0, faturamento: 0, custo: 0, lucro: 0, clientIds: new Set() };
-          current.count += 1;
           if (t.cliente_id) current.clientIds.add(t.cliente_id);
           current.faturamento += Number(t.entrada ?? 0);
           current.custo += Number(t.custo ?? 0);
@@ -280,7 +279,7 @@ function Dashboard() {
         const serverStats = Array.from(serverMap.values())
           .map(s => ({
             ...s,
-            count: s.clientIds.size // Recalcular quantidade de clientes únicos
+            count: s.clientIds.size // Quantidade de clientes únicos
           }))
           .sort((a, b) => b.faturamento - a.faturamento);
 
