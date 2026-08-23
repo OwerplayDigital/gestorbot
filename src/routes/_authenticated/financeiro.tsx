@@ -81,7 +81,10 @@ function FinanceiroHistory() {
         .from("transacoes")
         .select(`
           *,
-          clientes(nome),
+          clientes(
+            nome,
+            servidores_iptv(name)
+          ),
           servidores_iptv(name)
         `)
         .gte("created_at", start.toISOString())
@@ -94,8 +97,8 @@ function FinanceiroHistory() {
   });
 
   const stats = useMemo(() => {
-    const entradas = transactions.reduce((acc, t) => acc + Number(t.entrada || 0), 0);
-    const saidas = transactions.reduce((acc, t) => acc + Number(t.custo || 0), 0);
+    const entradas = transactions.reduce((acc: number, t: any) => acc + Number(t.entrada || 0), 0);
+    const saidas = transactions.reduce((acc: number, t: any) => acc + Number(t.custo || 0), 0);
     const lucro = entradas - saidas;
     return { entradas, saidas, lucro };
   }, [transactions]);
@@ -103,17 +106,33 @@ function FinanceiroHistory() {
   const serverStats = useMemo(() => {
     const serverMap: Record<string, { name: string, clients: Set<string>, receita: number, custo: number }> = {};
     
-    transactions.forEach(t => {
-      const serverId = t.serv_id || 'painel';
-      const serverName = t.servidores_iptv?.name || 'Painel/Sistema';
-      
-      if (!serverMap[serverId]) {
-        serverMap[serverId] = { name: serverName, clients: new Set(), receita: 0, custo: 0 };
+    transactions.forEach((t: any) => {
+      let serverId = t.serv_id;
+      let serverName = t.servidores_iptv?.name;
+
+      if (!serverId && t.clientes) {
+        const clientServers = t.clientes.servidores_iptv;
+        if (clientServers) {
+          const srv = Array.isArray(clientServers) ? clientServers[0] : clientServers;
+          if (srv) {
+            serverId = srv.id || 'painel';
+            serverName = srv.name;
+          }
+        }
+      }
+
+      if (!serverId) {
+        serverId = 'painel';
+        serverName = 'Painel/Sistema';
       }
       
-      if (t.cliente_id) serverMap[serverId].clients.add(t.cliente_id);
-      serverMap[serverId].receita += Number(t.entrada || 0);
-      serverMap[serverId].custo += Number(t.custo || 0);
+      if (!serverMap[serverId]) {
+        serverMap[serverId] = { name: serverName!, clients: new Set(), receita: 0, custo: 0 };
+      }
+      
+      if (t.cliente_id) serverMap[serverId]!.clients.add(t.cliente_id);
+      serverMap[serverId]!.receita += Number(t.entrada || 0);
+      serverMap[serverId]!.custo += Number(t.custo || 0);
     });
 
     return Object.values(serverMap).sort((a, b) => b.receita - a.receita);
