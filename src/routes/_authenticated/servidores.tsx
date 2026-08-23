@@ -160,14 +160,7 @@ function ServidoresPage() {
 
       {selectedReseller && (
         <ResellerModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSuccess={() => refetch()}
-          reseller={selectedReseller}
-        />
-      )}
-      {selectedReseller && (
-        <ResellerModal
+          key={`edit-${selectedReseller.id}-${isEditModalOpen}`}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           onSuccess={() => refetch()}
