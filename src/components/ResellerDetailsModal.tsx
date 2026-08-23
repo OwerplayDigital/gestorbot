@@ -59,8 +59,9 @@ export function ResellerDetailsModal({
         groups[key] = { items: [], totalCredits: 0, totalCusto: 0 };
       }
       groups[key].items.push(credit);
-      groups[key].totalCredits += (credit.quantidade_creditos || 0);
-      groups[key].totalCusto += (Number(credit.custo) || 0);
+      groups[key].totalCredits += ((credit as any).quantidade_creditos || 0);
+      groups[key].totalCusto += (Number((credit as any).custo) || 0);
+
     });
 
     return groups;
@@ -77,9 +78,10 @@ export function ResellerDetailsModal({
     });
 
     return {
-      totalCredits: monthCredits.reduce((sum, c) => sum + (c.quantidade_creditos || 0), 0),
-      totalCusto: monthCredits.reduce((sum, c) => sum + (Number(c.custo) || 0), 0)
+      totalCredits: monthCredits.reduce((sum, c) => sum + ((c as any).quantidade_creditos || 0), 0),
+      totalCusto: monthCredits.reduce((sum, c) => sum + (Number((c as any).custo) || 0), 0)
     };
+
   }, [credits]);
 
   const handleWhatsApp = () => {
