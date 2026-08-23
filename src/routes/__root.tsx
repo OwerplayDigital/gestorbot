@@ -155,8 +155,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <NavLink to="/dashboard" icon={LayoutDashboard} onClick={onNavigate}>Dashboard</NavLink>
         <NavLink to="/financeiro" icon={DollarSign} badge="12" onClick={onNavigate}>Financeiro</NavLink>
         <NavLink to="/clientes" icon={AlertTriangle} badge="4" onClick={onNavigate}>Inadimplência</NavLink>
-        
-        <NavLink to="/settings" icon={Settings} onClick={onNavigate}>Configurações</NavLink>
+        {/* Removido Configurações conforme solicitado */}
       </nav>
 
       <div className="px-3 pt-6 border-t border-border mt-auto space-y-4">
@@ -242,9 +241,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
                 <div className="flex items-center gap-3">
                   <ThemeToggle />
-                  <Button variant="ghost" size="icon" className="rounded-xl border border-border bg-card/50 hidden md:inline-flex">
-                    <Settings className="h-5 w-5" />
-                  </Button>
+                  {/* Removido Configurações conforme solicitado */}
                 </div>
               </div>
             </header>
