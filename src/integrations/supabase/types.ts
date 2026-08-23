@@ -397,6 +397,27 @@ export type Database = {
         }
         Relationships: []
       }
+      templates_whatsapp: {
+        Row: {
+          created_at: string
+          id: string
+          mensagem: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mensagem: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mensagem?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       transacoes: {
         Row: {
           cliente_id: string | null
