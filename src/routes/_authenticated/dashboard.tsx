@@ -459,12 +459,17 @@ function Dashboard() {
           </Badge>
         </div>
         
-        <div className="h-[300px] w-full">
+        <div className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={stats?.chartData ?? []}>
+            <BarChart data={stats?.chartData ?? []} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border" opacity={0.5} />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
+                tickFormatter={(value) => `R$ ${value}`}
+              />
               <Tooltip 
                 cursor={{ fill: 'rgba(255,255,255,0.03)' }}
                 content={({ active, payload }) => {
@@ -474,9 +479,9 @@ function Dashboard() {
                       <div className="bg-card dark:bg-[#090D16] border border-border dark:border-slate-800 rounded-xl p-3 shadow-2xl text-xs">
                         <p className="font-black text-foreground dark:text-white mb-2 pb-1 border-b border-border dark:border-slate-800">{data.name}</p>
                         <div className="space-y-1">
-                          <p className="text-emerald-500 flex justify-between gap-4 font-bold"><span>Entradas</span> <span>{formatBRL(data.entradas)}</span></p>
-                          <p className="text-rose-500 flex justify-between gap-4 font-bold"><span>Saídas</span> <span>{formatBRL(data.saidas)}</span></p>
-                          <p className="text-foreground dark:text-white flex justify-between gap-4 font-black border-t border-border dark:border-slate-800 pt-1 mt-1"><span>Lucro</span> <span>{formatBRL(data.lucro)}</span></p>
+                          <p className="text-[#3b82f6] flex justify-between gap-4 font-bold"><span>Entradas</span> <span>{formatBRL(data.entradas)}</span></p>
+                          <p className="text-[#ef4444] flex justify-between gap-4 font-bold"><span>Saídas</span> <span>{formatBRL(data.saidas)}</span></p>
+                          <p className="text-[#22c55e] flex justify-between gap-4 font-bold border-t border-border dark:border-slate-800 pt-1 mt-1"><span>Lucro</span> <span>{formatBRL(data.lucro)}</span></p>
                         </div>
                       </div>
                     );
@@ -484,8 +489,10 @@ function Dashboard() {
                   return null;
                 }}
               />
-              <Bar dataKey="entradas" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={20} />
-              <Bar dataKey="saidas" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={20} />
+              <Legend verticalAlign="top" align="right" height={36} iconType="circle" />
+              <Bar name="Entradas" dataKey="entradas" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} />
+              <Bar name="Saídas" dataKey="saidas" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={30} />
+              <Bar name="Lucro" dataKey="lucro" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={30} />
             </BarChart>
           </ResponsiveContainer>
         </div>
