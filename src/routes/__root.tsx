@@ -8,6 +8,8 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Menu, ChartBar } from "lucide-react";
 import gestorLogo from "@/assets/gestor-logo.png.asset.json";
 
@@ -117,7 +119,7 @@ function RootShell({ children }: { children: ReactNode }) {
   const isMaintenancePage = router.state.location.pathname === '/';
 
   return (
-    <html lang="pt-BR" className="dark">
+    <html lang="pt-BR">
       <head>
         <HeadContent />
       </head>
@@ -171,9 +173,12 @@ function RootComponent() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <Outlet />
-        <Toaster position="top-center" richColors />
+        <ThemeProvider defaultTheme="dark" storageKey="owerplay-theme">
+          <Outlet />
+          <Toaster position="top-center" richColors />
+        </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
+
 }
