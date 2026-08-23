@@ -54,7 +54,6 @@ interface SelectedMonth {
 }
 
 function FinanceiroHistory() {
-  const [searchTerm, setSearchTerm] = useState("");
   const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
   
   const pastMonths = useMemo(() => {
@@ -94,20 +93,31 @@ function FinanceiroHistory() {
     }
   });
 
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter(t => 
-      (t.clientes?.nome?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (t.servidores_iptv?.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (t.descricao?.toLowerCase() || "").includes(searchTerm.toLowerCase())
-    );
-  }, [transactions, searchTerm]);
-
   const stats = useMemo(() => {
-    const entradas = filteredTransactions.reduce((acc, t) => acc + Number(t.entrada || 0), 0);
-    const saidas = filteredTransactions.reduce((acc, t) => acc + Number(t.custo || 0), 0);
+    const entradas = transactions.reduce((acc, t) => acc + Number(t.entrada || 0), 0);
+    const saidas = transactions.reduce((acc, t) => acc + Number(t.custo || 0), 0);
     const lucro = entradas - saidas;
     return { entradas, saidas, lucro };
-  }, [filteredTransactions]);
+  }, [transactions]);
+
+  const serverStats = useMemo(() => {
+    const serverMap: Record<string, { name: string, clients: Set<string>, receita: number, custo: number }> = {};
+    
+    transactions.forEach(t => {
+      const serverId = t.serv_id || 'painel';
+      const serverName = t.servidores_iptv?.name || 'Painel/Sistema';
+      
+      if (!serverMap[serverId]) {
+        serverMap[serverId] = { name: serverName, clients: new Set(), receita: 0, custo: 0 };
+      }
+      
+      if (t.cliente_id) serverMap[serverId].clients.add(t.cliente_id);
+      serverMap[serverId].receita += Number(t.entrada || 0);
+      serverMap[serverId].custo += Number(t.custo || 0);
+    });
+
+    return Object.values(serverMap).sort((a, b) => b.receita - a.receita);
+  }, [transactions]);
 
   const formatBRL = (val: number) => {
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
