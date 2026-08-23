@@ -106,19 +106,13 @@ function FinanceiroHistory() {
   const serverStats = useMemo(() => {
     const serverMap: Record<string, { name: string, clients: Set<string>, receita: number, custo: number }> = {};
     
-    transactions.forEach(t => {
-      // 1. Tentar pegar o servidor diretamente da transação (serv_id)
-      // 2. Senão, tentar pegar o servidor ATUAL do cliente (via join clientes)
-      // 3. Senão, usar 'Painel/Sistema'
-      
+    transactions.forEach((t: any) => {
       let serverId = t.serv_id;
       let serverName = t.servidores_iptv?.name;
 
       if (!serverId && t.clientes) {
-        // Se a transação não tem serv_id, mas tem cliente, tenta pegar o servidor do cliente
         const clientServers = t.clientes.servidores_iptv;
         if (clientServers) {
-          // Se for um objeto único ou o primeiro de uma lista (dependendo do schema servidores_ids)
           const srv = Array.isArray(clientServers) ? clientServers[0] : clientServers;
           if (srv) {
             serverId = srv.id || 'painel';
