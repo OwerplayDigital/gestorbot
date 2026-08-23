@@ -48,18 +48,18 @@ function VencidosPage() {
       const todayStr = format(nowBr, 'yyyy-MM-dd');
 
       const expired = (clientsRes.data || []).filter(c => {
-        if (!c.vencimento) return false;
-        // O banco pode ter YYYY-MM-DD ou DD/MM/YYYY. 
-        // A lógica de listExpiredClients no bot sugere que pode variar.
-        // Vamos normalizar para comparação.
-        const isoVenc = c.vencimento.includes('/') 
-          ? c.vencimento.split('/').reverse().join('-') 
-          : c.vencimento;
+        const vencStr = c.vencimento;
+        if (!vencStr) return false;
+        
+        const isoVenc = vencStr.includes('/') 
+          ? vencStr.split('/').reverse().join('-') 
+          : vencStr;
         return isoVenc < todayStr;
       }).map(c => {
-        const isoVenc = c.vencimento.includes('/') 
-          ? c.vencimento.split('/').reverse().join('-') 
-          : c.vencimento;
+        const vencStr = c.vencimento!;
+        const isoVenc = vencStr.includes('/') 
+          ? vencStr.split('/').reverse().join('-') 
+          : vencStr;
         const vencDate = parseISO(isoVenc);
         const diff = differenceInDays(nowBr, vencDate);
         

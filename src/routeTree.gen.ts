@@ -15,6 +15,7 @@ import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
 import { Route as AuthenticatedMensagensRouteImport } from './routes/_authenticated/mensagens'
+import { Route as AuthenticatedVencidosRouteImport } from './routes/_authenticated/vencidos'
 import { Route as PagarIdRouteImport } from './routes/pagar.$id'
 import { Route as ApiPublicCronNotificationsRouteImport } from './routes/api/public/cron-notifications'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram-webhook'
@@ -48,6 +49,11 @@ const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({
   path: '/mensagens',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedVencidosRoute = AuthenticatedVencidosRouteImport.update({
+  id: '/vencidos',
+  path: '/vencidos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const PagarIdRoute = PagarIdRouteImport.update({
   id: '/pagar/$id',
   path: '/pagar/$id',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/mensagens': typeof AuthenticatedMensagensRoute
+  '/vencidos': typeof AuthenticatedVencidosRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/mensagens': typeof AuthenticatedMensagensRoute
+  '/vencidos': typeof AuthenticatedVencidosRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
   '/_authenticated/mensagens': typeof AuthenticatedMensagensRoute
+  '/_authenticated/vencidos': typeof AuthenticatedVencidosRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/financeiro'
     | '/mensagens'
+    | '/vencidos'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
     | '/api/public/telegram-webhook'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/financeiro'
     | '/mensagens'
+    | '/vencidos'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
     | '/api/public/telegram-webhook'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/financeiro'
     | '/_authenticated/mensagens'
+    | '/_authenticated/vencidos'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
     | '/api/public/telegram-webhook'
@@ -184,6 +196,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMensagensRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/vencidos': {
+      id: '/_authenticated/vencidos'
+      path: '/vencidos'
+      fullPath: '/vencidos'
+      preLoaderRoute: typeof AuthenticatedVencidosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/pagar/$id': {
       id: '/pagar/$id'
       path: '/pagar/$id'
@@ -213,6 +232,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
   AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRoute
+  AuthenticatedVencidosRoute: typeof AuthenticatedVencidosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -220,6 +240,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
   AuthenticatedMensagensRoute: AuthenticatedMensagensRoute,
+  AuthenticatedVencidosRoute: AuthenticatedVencidosRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
