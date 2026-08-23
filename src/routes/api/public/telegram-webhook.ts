@@ -837,7 +837,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               userState.delete(chatId);
             }
             else if (data === 'back_to_main') {
-               await sendMessage(chatId, "Clientes:", mainMenu);
+               await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
                userState.delete(chatId);
             }
             else if (state && state.action === 'cadastrar_cliente' && state.step === 3 && data.startsWith('plano:')) {

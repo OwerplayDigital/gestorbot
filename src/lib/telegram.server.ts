@@ -331,7 +331,6 @@ export const findClientByName = async (name: string) => {
       desconto,
       plano_id,
       servidores_ids,
-      servidores_iptv:servidores_iptv(id, name),
       plans:plans(id, name, price)
     `)
     .ilike("nome", `%${name}%`)

@@ -25,21 +25,24 @@ function ClientesPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: clients, isLoading } = useQuery({
-    queryKey: ['clients-list'],
+    queryKey: ['clients-list', searchTerm],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('clientes')
         .select('*')
         .order('nome');
+      
+      if (searchTerm) {
+        query = query.ilike('nome', `%${searchTerm}%`);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
   });
 
-  const filteredClients = clients?.filter(c => 
-    (c.nome?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-    (c.whatsapp || "").includes(searchTerm)
-  );
+  const filteredClients = clients || [];
 
   const parseDate = (dateStr: string | null) => {
     if (!dateStr) return null;
