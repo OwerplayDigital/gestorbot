@@ -16,11 +16,13 @@ function PortalPage() {
     queryKey: ["portal-reseller", resellerId],
     enabled: !!resellerId,
     queryFn: async () => {
+      // Busca pelo ID/UUID ou flexível
       const { data, error } = await supabase
         .from("revendedores")
         .select("*")
-        .eq("id", resellerId!)
-        .single();
+        .or(`id.eq.${resellerId},whatsapp.ilike.%${resellerId}%`)
+        .maybeSingle();
+      
       if (error) throw error;
       return data;
     },
