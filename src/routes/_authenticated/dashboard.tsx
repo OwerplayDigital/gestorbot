@@ -109,7 +109,7 @@ function Dashboard() {
           serversRes,
         ] = await Promise.all([
           supabase.from("clientes").select("id, nome, vencimento, valor, status"),
-          supabase.from("transacoes").select("*, clientes(nome), servidores_iptv(name)").order("created_at", { ascending: false }),
+          supabase.from("transacoes").select("*, clientes(nome, servidores_ids), servidores_iptv(name)").order("created_at", { ascending: false }),
           supabase.from("servidores_iptv").select("id, name"),
         ]);
 
@@ -170,11 +170,22 @@ function Dashboard() {
           };
         });
 
+        const transactionsWithResolvedServers = currentMonthTransactions.map((t: any) => {
+          const directServerName = t.servidores_iptv?.name;
+          const clientServerId = t.clientes?.servidores_ids?.[0];
+          const fallbackServerName = clientServerId ? servers.find(s => s.id === clientServerId)?.name : null;
+          
+          return {
+            ...t,
+            resolvedServerName: directServerName || fallbackServerName || "Painel"
+          };
+        });
+
         const expiringWithServers = expiringToday.map((c: any) => {
           return {
             ...c,
             valorFinal: Number(c.valor ?? 0),
-            serverName: servers.find(s => c.servidores_ids?.includes(s.id))?.name || "N/A"
+            serverName: servers.find(s => c.servidores_ids?.includes(s.id))?.name || "Painel"
           };
         });
 
@@ -189,8 +200,9 @@ function Dashboard() {
           expiringToday: expiringWithServers,
           vencidos,
           chartData,
-          recentTransactions: currentMonthTransactions
+          recentTransactions: transactionsWithResolvedServers
         };
+
       } catch (error) {
         console.error("Dashboard error:", error);
         throw error;
@@ -304,7 +316,7 @@ function Dashboard() {
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="font-black text-foreground text-sm tracking-tight uppercase">{t.clientes?.nome || "Cliente"}</span>
-                        <span className="text-[10px] text-muted-foreground font-bold">{t.servidores_iptv?.name || "N/A"}</span>
+                        <span className="text-[10px] text-muted-foreground font-bold">{t.resolvedServerName}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -362,7 +374,7 @@ function Dashboard() {
                       {t.clientes?.nome || "Cliente"}
                     </span>
                     <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] px-1.5 py-0 font-black h-4 uppercase">
-                      {t.servidores_iptv?.name || "N/A"}
+                      {t.resolvedServerName}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">

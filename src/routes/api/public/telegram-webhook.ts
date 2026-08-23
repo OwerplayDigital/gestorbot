@@ -180,13 +180,13 @@ async function sendClientCompact(chatId: number, c: any) {
 
 async function sendClientFicha(chatId: number, c: any) {
   const plan = c.plans;
-  const planName = plan?.name || 'N/A';
+  const planName = plan?.name || 'Plano';
   const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
   const discount = Number(c.desconto || 0);
   const valorFinal = Math.max(0, planPrice - discount).toFixed(2).replace('.', ',');
   
   const servers = c.servidores || [];
-  const serverNames = servers.map((s: any) => s.name).join(', ') || 'N/A';
+  const serverNames = servers.map((s: any) => s.name).join(', ') || 'Painel';
   
   const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
   const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
