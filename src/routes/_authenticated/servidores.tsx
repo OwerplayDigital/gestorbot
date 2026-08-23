@@ -157,7 +157,7 @@ function ServidoresPage() {
         onSuccess={() => refetch()} 
       />
 
-      {selectedReseller && (
+      {selectedReseller && isDetailsOpen && (
         <ResellerDetailsModal
           isOpen={isDetailsOpen}
           onClose={() => setIsDetailsOpen(false)}
