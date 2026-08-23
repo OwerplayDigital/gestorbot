@@ -223,7 +223,7 @@ function Dashboard() {
           <p className="text-muted-foreground font-medium">Controle de métricas e performance em tempo real.</p>
         </div>
 
-        <div className="bg-card/50 border border-border p-1 rounded-2xl flex items-center gap-1 self-start md:self-center">
+        <div className="bg-card border border-border p-1 rounded-2xl flex items-center gap-1 self-start md:self-center shadow-sm">
           {[
             { id: "hoje", label: "Hoje" },
             { id: "mes", label: "Agosto/26" },
@@ -246,33 +246,33 @@ function Dashboard() {
       
       {/* Grid de Métricas Principais */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-[#131B2E] border border-slate-800 rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all shadow-[0_0_12px_rgba(34,197,94,0.05)] hover:shadow-[0_0_12px_rgba(34,197,94,0.25)]">
+        <div className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all shadow-sm dark:shadow-[0_0_12px_rgba(34,197,94,0.05)] dark:hover:shadow-[0_0_12px_rgba(34,197,94,0.25)]">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded-lg">Lucro Líquido</span>
             <TrendingUp size={18} className="text-emerald-500" />
           </div>
-          <div className="text-3xl font-black text-white">{showValues ? formatBRL(stats?.lucro ?? 0) : "•••••"}</div>
+          <div className="text-3xl font-black text-foreground dark:text-white">{showValues ? formatBRL(stats?.lucro ?? 0) : "•••••"}</div>
           <div className="text-[10px] font-bold text-muted-foreground mt-2 flex items-center gap-1">
             <TrendingUp size={10} className="text-emerald-500" />
             <span className="text-emerald-500">+12.4%</span> em relação ao período anterior
           </div>
         </div>
 
-        <div className="bg-[#131B2E] border border-slate-800 rounded-2xl p-6">
+        <div className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-black text-owerplay-cyan uppercase tracking-widest bg-owerplay-cyan/10 px-2 py-1 rounded-lg">Faturamento</span>
             <Users size={18} className="text-owerplay-cyan" />
           </div>
-          <div className="text-3xl font-black text-white">{showValues ? formatBRL(stats?.entradas ?? 0) : "•••••"}</div>
+          <div className="text-3xl font-black text-foreground dark:text-white">{showValues ? formatBRL(stats?.entradas ?? 0) : "•••••"}</div>
           <div className="text-[10px] font-bold text-muted-foreground mt-2">{stats?.activeClients} clientes ativos pagantes</div>
         </div>
 
-        <div className="bg-[#131B2E] border border-slate-800 rounded-2xl p-6">
+        <div className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-black text-rose-500 uppercase tracking-widest bg-rose-500/10 px-2 py-1 rounded-lg">Custo Operacional</span>
             <TrendingDown size={18} className="text-rose-500" />
           </div>
-          <div className="text-3xl font-black text-white">{showValues ? formatBRL(stats?.saidas ?? 0) : "•••••"}</div>
+          <div className="text-3xl font-black text-foreground dark:text-white">{showValues ? formatBRL(stats?.saidas ?? 0) : "•••••"}</div>
           <div className="text-[10px] font-bold text-muted-foreground mt-2">Investimento total em painéis/servidores</div>
         </div>
       </section>
@@ -291,13 +291,13 @@ function Dashboard() {
             { id: 3, nome: "Pedro Oliveira", servidor: "Uniplay", creditos: 200, investido: 600, color: "bg-emerald-500" },
             { id: 4, nome: "Ana Costa", servidor: "P2Braz", creditos: 120, investido: 360, color: "bg-amber-500" }
           ].map((rev) => (
-            <div key={rev.id} className="bg-[#131B2E] border border-slate-800 rounded-2xl p-5 hover:bg-card transition-colors group">
+            <div key={rev.id} className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl p-5 hover:bg-card transition-colors group shadow-sm">
               <div className="flex items-center gap-4 mb-5">
                 <div className={`h-12 w-12 rounded-xl flex items-center justify-center text-white font-black text-lg ${rev.color} shadow-lg`}>
                   {rev.nome.charAt(0)}
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-black text-white tracking-tight">{rev.nome}</span>
+                  <span className="font-black text-foreground dark:text-white tracking-tight">{rev.nome}</span>
                   <Badge variant="secondary" className="w-fit text-[10px] h-5 font-bold bg-white/5 border-white/10">{rev.servidor}</Badge>
                 </div>
               </div>
@@ -305,7 +305,7 @@ function Dashboard() {
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Créditos</span>
-                  <span className="text-sm font-black text-white">{rev.creditos} un.</span>
+                  <span className="text-sm font-black text-foreground dark:text-white">{rev.creditos} un.</span>
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Investido</span>
@@ -313,7 +313,7 @@ function Dashboard() {
                 </div>
               </div>
 
-              <Button className="w-full bg-[#1e293b] hover:bg-[#2e3b4e] text-white font-bold rounded-xl h-10 border border-slate-700 transition-all text-xs">
+              <Button className="w-full bg-secondary dark:bg-[#1e293b] hover:bg-secondary/80 dark:hover:bg-[#2e3b4e] text-foreground dark:text-white font-bold rounded-xl h-10 border border-border dark:border-slate-700 transition-all text-xs shadow-sm">
                 Copiar Link
               </Button>
             </div>
@@ -322,10 +322,10 @@ function Dashboard() {
       </section>
 
       {/* Gráfico de Performance Financeira */}
-      <section className="bg-[#131B2E] border border-slate-800 rounded-2xl p-8">
+      <section className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl p-8 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
-            <h3 className="text-lg font-black tracking-tight text-white uppercase">Performance Mensal</h3>
+            <h3 className="text-lg font-black tracking-tight text-foreground dark:text-white uppercase">Performance Mensal</h3>
             <p className="text-xs text-muted-foreground font-medium">Comparativo de lucros e perdas do ano vigente.</p>
           </div>
           <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-3 py-1 font-black text-[10px]">
@@ -336,7 +336,7 @@ function Dashboard() {
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={stats?.chartData ?? []}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border" opacity={0.5} />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
               <Tooltip 
