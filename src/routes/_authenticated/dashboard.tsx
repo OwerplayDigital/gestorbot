@@ -261,6 +261,7 @@ function Dashboard() {
           chartData,
           recentTransactions: transactionsWithResolvedServers,
           previousPeriodLucro,
+          previousPeriodEntradas,
           transactionsCount
         };
 
