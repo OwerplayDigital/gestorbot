@@ -124,10 +124,10 @@ function FinanceiroHistory() {
   };
 
   const exportToCSV = () => {
-    if (filteredTransactions.length === 0) return;
+    if (transactions.length === 0) return;
 
     const headers = ["Data", "Cliente/Descrição", "Servidor", "Tipo", "Entrada", "Saída", "Lucro"];
-    const rows = filteredTransactions.map(t => [
+    const rows = transactions.map((t: any) => [
       t.created_at ? format(parseISO(t.created_at), "dd/MM/yyyy HH:mm") : "N/A",
       t.clientes?.nome || t.descricao || "N/A",
       t.servidores_iptv?.name || "Painel",
@@ -139,7 +139,7 @@ function FinanceiroHistory() {
 
     const csvContent = [
       headers.join(","),
-      ...rows.map(row => row.join(","))
+      ...rows.map((row: any) => row.join(","))
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
