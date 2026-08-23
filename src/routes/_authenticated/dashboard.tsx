@@ -58,6 +58,8 @@ type DashboardStats = {
   vencidos: any[];
   chartData: any[];
   recentTransactions: any[];
+  previousPeriodLucro: number;
+  transactionsCount: number;
 };
 
 const parseDate = (d: any): Date | null => {
