@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import gestorLogo from "@/assets/gestor-logo.png.asset.json";
-
+ 
 export const Route = createFileRoute("/")({
   component: Index,
 });

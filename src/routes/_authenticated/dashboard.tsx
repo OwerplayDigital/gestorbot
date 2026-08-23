@@ -256,19 +256,33 @@ function Dashboard() {
         const serverMap = new Map();
         currentMonthTrans.forEach((t: any) => {
           const directServerName = t.servidores_iptv?.name;
-          const clientServerId = t.clientes?.servidores_ids?.[0];
-          const fallbackServerName = clientServerId ? servers.find(s => s.id === clientServerId)?.name : null;
-          const name = directServerName || fallbackServerName || "Outros";
+          const clientServerIds = t.clientes?.servidores_ids;
+          let name = directServerName;
+          
+          if (!name && clientServerIds && clientServerIds.length > 0) {
+            const fallbackServer = servers.find(s => s.id === clientServerIds[0]);
+            if (fallbackServer) {
+              name = fallbackServer.name;
+            }
+          }
 
-          const current = serverMap.get(name) || { name, count: 0, faturamento: 0, custo: 0, lucro: 0 };
+          if (!name) name = "Painel";
+
+          const current = serverMap.get(name) || { name, count: 0, faturamento: 0, custo: 0, lucro: 0, clientIds: new Set() };
           current.count += 1;
+          if (t.cliente_id) current.clientIds.add(t.cliente_id);
           current.faturamento += Number(t.entrada ?? 0);
           current.custo += Number(t.custo ?? 0);
           current.lucro += Number(t.lucro_liquido ?? 0);
           serverMap.set(name, current);
         });
 
-        const serverStats = Array.from(serverMap.values()).sort((a, b) => b.faturamento - a.faturamento);
+        const serverStats = Array.from(serverMap.values())
+          .map(s => ({
+            ...s,
+            count: s.clientIds.size // Recalcular quantidade de clientes únicos
+          }))
+          .sort((a, b) => b.faturamento - a.faturamento);
 
         return {
           totalClients,
