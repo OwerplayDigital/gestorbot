@@ -293,6 +293,7 @@ export const listClientsExpiringToday = async () => {
       vencimento, 
       whatsapp,
       servidores_ids,
+      servidores_iptv:servidores_iptv(id, name),
       plans:plans(id, name, price)
     `)
     .eq("vencimento", today as string);

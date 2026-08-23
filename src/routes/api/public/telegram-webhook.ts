@@ -163,7 +163,7 @@ async function sendClientCompact(chatId: number, c: any) {
   
   const phone = cleanPhone(c.whatsapp || '');
   
-  const nomeServidor = c.servidores?.[0]?.name || c.servidor?.name || c.servidor || c.nome_servidor || 'Não informado';
+  const nomeServidor = c.servidores?.[0]?.name || c.servidores_iptv?.name || c.servidor?.name || c.servidor || c.nome_servidor || 'Não informado';
   const msg = `👤 Cliente: ${c.nome}\n` +
               `📅 Vencimento: ${brDate}\n` +
               `🖥️ Servidor: ${nomeServidor}`;
