@@ -28,9 +28,10 @@ export function ResellerDetailsModal({
 }: ResellerDetailsModalProps) {
   const [isReloadModalOpen, setIsReloadModalOpen] = useState(false);
 
-  const { data: credits = [], refetch } = useQuery({
+  const { data: credits = [], refetch, isLoading } = useQuery({
     queryKey: ["reseller-credits", reseller?.id],
-    enabled: !!reseller?.id,
+    enabled: isOpen && !!reseller?.id,
+    staleTime: 1000 * 60, // 1 minute
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reseller_credits" as any)
@@ -152,7 +153,11 @@ export function ResellerDetailsModal({
               <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Histórico de Recargas</h3>
             </div>
 
-            {Object.keys(groupedCredits).length === 0 ? (
+            {isLoading ? (
+              <div className="flex justify-center py-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : Object.keys(groupedCredits).length === 0 ? (
               <div className="text-center py-10 opacity-50">
                 <Package className="mx-auto mb-2 opacity-20" size={40} />
                 <p className="text-[10px] font-bold uppercase">Nenhuma recarga registrada</p>

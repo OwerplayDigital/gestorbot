@@ -22,6 +22,7 @@ function ServidoresPage() {
   
   const { data: revendedoresData = [], refetch, isLoading } = useQuery({
     queryKey: ["revendedores-list-with-credits"],
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
     queryFn: async () => {
       const { data: resellers, error: resError } = await supabase
         .from("revendedores" as any)
@@ -30,28 +31,35 @@ function ServidoresPage() {
       
       if (resError) throw resError;
       
+      if (!resellers || resellers.length === 0) return [];
+
       const now = new Date();
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      
+      const resellerIds = resellers.map((r: any) => r.id);
       
       const { data: credits, error: creditError } = await supabase
         .from("reseller_credits" as any)
         .select("reseller_id, quantidade_creditos, custo")
+        .in("reseller_id", resellerIds)
         .gte("data", firstDayOfMonth);
       
       if (creditError) throw creditError;
 
-      return (resellers || []).map((res: any) => {
-        const resCredits = (credits || []).filter((c: any) => (c as any).reseller_id === res.id);
-        const totalCredits = resCredits.reduce((sum, c) => sum + ((c as any).quantidade_creditos || 0), 0);
-        const totalCusto = resCredits.reduce((sum, c) => sum + (Number((c as any).custo) || 0), 0);
+      const creditsMap = (credits || []).reduce((acc: any, c: any) => {
+        if (!acc[c.reseller_id]) {
+          acc[c.reseller_id] = { credits: 0, cost: 0 };
+        }
+        acc[c.reseller_id].credits += (c.quantidade_creditos || 0);
+        acc[c.reseller_id].cost += (Number(c.custo) || 0);
+        return acc;
+      }, {});
 
-        
-        return {
-          ...res,
-          mes_atual_creditos: totalCredits,
-          mes_atual_custo: totalCusto
-        };
-      });
+      return resellers.map((res: any) => ({
+        ...res,
+        mes_atual_creditos: creditsMap[res.id]?.credits || 0,
+        mes_atual_custo: creditsMap[res.id]?.cost || 0
+      }));
     }
   });
 
@@ -149,7 +157,7 @@ function ServidoresPage() {
         onSuccess={() => refetch()} 
       />
 
-      {selectedReseller && (
+      {selectedReseller && isDetailsOpen && (
         <ResellerDetailsModal
           isOpen={isDetailsOpen}
           onClose={() => setIsDetailsOpen(false)}
@@ -158,9 +166,9 @@ function ServidoresPage() {
         />
       )}
 
-      {selectedReseller && (
+      {selectedReseller && isEditModalOpen && (
         <ResellerModal
-          key={`edit-${selectedReseller.id}-${isEditModalOpen}`}
+          key={`edit-${selectedReseller.id}`}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           onSuccess={() => refetch()}
