@@ -38,6 +38,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend
 } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
