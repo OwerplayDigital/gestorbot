@@ -121,7 +121,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
-function NavLink({ to, icon: Icon, children, badge, onClick }: { to: string; icon: any; children: ReactNode; badge?: string; onClick?: () => void }) {
+function NavLink({ to, icon: Icon, children, badge, onClick }: { to: string; icon: any; children: ReactNode; badge?: string; onClick?: (() => void) | undefined }) {
   return (
     <Link
       to={to}
