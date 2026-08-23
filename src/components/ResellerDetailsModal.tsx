@@ -114,55 +114,57 @@ export function ResellerDetailsModal({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[600px] rounded-2xl max-h-[85vh] flex flex-col p-0 overflow-hidden border-border bg-white text-slate-900">
-          <DialogHeader className="p-6 pb-2">
-            <div className="flex justify-between items-start">
-              <div>
-                <DialogTitle className="text-2xl font-black uppercase tracking-tight text-slate-900">{reseller.nome}</DialogTitle>
-                <p className="text-xs font-bold text-slate-500 uppercase mt-1">
+        <DialogContent className="sm:max-w-[600px] w-[95vw] rounded-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden border-border bg-white text-slate-900">
+          <DialogHeader className="p-4 sm:p-6 pb-2">
+            <div className="flex justify-between items-start gap-2">
+              <div className="min-w-0 flex-1">
+                <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight text-slate-900 truncate">{reseller.nome}</DialogTitle>
+                <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase mt-0.5 truncate">
                   {reseller.whatsapp || "Sem contato"} · {reseller.servidor || "Uniplay"}
                 </p>
               </div>
               <Button 
                 onClick={() => setIsReloadModalOpen(true)}
-                className="rounded-xl font-black uppercase tracking-tighter gap-2 bg-primary hover:bg-primary/90 text-white"
+                className="h-9 px-3 rounded-xl font-black uppercase tracking-tighter gap-1.5 bg-primary hover:bg-primary/90 text-white shrink-0"
+                size="sm"
               >
                 <Plus size={16} />
-                Nova Recarga
+                <span className="hidden sm:inline">Nova Recarga</span>
+                <span className="sm:hidden">Recarga</span>
               </Button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-6">
-              <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Créditos (mês atual)</span>
-                <span className="text-xl font-black text-slate-900">{stats.totalCredits}</span>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-4 sm:mt-6">
+              <div className="bg-slate-50 border border-slate-100 p-3 sm:p-4 rounded-2xl">
+                <span className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5 sm:mb-1">Créditos (mês)</span>
+                <span className="text-lg sm:text-xl font-black text-slate-900">{stats.totalCredits}</span>
               </div>
-              <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Custo Total (mês atual)</span>
-                <span className="text-xl font-black text-slate-900">{stats.totalCusto.toFixed(2).replace('.', ',')}</span>
+              <div className="bg-slate-50 border border-slate-100 p-3 sm:p-4 rounded-2xl">
+                <span className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5 sm:mb-1">Custo (mês)</span>
+                <span className="text-lg sm:text-xl font-black text-slate-900">{stats.totalCusto.toFixed(2).replace('.', ',')}</span>
               </div>
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar">
-            <div className="flex items-center gap-2 mb-4">
-              <History size={16} className="text-primary" />
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Histórico de Recargas</h3>
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-2 sm:py-4 custom-scrollbar">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <History size={14} className="text-primary" />
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Histórico de Recargas</h3>
             </div>
 
             {Object.keys(groupedCredits).length === 0 ? (
               <div className="text-center py-10 opacity-50">
                 <Package className="mx-auto mb-2 opacity-20" size={40} />
-                <p className="text-xs font-bold uppercase">Nenhuma recarga registrada</p>
+                <p className="text-[10px] font-bold uppercase">Nenhuma recarga registrada</p>
               </div>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-6 sm:space-y-8">
                 {Object.entries(groupedCredits).map(([monthYear, group]) => (
-                  <div key={monthYear} className="space-y-3">
+                  <div key={monthYear} className="space-y-2 sm:space-y-3">
                     <div className="flex justify-between items-end border-b border-slate-100 pb-1">
                       <div className="flex flex-col">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{monthYear}</h4>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">
+                        <h4 className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-primary">{monthYear}</h4>
+                        <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase">
                           {group.totalCredits} créditos · {group.totalCusto.toFixed(2).replace('.', ',')}
                         </span>
                       </div>
@@ -170,39 +172,39 @@ export function ResellerDetailsModal({
                         variant="ghost" 
                         size="icon" 
                         onClick={handleWhatsApp}
-                        className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 rounded-lg"
+                        className="h-7 w-7 sm:h-8 sm:w-8 text-emerald-600 hover:bg-emerald-50 rounded-lg"
                       >
-                        <Phone size={14} />
+                        <Phone size={12} />
                       </Button>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5 sm:space-y-2">
                       {group.items.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between bg-white border border-slate-100 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors">
-                          <div className="flex items-center gap-6 flex-1">
-                            <div className="min-w-[80px]">
-                              <span className="text-[9px] font-black text-slate-400 uppercase block leading-tight">Data</span>
-                              <span className="text-xs font-bold text-slate-700">{new Date(item.data + "T00:00:00").toLocaleDateString('pt-BR')}</span>
+                        <div key={item.id} className="flex items-center justify-between bg-white border border-slate-100 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl hover:bg-slate-50 transition-colors">
+                          <div className="flex items-center gap-2 sm:gap-6 flex-1 min-w-0">
+                            <div className="w-[55px] sm:min-w-[80px]">
+                              <span className="text-[7px] sm:text-[9px] font-black text-slate-400 uppercase block leading-tight">Data</span>
+                              <span className="text-[10px] sm:text-xs font-bold text-slate-700">{new Date(item.data + "T00:00:00").toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
                             </div>
-                            <div className="min-w-[70px]">
-                              <span className="text-[9px] font-black text-slate-400 uppercase block leading-tight">Créditos</span>
-                              <span className="text-xs font-black text-slate-900">{item.quantidade_creditos}</span>
+                            <div className="w-[45px] sm:min-w-[70px]">
+                              <span className="text-[7px] sm:text-[9px] font-black text-slate-400 uppercase block leading-tight">Cred</span>
+                              <span className="text-[10px] sm:text-xs font-black text-slate-900">{item.quantidade_creditos}</span>
                             </div>
-                            <div className="min-w-[70px]">
-                              <span className="text-[9px] font-black text-slate-400 uppercase block leading-tight">Custo</span>
-                              <span className="text-xs font-black text-slate-900">{Number(item.custo).toFixed(2).replace('.', ',')}</span>
+                            <div className="w-[50px] sm:min-w-[70px]">
+                              <span className="text-[7px] sm:text-[9px] font-black text-slate-400 uppercase block leading-tight">Custo</span>
+                              <span className="text-[10px] sm:text-xs font-black text-slate-900">{Number(item.custo).toFixed(0)}</span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <span className="text-[9px] font-black text-slate-400 uppercase block leading-tight">Servidor</span>
-                              <span className="text-xs font-bold text-slate-500 uppercase truncate block">{item.servidor || "-"}</span>
+                              <span className="text-[7px] sm:text-[9px] font-black text-slate-400 uppercase block leading-tight">Serv</span>
+                              <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase truncate block">{item.servidor || "-"}</span>
                             </div>
                           </div>
                           <Button 
                             variant="ghost" 
                             size="icon" 
                             onClick={() => handleDeleteCredit(item.id)}
-                            className="h-7 w-7 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg ml-2"
+                            className="h-6 w-6 sm:h-7 sm:w-7 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg ml-1 sm:ml-2"
                           >
-                            <Trash2 size={12} />
+                            <Trash2 size={10} />
                           </Button>
                         </div>
                       ))}
