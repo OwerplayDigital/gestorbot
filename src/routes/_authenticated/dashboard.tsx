@@ -59,6 +59,7 @@ type DashboardStats = {
   chartData: any[];
   recentTransactions: any[];
   previousPeriodLucro: number;
+  previousPeriodEntradas: number;
   transactionsCount: number;
 };
 
