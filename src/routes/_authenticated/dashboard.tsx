@@ -345,12 +345,12 @@ function Dashboard() {
                   if (active && payload && payload.length) {
                     const data = (payload[0] as any)?.payload as any;
                     return (
-                      <div className="bg-[#090D16] border border-slate-800 rounded-xl p-3 shadow-2xl text-xs">
-                        <p className="font-black text-white mb-2 pb-1 border-b border-slate-800">{data.name}</p>
+                      <div className="bg-card dark:bg-[#090D16] border border-border dark:border-slate-800 rounded-xl p-3 shadow-2xl text-xs">
+                        <p className="font-black text-foreground dark:text-white mb-2 pb-1 border-b border-border dark:border-slate-800">{data.name}</p>
                         <div className="space-y-1">
                           <p className="text-emerald-500 flex justify-between gap-4 font-bold"><span>Entradas</span> <span>{formatBRL(data.entradas)}</span></p>
                           <p className="text-rose-500 flex justify-between gap-4 font-bold"><span>Saídas</span> <span>{formatBRL(data.saidas)}</span></p>
-                          <p className="text-white flex justify-between gap-4 font-black border-t border-slate-800 pt-1 mt-1"><span>Lucro</span> <span>{formatBRL(data.lucro)}</span></p>
+                          <p className="text-foreground dark:text-white flex justify-between gap-4 font-black border-t border-border dark:border-slate-800 pt-1 mt-1"><span>Lucro</span> <span>{formatBRL(data.lucro)}</span></p>
                         </div>
                       </div>
                     );
