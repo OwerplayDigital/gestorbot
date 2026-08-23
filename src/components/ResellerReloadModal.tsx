@@ -40,7 +40,7 @@ export function ResellerReloadModal({
 }: ResellerReloadModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { register, handleSubmit, reset, setValue, watch } = useForm<ReloadFormValues>({
+  const { register, handleSubmit, reset, setValue } = useForm<ReloadFormValues>({
     defaultValues: {
       data: new Date().toISOString().split('T')[0],
       servidor: currentServer || "",
@@ -50,6 +50,7 @@ export function ResellerReloadModal({
   });
 
   const onSubmit = async (values: ReloadFormValues) => {
+
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
