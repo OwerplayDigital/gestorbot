@@ -266,7 +266,10 @@ function Dashboard() {
             }
           }
 
-          if (!name) name = "Painel";
+          // Se ainda não tiver nome ou for 'Painel', redistribuímos entre os servidores oficiais
+          // Para este dashboard, se não houver servidor no cliente, ignoramos para não sujar o gráfico
+          // ou atribuímos a um servidor padrão se houver apenas um, mas aqui vamos apenas ignorar 'Painel'
+          if (!name || name === "Painel") return;
 
           const current = serverMap.get(name) || { name, count: 0, faturamento: 0, custo: 0, lucro: 0, clientIds: new Set() };
           if (t.cliente_id) current.clientIds.add(t.cliente_id);
