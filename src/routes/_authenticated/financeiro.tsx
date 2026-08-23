@@ -9,20 +9,17 @@ import {
   TrendingUp, 
   TrendingDown,
   Calendar,
-  Filter,
-  ArrowUpDown
+  Filter
 } from "lucide-react";
 import { 
   format, 
   parseISO, 
   startOfMonth, 
   endOfMonth, 
-  subMonths, 
-  isSameMonth, 
-  isSameYear 
+  subMonths
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { toZonedTime, format as formatTz } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,13 +37,18 @@ export const Route = createFileRoute("/_authenticated/financeiro")({
   component: FinanceiroHistory,
 });
 
+interface SelectedMonth {
+  label: string;
+  value: string;
+  date: Date;
+}
+
 function FinanceiroHistory() {
   const [searchTerm, setSearchTerm] = useState("");
   const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
   
-  // Lista de meses passados (excluindo o atual)
   const pastMonths = useMemo(() => {
-    const months = [];
+    const months: SelectedMonth[] = [];
     for (let i = 1; i <= 12; i++) {
       const date = subMonths(nowBr, i);
       months.push({
@@ -58,7 +60,7 @@ function FinanceiroHistory() {
     return months;
   }, [nowBr]);
 
-  const [selectedMonth, setSelectedMonth] = useState(pastMonths[0]);
+  const [selectedMonth, setSelectedMonth] = useState<SelectedMonth>(pastMonths[0]!);
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["financeiro-history", selectedMonth.value],
@@ -78,7 +80,7 @@ function FinanceiroHistory() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as any[];
     }
   });
 
@@ -86,7 +88,7 @@ function FinanceiroHistory() {
     return transactions.filter(t => 
       (t.clientes?.nome?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
       (t.servidores_iptv?.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (t.nome_manual?.toLowerCase() || "").includes(searchTerm.toLowerCase())
+      (t.descricao?.toLowerCase() || "").includes(searchTerm.toLowerCase())
     );
   }, [transactions, searchTerm]);
 
@@ -106,10 +108,10 @@ function FinanceiroHistory() {
 
     const headers = ["Data", "Cliente/Descrição", "Servidor", "Tipo", "Entrada", "Saída", "Lucro"];
     const rows = filteredTransactions.map(t => [
-      format(parseISO(t.created_at), "dd/MM/yyyy HH:mm"),
-      t.clientes?.nome || t.nome_manual || "N/A",
+      t.created_at ? format(parseISO(t.created_at), "dd/MM/yyyy HH:mm") : "N/A",
+      t.clientes?.nome || t.descricao || "N/A",
       t.servidores_iptv?.name || "Painel",
-      t.entrada > 0 ? "Entrada" : "Saída",
+      (t.entrada || 0) > 0 ? "Entrada" : "Saída",
       t.entrada || 0,
       t.custo || 0,
       t.lucro_liquido || 0
@@ -175,7 +177,7 @@ function FinanceiroHistory() {
 
       {/* Cards de Resumo */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="rounded-2xl border-border shadow-sm overflow-hidden">
+        <Card className="rounded-2xl border-border shadow-sm overflow-hidden bg-card">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded-lg">Faturamento</span>
@@ -188,7 +190,7 @@ function FinanceiroHistory() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-border shadow-sm overflow-hidden">
+        <Card className="rounded-2xl border-border shadow-sm overflow-hidden bg-card">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest bg-rose-500/10 px-2 py-0.5 rounded-lg">Custos</span>
@@ -256,13 +258,13 @@ function FinanceiroHistory() {
                     <tr key={t.id} className="hover:bg-muted/30 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className="text-xs font-black text-foreground">{format(parseISO(t.created_at), "dd/MM/yyyy")}</span>
-                          <span className="text-[10px] text-muted-foreground font-bold">{format(parseISO(t.created_at), "HH:mm")}</span>
+                          <span className="text-xs font-black text-foreground">{t.created_at ? format(parseISO(t.created_at), "dd/MM/yyyy") : "N/A"}</span>
+                          <span className="text-[10px] text-muted-foreground font-bold">{t.created_at ? format(parseISO(t.created_at), "HH:mm") : "N/A"}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-sm font-black text-foreground uppercase tracking-tight">
-                          {t.clientes?.nome || t.nome_manual || "N/A"}
+                          {t.clientes?.nome || t.descricao || "N/A"}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -272,11 +274,11 @@ function FinanceiroHistory() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex flex-col items-end">
-                          <span className={`text-sm font-black ${t.entrada > 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                            {t.entrada > 0 ? `+ ${formatBRL(t.entrada)}` : `- ${formatBRL(t.custo)}`}
+                          <span className={`text-sm font-black ${(t.entrada || 0) > 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                            {(t.entrada || 0) > 0 ? `+ ${formatBRL(t.entrada || 0)}` : `- ${formatBRL(t.custo || 0)}`}
                           </span>
-                          {t.lucro_liquido > 0 && t.entrada > 0 && (
-                            <span className="text-[9px] font-black text-emerald-600/60">Lucro: {formatBRL(t.lucro_liquido)}</span>
+                          {(t.lucro_liquido || 0) > 0 && (t.entrada || 0) > 0 && (
+                            <span className="text-[9px] font-black text-emerald-600/60">Lucro: {formatBRL(t.lucro_liquido || 0)}</span>
                           )}
                         </div>
                       </td>
@@ -297,3 +299,4 @@ function FinanceiroHistory() {
     </div>
   );
 }
+
