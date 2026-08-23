@@ -303,8 +303,22 @@ function Dashboard() {
           </div>
           <div className="text-3xl font-black text-foreground dark:text-white">{showValues ? formatBRL(stats?.lucro ?? 0) : "•••••"}</div>
           <div className="text-[10px] font-bold text-muted-foreground mt-2 flex items-center gap-1">
-            <TrendingUp size={10} className="text-emerald-500" />
-            <span className="text-emerald-500">+12.4%</span> em relação ao período anterior
+            {stats && stats.previousPeriodLucro !== 0 && (
+              <>
+                {((stats.lucro - stats.previousPeriodLucro) / Math.abs(stats.previousPeriodLucro)) >= 0 ? (
+                  <TrendingUp size={10} className="text-emerald-500" />
+                ) : (
+                  <TrendingDown size={10} className="text-rose-500" />
+                )}
+                <span className={((stats.lucro - stats.previousPeriodLucro) / Math.abs(stats.previousPeriodLucro)) >= 0 ? "text-emerald-500" : "text-rose-500"}>
+                  {((stats.lucro - stats.previousPeriodLucro) / Math.abs(stats.previousPeriodLucro) * 100).toFixed(1)}%
+                </span>
+                em relação ao período anterior
+              </>
+            )}
+            {(!stats || stats.previousPeriodLucro === 0) && (
+              <span className="text-muted-foreground opacity-50">Sem dados comparativos</span>
+            )}
           </div>
         </div>
 
@@ -314,7 +328,11 @@ function Dashboard() {
             <Users size={18} className="text-primary" />
           </div>
           <div className="text-3xl font-black text-foreground dark:text-white">{showValues ? formatBRL(stats?.entradas ?? 0) : "•••••"}</div>
-          <div className="text-[10px] font-bold text-muted-foreground mt-2">{stats?.activeClients} clientes ativos pagantes</div>
+          <div className="text-[10px] font-bold text-muted-foreground mt-2">
+            {activeTab === 'hoje' 
+              ? `${stats?.transactionsCount ?? 0} renovações hoje` 
+              : `${stats?.activeClients ?? 0} clientes ativos pagantes`}
+          </div>
         </div>
 
         <div className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl p-6 shadow-sm">
