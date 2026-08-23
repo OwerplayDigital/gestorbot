@@ -14,10 +14,10 @@ function PublicFaturaPage() {
     queryKey: ["public-reseller", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("revendedores" as any)
+        .from("revendedores")
         .select("*")
         .eq("id", id)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       return data;
