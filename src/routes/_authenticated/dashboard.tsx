@@ -16,6 +16,7 @@ import {
   RefreshCcw
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { toZonedTime, format as formatTz } from "date-fns-tz";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +39,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend
 } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -91,17 +93,19 @@ const parseDate = (d: any): Date | null => {
 function Dashboard() {
   const [showValues, setShowValues] = useState(true);
   const [activeTab, setActiveTab] = useState("mes");
+  const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
+  const currentMonthLabel = formatTz(nowBr, "MMMM/yy", { locale: ptBR })
+    .replace(/^\w/, (c) => c.toUpperCase());
   
-  const selectedMonth = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), "MM");
-  const selectedYear = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), "yyyy");
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
-    queryKey: ["dashboard-stats-modern", selectedMonth, selectedYear],
+    queryKey: ["dashboard-stats-modern", activeTab],
     queryFn: async () => {
       try {
         const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
-        nowBr.setHours(0, 0, 0, 0);
         const todayStr = formatTz(nowBr, "yyyy-MM-dd");
+        const currentMonth = formatTz(nowBr, "MM");
+        const currentYear = formatTz(nowBr, "yyyy");
         
         const [
           clientsRes, 
@@ -137,19 +141,27 @@ function Dashboard() {
         const activeClients = clients.filter((c: any) => c.status === "ativo").length;
         const totalVencidos = vencidos.length;
 
-        const currentMonthTransactions = transactions.filter(t => {
+        const filteredTransactions = transactions.filter(t => {
           if (!t.data) return false;
           const tDate = parseISO(t.data);
-          return format(tDate, "MM") === selectedMonth && format(tDate, "yyyy") === selectedYear;
+          
+          if (activeTab === "hoje") {
+            return format(tDate, "yyyy-MM-dd") === todayStr;
+          } else if (activeTab === "mes") {
+            return format(tDate, "MM") === currentMonth && format(tDate, "yyyy") === currentYear;
+          } else if (activeTab === "ano") {
+            return format(tDate, "yyyy") === currentYear;
+          }
+          return true;
         });
 
-        const entradas = currentMonthTransactions
+        const entradas = filteredTransactions
           .reduce((acc, t) => acc + Number(t.entrada ?? 0), 0);
         
-        const saidas = currentMonthTransactions
+        const saidas = filteredTransactions
           .reduce((acc, t) => acc + Number(t.custo ?? 0), 0);
 
-        const lucro = currentMonthTransactions
+        const lucro = filteredTransactions
           .reduce((acc, t) => acc + Number(t.lucro_liquido ?? 0), 0);
 
         const monthsLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -158,7 +170,7 @@ function Dashboard() {
           const monthTrans = transactions.filter(t => {
             if (!t.data) return false;
             const d = parseISO(t.data);
-            return format(d, "MM") === monthStr && format(d, "yyyy") === selectedYear;
+            return format(d, "MM") === monthStr && format(d, "yyyy") === currentYear;
           });
           const ent = monthTrans.reduce((a, b) => a + Number(b.entrada ?? 0), 0);
           const sai = monthTrans.reduce((a, b) => a + Number(b.custo ?? 0), 0);
@@ -170,7 +182,7 @@ function Dashboard() {
           };
         });
 
-        const transactionsWithResolvedServers = currentMonthTransactions.map((t: any) => {
+        const transactionsWithResolvedServers = filteredTransactions.map((t: any) => {
           const directServerName = t.servidores_iptv?.name;
           const clientServerId = t.clientes?.servidores_ids?.[0];
           const fallbackServerName = clientServerId ? servers.find(s => s.id === clientServerId)?.name : null;
@@ -229,17 +241,11 @@ function Dashboard() {
   return (
     <div className="flex flex-col gap-8 p-4 md:p-8 pb-12 max-w-7xl mx-auto w-full">
       
-      {/* Cabeçalho de Visão Geral */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-3xl font-black tracking-tighter text-foreground uppercase">Visão Geral do Negócio</h1>
-          <p className="text-muted-foreground font-medium">Controle de métricas e performance em tempo real.</p>
-        </div>
-
+      <div className="flex flex-col md:flex-row md:items-center justify-end gap-6">
         <div className="bg-card border border-border p-1 rounded-2xl flex items-center gap-1 self-start md:self-center shadow-sm">
           {[
             { id: "hoje", label: "Hoje" },
-            { id: "mes", label: "Agosto/26" },
+            { id: "mes", label: currentMonthLabel },
             { id: "ano", label: "Ano" }
           ].map((tab) => (
             <button
@@ -452,12 +458,17 @@ function Dashboard() {
           </Badge>
         </div>
         
-        <div className="h-[300px] w-full">
+        <div className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={stats?.chartData ?? []}>
+            <BarChart data={stats?.chartData ?? []} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border" opacity={0.5} />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
+                tickFormatter={(value) => `R$ ${value}`}
+              />
               <Tooltip 
                 cursor={{ fill: 'rgba(255,255,255,0.03)' }}
                 content={({ active, payload }) => {
@@ -467,9 +478,9 @@ function Dashboard() {
                       <div className="bg-card dark:bg-[#090D16] border border-border dark:border-slate-800 rounded-xl p-3 shadow-2xl text-xs">
                         <p className="font-black text-foreground dark:text-white mb-2 pb-1 border-b border-border dark:border-slate-800">{data.name}</p>
                         <div className="space-y-1">
-                          <p className="text-emerald-500 flex justify-between gap-4 font-bold"><span>Entradas</span> <span>{formatBRL(data.entradas)}</span></p>
-                          <p className="text-rose-500 flex justify-between gap-4 font-bold"><span>Saídas</span> <span>{formatBRL(data.saidas)}</span></p>
-                          <p className="text-foreground dark:text-white flex justify-between gap-4 font-black border-t border-border dark:border-slate-800 pt-1 mt-1"><span>Lucro</span> <span>{formatBRL(data.lucro)}</span></p>
+                          <p className="text-[#3b82f6] flex justify-between gap-4 font-bold"><span>Entradas</span> <span>{formatBRL(data.entradas)}</span></p>
+                          <p className="text-[#ef4444] flex justify-between gap-4 font-bold"><span>Saídas</span> <span>{formatBRL(data.saidas)}</span></p>
+                          <p className="text-[#22c55e] flex justify-between gap-4 font-bold border-t border-border dark:border-slate-800 pt-1 mt-1"><span>Lucro</span> <span>{formatBRL(data.lucro)}</span></p>
                         </div>
                       </div>
                     );
@@ -477,8 +488,10 @@ function Dashboard() {
                   return null;
                 }}
               />
-              <Bar dataKey="entradas" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={20} />
-              <Bar dataKey="saidas" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={20} />
+              <Legend verticalAlign="top" align="right" height={36} iconType="circle" />
+              <Bar name="Entradas" dataKey="entradas" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} />
+              <Bar name="Saídas" dataKey="saidas" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={30} />
+              <Bar name="Lucro" dataKey="lucro" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={30} />
             </BarChart>
           </ResponsiveContainer>
         </div>
