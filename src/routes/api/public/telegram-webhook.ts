@@ -163,7 +163,7 @@ async function sendClientCompact(chatId: number, c: any) {
   
   const phone = cleanPhone(c.whatsapp || '');
   
-  const nomeServidor = c.servidores?.[0]?.name || c.servidores_iptv?.name || c.servidor?.name || 'Não informado';
+  const nomeServidor = c.servidores?.[0]?.name || c.servidor?.name || 'Não informado';
   const msg = `👤 Cliente: ${c.nome}\n` +
               `📅 Vencimento: ${brDate}\n` +
               `🖥️ Servidor: ${nomeServidor}`;
@@ -212,7 +212,7 @@ async function sendClientFicha(chatId: number, c: any) {
   const phone = cleanPhone(c.whatsapp || '');
   const msg = `👤 Cliente: ${c.nome}\n` +
               `📅 Vencimento: ${brDate}\n` +
-              `🖥️ Servidor: ${c.servidores_iptv?.name || serverNames}\n` +
+              `🖥️ Servidor: ${serverNames}\n` +
               `WhatsApp: ${c.whatsapp || 'N/A'}\n` +
               `Plano: ${planName}\n` +
               `Valor: R$ ${valorFinal}\n` +
@@ -837,7 +837,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               userState.delete(chatId);
             }
             else if (data === 'back_to_main') {
-               await sendMessage(chatId, "Clientes:", mainMenu);
+               await sendMessage(chatId, "GESTOR IPTV | Painel de Controle\nSelecione a opção desejada abaixo:", mainMenu);
                userState.delete(chatId);
             }
             else if (state && state.action === 'cadastrar_cliente' && state.step === 3 && data.startsWith('plano:')) {
