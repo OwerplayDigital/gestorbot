@@ -182,7 +182,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
   if (isCheckoutPage || isMaintenancePage) {
     return (
-      <html lang="pt-BR" className="dark">
+      <html lang="pt-BR" className="light">
         <head>
           <HeadContent />
         </head>
@@ -197,7 +197,7 @@ function RootShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <html lang="pt-BR" className="dark">
+    <html lang="pt-BR" className="light">
       <head>
         <HeadContent />
       </head>
