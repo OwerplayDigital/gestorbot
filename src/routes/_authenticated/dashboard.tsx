@@ -186,6 +186,7 @@ function Dashboard() {
         const saidas = filteredTransactions.reduce((acc, t) => acc + Number(t.custo ?? 0), 0);
         const lucro = filteredTransactions.reduce((acc, t) => acc + Number(t.lucro_liquido ?? 0), 0);
         const previousPeriodLucro = previousTransactions.reduce((acc, t) => acc + Number(t.lucro_liquido ?? 0), 0);
+        const previousPeriodEntradas = previousTransactions.reduce((acc, t) => acc + Number(t.entrada ?? 0), 0);
         const transactionsCount = filteredTransactions.length;
 
         const monthsLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
