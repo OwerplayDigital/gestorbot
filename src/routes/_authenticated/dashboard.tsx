@@ -170,11 +170,22 @@ function Dashboard() {
           };
         });
 
+        const transactionsWithResolvedServers = currentMonthTransactions.map((t: any) => {
+          const directServerName = t.servidores_iptv?.name;
+          const clientServerId = t.clientes?.servidores_ids?.[0];
+          const fallbackServerName = clientServerId ? servers.find(s => s.id === clientServerId)?.name : null;
+          
+          return {
+            ...t,
+            resolvedServerName: directServerName || fallbackServerName || "Painel"
+          };
+        });
+
         const expiringWithServers = expiringToday.map((c: any) => {
           return {
             ...c,
             valorFinal: Number(c.valor ?? 0),
-            serverName: servers.find(s => c.servidores_ids?.includes(s.id))?.name || "N/A"
+            serverName: servers.find(s => c.servidores_ids?.includes(s.id))?.name || "Painel"
           };
         });
 
@@ -189,8 +200,9 @@ function Dashboard() {
           expiringToday: expiringWithServers,
           vencidos,
           chartData,
-          recentTransactions: currentMonthTransactions
+          recentTransactions: transactionsWithResolvedServers
         };
+
       } catch (error) {
         console.error("Dashboard error:", error);
         throw error;
