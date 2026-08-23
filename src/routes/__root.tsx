@@ -186,8 +186,9 @@ function RootShell({ children }: { children: ReactNode }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const isCheckoutPage = router.state.location.pathname.startsWith('/pagar/');
   const isMaintenancePage = router.state.location.pathname === '/';
+  const isPortalPage = router.state.location.pathname === '/portal';
 
-  if (isCheckoutPage || isMaintenancePage) {
+  if (isCheckoutPage || isMaintenancePage || isPortalPage) {
     return (
       <html lang="pt-BR" className="light">
         <head>
