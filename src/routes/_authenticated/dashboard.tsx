@@ -290,29 +290,47 @@ function Dashboard() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-muted/50 border-b border-border/50">
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Cliente</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Data</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Valor</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Status</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Cliente / Servidor</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Plano</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Custo</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Lucro</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
                 {stats?.recentTransactions?.slice(0, 5).map((t: any) => (
-                  <tr key={t.id} className="hover:bg-muted/30 transition-colors">
+                  <tr key={t.id} className="hover:bg-muted/30 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="font-black text-foreground text-sm tracking-tight uppercase">{t.clientes?.nome || "Cliente"}</span>
                         <span className="text-[10px] text-muted-foreground font-bold">{t.servidores_iptv?.name || "IPTV"}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">{t.data ? format(parseISO(t.data), "dd/MM/yyyy") : "--/--/--"}</span>
+                    <td className="px-6 py-4 text-right">
+                      <span className="text-sm font-black text-foreground">{formatBRL(t.entrada)}</span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className="text-sm font-black text-emerald-500">{formatBRL(t.entrada)}</span>
+                      <span className="text-sm font-black text-rose-500">{formatBRL(t.custo)}</span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <span className="text-sm font-black text-emerald-500">{formatBRL(t.lucro_liquido)}</span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase">Renovado</Badge>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                        onClick={async () => {
+                          const { error } = await supabase.from('transacoes').delete().eq('id', t.id);
+                          if (error) {
+                            toast.error("Erro ao excluir registro");
+                          } else {
+                            toast.success("Registro removido");
+                          }
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
                     </td>
                   </tr>
                 ))}
