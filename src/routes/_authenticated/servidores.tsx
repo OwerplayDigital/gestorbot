@@ -40,9 +40,10 @@ function ServidoresPage() {
       if (creditError) throw creditError;
 
       return (resellers || []).map((res: any) => {
-        const resCredits = (credits || []).filter((c: any) => c.reseller_id === res.id);
-        const totalCredits = resCredits.reduce((sum, c) => sum + (c.quantidade_creditos || 0), 0);
-        const totalCusto = resCredits.reduce((sum, c) => sum + (Number(c.custo) || 0), 0);
+        const resCredits = (credits || []).filter((c: any) => (c as any).reseller_id === res.id);
+        const totalCredits = resCredits.reduce((sum, c) => sum + ((c as any).quantidade_creditos || 0), 0);
+        const totalCusto = resCredits.reduce((sum, c) => sum + (Number((c as any).custo) || 0), 0);
+
         
         return {
           ...res,

@@ -49,6 +49,7 @@ export function ResellerReloadModal({
     }
   });
 
+
   const onSubmit = async (values: ReloadFormValues) => {
 
     setIsSubmitting(true);
@@ -78,7 +79,8 @@ export function ResellerReloadModal({
       // The instructions say "tabela de créditos/transações do revendedor".
       // Let's also add it to the main 'transacoes' table as an expense (Saída)
       const { error: transError } = await supabase
-        .from("transacoes")
+        .from("transacoes" as any)
+
         .insert({
           user_id: user.id,
           tipo: "Saída",
