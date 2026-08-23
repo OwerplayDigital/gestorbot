@@ -58,6 +58,8 @@ type DashboardStats = {
   vencidos: any[];
   chartData: any[];
   recentTransactions: any[];
+  previousPeriodLucro: number;
+  transactionsCount: number;
 };
 
 const parseDate = (d: any): Date | null => {
@@ -112,7 +114,7 @@ function Dashboard() {
           transactionsRes, 
           serversRes,
         ] = await Promise.all([
-          supabase.from("clientes").select("id, nome, vencimento, valor, status"),
+          supabase.from("clientes").select("id, nome, vencimento, valor, status, servidores_ids"),
           supabase.from("transacoes").select("*, clientes(nome, servidores_ids), servidores_iptv(name)").order("created_at", { ascending: false }),
           supabase.from("servidores_iptv").select("id, name"),
         ]);
@@ -141,6 +143,7 @@ function Dashboard() {
         const activeClients = clients.filter((c: any) => c.status === "ativo").length;
         const totalVencidos = vencidos.length;
 
+        // Filtro do período atual
         const filteredTransactions = transactions.filter(t => {
           if (!t.data) return false;
           const tDate = parseISO(t.data);
@@ -155,14 +158,34 @@ function Dashboard() {
           return true;
         });
 
-        const entradas = filteredTransactions
-          .reduce((acc, t) => acc + Number(t.entrada ?? 0), 0);
-        
-        const saidas = filteredTransactions
-          .reduce((acc, t) => acc + Number(t.custo ?? 0), 0);
+        // Filtro do período anterior para comparação de lucro
+        const previousTransactions = transactions.filter(t => {
+          if (!t.data) return false;
+          const tDate = parseISO(t.data);
+          
+          if (activeTab === "hoje") {
+            const yesterday = new Date(nowBr);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = formatTz(yesterday, "yyyy-MM-dd");
+            return format(tDate, "yyyy-MM-dd") === yesterdayStr;
+          } else if (activeTab === "mes") {
+            const lastMonth = new Date(nowBr);
+            lastMonth.setMonth(lastMonth.getMonth() - 1);
+            const lastMonthStr = format(lastMonth, "MM");
+            const lastYearStr = format(lastMonth, "yyyy");
+            return format(tDate, "MM") === lastMonthStr && format(tDate, "yyyy") === lastYearStr;
+          } else if (activeTab === "ano") {
+            const lastYear = Number(currentYear) - 1;
+            return format(tDate, "yyyy") === lastYear.toString();
+          }
+          return false;
+        });
 
-        const lucro = filteredTransactions
-          .reduce((acc, t) => acc + Number(t.lucro_liquido ?? 0), 0);
+        const entradas = filteredTransactions.reduce((acc, t) => acc + Number(t.entrada ?? 0), 0);
+        const saidas = filteredTransactions.reduce((acc, t) => acc + Number(t.custo ?? 0), 0);
+        const lucro = filteredTransactions.reduce((acc, t) => acc + Number(t.lucro_liquido ?? 0), 0);
+        const previousPeriodLucro = previousTransactions.reduce((acc, t) => acc + Number(t.lucro_liquido ?? 0), 0);
+        const transactionsCount = filteredTransactions.length;
 
         const monthsLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
         const chartData = monthsLabels.map((m, idx) => {
@@ -210,9 +233,17 @@ function Dashboard() {
           saidas,
           lucro,
           expiringToday: expiringWithServers,
-          vencidos,
+          vencidos: vencidos.map(c => ({
+            id: c.id,
+            nome: c.nome,
+            status: c.status,
+            valor: c.valor,
+            vencimento: c.vencimento
+          })),
           chartData,
-          recentTransactions: transactionsWithResolvedServers
+          recentTransactions: transactionsWithResolvedServers,
+          previousPeriodLucro,
+          transactionsCount
         };
 
       } catch (error) {
@@ -272,8 +303,22 @@ function Dashboard() {
           </div>
           <div className="text-3xl font-black text-foreground dark:text-white">{showValues ? formatBRL(stats?.lucro ?? 0) : "•••••"}</div>
           <div className="text-[10px] font-bold text-muted-foreground mt-2 flex items-center gap-1">
-            <TrendingUp size={10} className="text-emerald-500" />
-            <span className="text-emerald-500">+12.4%</span> em relação ao período anterior
+            {stats && stats.previousPeriodLucro !== 0 && (
+              <>
+                {((stats.lucro - stats.previousPeriodLucro) / Math.abs(stats.previousPeriodLucro)) >= 0 ? (
+                  <TrendingUp size={10} className="text-emerald-500" />
+                ) : (
+                  <TrendingDown size={10} className="text-rose-500" />
+                )}
+                <span className={((stats.lucro - stats.previousPeriodLucro) / Math.abs(stats.previousPeriodLucro)) >= 0 ? "text-emerald-500" : "text-rose-500"}>
+                  {((stats.lucro - stats.previousPeriodLucro) / Math.abs(stats.previousPeriodLucro) * 100).toFixed(1)}%
+                </span>
+                em relação ao período anterior
+              </>
+            )}
+            {(!stats || stats.previousPeriodLucro === 0) && (
+              <span className="text-muted-foreground opacity-50">Sem dados comparativos</span>
+            )}
           </div>
         </div>
 
@@ -283,7 +328,11 @@ function Dashboard() {
             <Users size={18} className="text-primary" />
           </div>
           <div className="text-3xl font-black text-foreground dark:text-white">{showValues ? formatBRL(stats?.entradas ?? 0) : "•••••"}</div>
-          <div className="text-[10px] font-bold text-muted-foreground mt-2">{stats?.activeClients} clientes ativos pagantes</div>
+          <div className="text-[10px] font-bold text-muted-foreground mt-2">
+            {activeTab === 'hoje' 
+              ? `${stats?.transactionsCount ?? 0} renovações hoje` 
+              : `${stats?.activeClients ?? 0} clientes ativos pagantes`}
+          </div>
         </div>
 
         <div className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl p-6 shadow-sm">
