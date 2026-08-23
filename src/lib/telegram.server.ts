@@ -370,7 +370,6 @@ export const getClientById = async (id: string) => {
       desconto,
       plano_id,
       servidores_ids,
-      servidores_ids,
       plans:plans(id, name, price)
     `)
     .eq("id", id)
