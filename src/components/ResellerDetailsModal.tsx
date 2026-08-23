@@ -185,7 +185,7 @@ export function ResellerDetailsModal({
                             </div>
                             <div>
                               <span className="text-[9px] font-black text-slate-400 uppercase block">Créditos</span>
-                              <span className="text-xs font-black text-slate-900">{item.quantidade_creditos} CR</span>
+                              <span className="text-xs font-black text-slate-900">{item.quantidade_creditos}</span>
                             </div>
                             <div>
                               <span className="text-[9px] font-black text-slate-400 uppercase block">Custo</span>
