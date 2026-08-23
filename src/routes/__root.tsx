@@ -8,7 +8,16 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { Menu, ChartBar } from "lucide-react";
+import { 
+  Menu, 
+  LayoutDashboard, 
+  DollarSign, 
+  AlertTriangle, 
+  Users, 
+  LogOut,
+  Settings,
+  Circle
+} from "lucide-react";
 import gestorLogo from "@/assets/gestor-logo.png.asset.json";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -23,6 +32,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Badge } from "@/components/ui/badge";
 
 function NotFoundComponent() {
   return (
@@ -36,8 +47,6 @@ function NotFoundComponent() {
         <div className="mt-6">
           <Link
             to="/"
-
-
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Voltar ao Início
@@ -91,10 +100,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" },
-      { title: "Owerplay Gestor - IPTV" },
+      { title: "GESTOR PRO - IPTV" },
       { name: "description", content: "Sistema inteligente para revendedores de IPTV." },
-      { property: "og:site_name", content: "OWERPLAY TV" },
-      { property: "og:title", content: "OWERPLAY Gestor" },
+      { property: "og:site_name", content: "GESTOR PRO" },
+      { property: "og:title", content: "GESTOR PRO" },
       { property: "og:description", content: "Controle sua operação IPTV mobile-first." },
       { property: "og:image", content: "https://gestorbot.lovable.app/og-preview.png" },
       { property: "og:type", content: "website" },
@@ -111,53 +120,131 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+function NavLink({ to, icon: Icon, children, badge }: { to: string; icon: any; children: ReactNode; badge?: string }) {
+  return (
+    <Link
+      to={to}
+      activeProps={{ className: "bg-primary/10 text-primary border-primary/20" }}
+      inactiveProps={{ className: "text-muted-foreground hover:bg-muted transition-colors" }}
+      className="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold border border-transparent"
+    >
+      <div className="flex items-center gap-3">
+        <Icon size={18} />
+        {children}
+      </div>
+      {badge && (
+        <Badge variant="secondary" className="bg-card border-border text-[10px] font-black h-5 px-1.5 min-w-[20px] justify-center">
+          {badge}
+        </Badge>
+      )}
+    </Link>
+  );
+}
+
+function SidebarContent() {
+  return (
+    <div className="flex flex-col h-full py-6">
+      <div className="px-6 mb-8 flex items-center gap-2">
+        <img src={gestorLogo.url} alt="Logo" className="h-8 w-8 rounded-xl object-cover" />
+        <span className="text-xl font-black tracking-tighter text-foreground">GESTOR PRO</span>
+      </div>
+
+      <nav className="flex-1 px-3 space-y-1">
+        <NavLink to="/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
+        <NavLink to="/financeiro" icon={DollarSign} badge="12">Financeiro</NavLink>
+        <NavLink to="/clientes" icon={AlertTriangle} badge="4">Inadimplência</NavLink>
+        <NavLink to="/servidores" icon={Users} badge="8">Revendedores</NavLink>
+        <NavLink to="/settings" icon={Settings}>Configurações</NavLink>
+      </nav>
+
+      <div className="px-3 pt-6 border-t border-border mt-auto space-y-4">
+        <div className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-emerald-500 bg-emerald-500/10 rounded-xl">
+          <div className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </div>
+          Bot Conectado
+        </div>
+
+        <Link to="/" className="flex items-center gap-3 px-3 py-2 text-sm font-semibold text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors">
+          <LogOut size={18} />
+          Sair
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 function RootShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const isCheckoutPage = router.state.location.pathname.startsWith('/pagar/');
   const isMaintenancePage = router.state.location.pathname === '/';
+
+  if (isCheckoutPage || isMaintenancePage) {
+    return (
+      <html lang="pt-BR" className="dark">
+        <head>
+          <HeadContent />
+        </head>
+        <body className="antialiased bg-background">
+          <main className="flex-1">
+            {children}
+          </main>
+          <Scripts />
+        </body>
+      </html>
+    );
+  }
 
   return (
     <html lang="pt-BR" className="dark">
       <head>
         <HeadContent />
       </head>
-      <body className="antialiased">
-        <div className="flex flex-col min-h-screen">
-          {/* Header Mobile-First - Hidden on Checkout and Maintenance Pages */}
-          {!isCheckoutPage && !isMaintenancePage && (
-            <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="container flex h-14 items-center px-4 gap-3">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="md:hidden">
-                      <Menu className="h-5 w-5" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="w-[280px]">
-                    <SheetHeader>
-                      <SheetTitle className="text-left flex items-center gap-2">
-                        <img src={gestorLogo.url} alt="Logo" className="h-6 w-6 rounded-md object-cover" />
-                        Owerplay Gestor
-                      </SheetTitle>
-                    </SheetHeader>
-                    <nav className="flex flex-col gap-4 mt-8">
-                      <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Dashboard</Link>
-                      <Link to="/settings" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Configurações</Link>
-                      <Link to="/" className="text-sm font-medium hover:text-primary transition-colors px-2 py-1">Sair</Link>
-                    </nav>
-                  </SheetContent>
-                </Sheet>
-                <Link to="/dashboard" className="flex items-center gap-2 font-bold tracking-tighter text-lg">
-                  <img src={gestorLogo.url} alt="Logo" className="h-7 w-7 rounded-md object-cover" />
-                  <span className="inline-block">Owerplay Gestor</span>
-                </Link>
+      <body className="antialiased bg-background">
+        <div className="flex min-h-screen bg-background">
+          {/* Sidebar - Desktop */}
+          <aside className="hidden lg:flex flex-col w-64 border-r border-border bg-sidebar shrink-0">
+            <SidebarContent />
+          </aside>
+
+          <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+            {/* Header Mobile/Tablet & Theme Toggle */}
+            <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <div className="flex h-16 items-center justify-between px-4 lg:px-8">
+                <div className="flex items-center gap-4">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="icon" className="lg:hidden">
+                        <Menu className="h-5 w-5" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="p-0 w-72 bg-sidebar border-r border-border">
+                      <SidebarContent />
+                    </SheetContent>
+                  </Sheet>
+                  
+                  {/* Title or Breadcrumb could go here, but user asked for Theme Toggle in header */}
+                  <h2 className="hidden lg:block text-sm font-bold text-muted-foreground uppercase tracking-widest">Painel Administrativo</h2>
+                  <div className="lg:hidden flex items-center gap-2">
+                    <img src={gestorLogo.url} alt="Logo" className="h-6 w-6 rounded-lg" />
+                    <span className="font-black tracking-tighter">GESTOR PRO</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <ThemeToggle />
+                  <Button variant="ghost" size="icon" className="rounded-xl border border-border bg-card/50 hidden md:inline-flex">
+                    <Settings className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
             </header>
-          )}
 
-          <main className="flex-1 overflow-x-hidden">
-            {children}
-          </main>
+            <main className="flex-1 overflow-y-auto">
+              {children}
+            </main>
+          </div>
         </div>
         <Scripts />
       </body>
