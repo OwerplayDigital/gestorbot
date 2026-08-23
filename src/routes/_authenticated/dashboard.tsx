@@ -16,6 +16,7 @@ import {
   RefreshCcw
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { toZonedTime, format as formatTz } from "date-fns-tz";
 
 import { supabase } from "@/integrations/supabase/client";
