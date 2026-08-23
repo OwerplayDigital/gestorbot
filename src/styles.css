@@ -89,7 +89,7 @@
 }
 
 .dark {
-  --background: #0f172a;
+  --background: #090D16;
   --foreground: oklch(0.95 0.01 240);
   --card: #131B2E;
   --card-foreground: oklch(0.95 0.01 240);
@@ -113,7 +113,7 @@
   --chart-3: oklch(0.6 0.02 240);
   --chart-4: oklch(0.7 0.15 190);
   --chart-5: oklch(0.5 0.15 190);
-  --sidebar: #0f172a;
+  --sidebar: #090D16;
   --sidebar-foreground: oklch(0.95 0.01 240);
   --sidebar-primary: oklch(0.9 0.2 190);
   --sidebar-primary-foreground: oklch(0.15 0.04 260);
