@@ -121,10 +121,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
-function NavLink({ to, icon: Icon, children, badge }: { to: string; icon: any; children: ReactNode; badge?: string }) {
+function NavLink({ to, icon: Icon, children, badge, onClick }: { to: string; icon: any; children: ReactNode; badge?: string; onClick?: () => void }) {
   return (
     <Link
       to={to}
+      onClick={onClick}
       activeProps={{ className: "bg-primary/10 text-primary border-primary/20" }}
       inactiveProps={{ className: "text-muted-foreground hover:bg-muted transition-colors" }}
       className="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold border border-transparent"
@@ -142,7 +143,7 @@ function NavLink({ to, icon: Icon, children, badge }: { to: string; icon: any; c
   );
 }
 
-function SidebarContent() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex flex-col h-full py-6">
       <div className="px-6 mb-8 flex items-center gap-2">
@@ -151,11 +152,11 @@ function SidebarContent() {
       </div>
 
       <nav className="flex-1 px-3 space-y-1">
-        <NavLink to="/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
-        <NavLink to="/financeiro" icon={DollarSign} badge="12">Financeiro</NavLink>
-        <NavLink to="/clientes" icon={AlertTriangle} badge="4">Inadimplência</NavLink>
-        <NavLink to="/servidores" icon={Users}>Revendedores</NavLink>
-        <NavLink to="/settings" icon={Settings}>Configurações</NavLink>
+        <NavLink to="/dashboard" icon={LayoutDashboard} onClick={onNavigate}>Dashboard</NavLink>
+        <NavLink to="/financeiro" icon={DollarSign} badge="12" onClick={onNavigate}>Financeiro</NavLink>
+        <NavLink to="/clientes" icon={AlertTriangle} badge="4" onClick={onNavigate}>Inadimplência</NavLink>
+        <NavLink to="/servidores" icon={Users} onClick={onNavigate}>Revendedores</NavLink>
+        <NavLink to="/settings" icon={Settings} onClick={onNavigate}>Configurações</NavLink>
       </nav>
 
       <div className="px-3 pt-6 border-t border-border mt-auto space-y-4">
@@ -167,7 +168,11 @@ function SidebarContent() {
           Bot Conectado
         </div>
 
-        <Link to="/" className="flex items-center gap-3 px-3 py-2 text-sm font-semibold text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors">
+        <Link 
+          to="/" 
+          onClick={onNavigate}
+          className="flex items-center gap-3 px-3 py-2 text-sm font-semibold text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors"
+        >
           <LogOut size={18} />
           Sair
         </Link>
