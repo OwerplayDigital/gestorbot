@@ -521,7 +521,14 @@ function Dashboard() {
           </div>
           <div className="bg-muted/30 border border-border/50 rounded-2xl px-3 py-2 text-right">
             <span className="block text-[8px] font-black text-muted-foreground uppercase leading-none mb-1">VS Mês Anterior</span>
-            <span className="text-xs font-black text-emerald-500">+38.1%</span>
+            {stats && stats.previousPeriodEntradas !== 0 ? (
+              <span className={`text-xs font-black ${((stats.entradas - stats.previousPeriodEntradas) / stats.previousPeriodEntradas) >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                {((stats.entradas - stats.previousPeriodEntradas) / stats.previousPeriodEntradas * 100) >= 0 ? "+" : ""}
+                {((stats.entradas - stats.previousPeriodEntradas) / stats.previousPeriodEntradas * 100).toFixed(1)}%
+              </span>
+            ) : (
+              <span className="text-xs font-black text-muted-foreground opacity-50">-%</span>
+            )}
           </div>
         </div>
         
