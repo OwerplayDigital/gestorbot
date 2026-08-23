@@ -188,19 +188,33 @@ function Dashboard() {
         const transactionsCount = filteredTransactions.length;
 
         const monthsLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-        const chartData = monthsLabels.map((m, idx) => {
-          const monthIndex = idx + 1;
+        const currentMonthIdx = nowBr.getMonth();
+        const currentYearNum = nowBr.getFullYear();
+        
+        // Calcular os últimos 6 meses (incluindo o atual)
+        const lastSixMonths = [];
+        for (let i = 5; i >= 0; i--) {
+          let mIdx = currentMonthIdx - i;
+          let y = currentYearNum;
+          if (mIdx < 0) {
+            mIdx += 12;
+            y -= 1;
+          }
+          lastSixMonths.push({ mIdx, y, label: monthsLabels[mIdx] });
+        }
+
+        const chartData = lastSixMonths.map(({ mIdx, y, label }) => {
           const monthTrans = transactions.filter(t => {
             if (!t.data) return false;
             const d = parseISO(t.data);
-            return d.getFullYear() === Number(currentYear) && (d.getMonth() + 1) === monthIndex;
+            return d.getFullYear() === y && d.getMonth() === mIdx;
           });
           
           const ent = monthTrans.reduce((a, b) => a + Number(b.entrada ?? 0), 0);
           const sai = monthTrans.reduce((a, b) => a + Number(b.custo ?? 0), 0);
           
           return {
-            name: m,
+            name: label,
             entradas: ent,
             saidas: sai,
             lucro: ent - sai
@@ -515,7 +529,7 @@ function Dashboard() {
               data={stats?.chartData ?? []} 
               margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
               barGap={2}
-              barCategoryGap="20%"
+              barCategoryGap="10%"
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border" opacity={0.3} />
               <XAxis 
@@ -557,9 +571,9 @@ function Dashboard() {
                 iconType="rect" 
                 formatter={(value) => <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-4">{value}</span>}
               />
-              <Bar name="Entradas" dataKey="entradas" fill="#0284c7" radius={[4, 4, 0, 0]} />
-              <Bar name="Saídas" dataKey="saidas" fill="#ef4444" radius={[4, 4, 0, 0]} />
-              <Bar name="Lucro" dataKey="lucro" fill="#22c55e" radius={[4, 4, 0, 0]} />
+              <Bar name="Entradas" dataKey="entradas" fill="#0284c7" radius={[4, 4, 0, 0]} maxBarSize={16} />
+              <Bar name="Saídas" dataKey="saidas" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={16} />
+              <Bar name="Lucro" dataKey="lucro" fill="#22c55e" radius={[4, 4, 0, 0]} maxBarSize={16} />
             </BarChart>
           </ResponsiveContainer>
         </div>
