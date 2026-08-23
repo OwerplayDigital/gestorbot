@@ -81,7 +81,10 @@ function FinanceiroHistory() {
         .from("transacoes")
         .select(`
           *,
-          clientes(nome),
+          clientes(
+            nome,
+            servidores_iptv(name)
+          ),
           servidores_iptv(name)
         `)
         .gte("created_at", start.toISOString())
