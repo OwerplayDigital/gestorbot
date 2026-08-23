@@ -188,7 +188,7 @@ function FinanceiroHistory() {
             size="icon" 
             className="rounded-xl border-border bg-card shadow-sm"
             onClick={exportToCSV}
-            disabled={filteredTransactions.length === 0}
+            disabled={transactions.length === 0}
           >
             <Download size={18} />
           </Button>
