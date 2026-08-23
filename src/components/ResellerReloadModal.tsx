@@ -21,6 +21,7 @@ interface ReloadFormValues {
   servidor: string;
 }
 
+
 interface ResellerReloadModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -41,13 +42,14 @@ export function ResellerReloadModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { register, handleSubmit, reset, setValue } = useForm<ReloadFormValues>({
-    defaultValues: {
+    values: {
       data: new Date().toISOString().split('T')[0],
       servidor: currentServer || "",
       quantidade_creditos: 0,
       custo: 0
     }
   });
+
 
 
   const onSubmit = async (values: ReloadFormValues) => {
@@ -118,7 +120,7 @@ export function ResellerReloadModal({
           <p className="text-sm text-muted-foreground uppercase font-bold">{resellerName}</p>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 py-4">
+        <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6 py-4">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Data</Label>
