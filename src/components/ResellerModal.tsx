@@ -23,12 +23,19 @@ interface ResellerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  reseller?: any;
 }
 
-export function ResellerModal({ isOpen, onClose, onSuccess }: ResellerModalProps) {
+export function ResellerModal({ isOpen, onClose, onSuccess, reseller }: ResellerModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ResellerFormValues>();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ResellerFormValues>({
+    values: reseller ? {
+      nome: reseller.nome || "",
+      whatsapp: reseller.whatsapp || "",
+      servidor: reseller.servidor || "",
+    } : undefined
+  });
 
 
   const onSubmit = async (values: ResellerFormValues) => {
@@ -37,22 +44,30 @@ export function ResellerModal({ isOpen, onClose, onSuccess }: ResellerModalProps
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      const { error } = await supabase
-        .from("revendedores" as any)
-        .insert({
-          ...values,
-          user_id: user.id,
-        } as any);
+      if (reseller?.id) {
+        const { error } = await supabase
+          .from("revendedores" as any)
+          .update(values as any)
+          .eq("id", reseller.id);
+        if (error) throw error;
+        toast.success("Dados do revendedor atualizados!");
+      } else {
+        const { error } = await supabase
+          .from("revendedores" as any)
+          .insert({
+            ...values,
+            user_id: user.id,
+          } as any);
+        if (error) throw error;
+        toast.success("Revendedor cadastrado com sucesso!");
+      }
 
-      if (error) throw error;
-
-      toast.success("Revendedor cadastrado com sucesso!");
       reset();
       onSuccess();
       onClose();
     } catch (error: any) {
       console.error("Erro ao cadastrar revendedor:", error);
-      toast.error("Erro ao cadastrar: " + (error.message || "Tente novamente"));
+      toast.error("Erro ao processar: " + (error.message || "Tente novamente"));
     } finally {
       setIsSubmitting(false);
     }
@@ -62,7 +77,9 @@ export function ResellerModal({ isOpen, onClose, onSuccess }: ResellerModalProps
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-black uppercase tracking-tight">Novo Revendedor</DialogTitle>
+          <DialogTitle className="text-xl font-black uppercase tracking-tight">
+            {reseller ? "Editar Revendedor" : "Novo Revendedor"}
+          </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
