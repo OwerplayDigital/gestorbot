@@ -97,8 +97,6 @@ function Dashboard() {
   const currentMonthLabel = formatTz(nowBr, "MMMM/yy", { locale: ptBR })
     .replace(/^\w/, (c) => c.toUpperCase());
   
-  const selectedMonth = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), "MM");
-  const selectedYear = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), "yyyy");
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats-modern", activeTab],
