@@ -97,8 +97,8 @@ function FinanceiroHistory() {
   });
 
   const stats = useMemo(() => {
-    const entradas = transactions.reduce((acc, t) => acc + Number(t.entrada || 0), 0);
-    const saidas = transactions.reduce((acc, t) => acc + Number(t.custo || 0), 0);
+    const entradas = transactions.reduce((acc: number, t: any) => acc + Number(t.entrada || 0), 0);
+    const saidas = transactions.reduce((acc: number, t: any) => acc + Number(t.custo || 0), 0);
     const lucro = entradas - saidas;
     return { entradas, saidas, lucro };
   }, [transactions]);
