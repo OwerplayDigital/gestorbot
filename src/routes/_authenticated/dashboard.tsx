@@ -121,7 +121,7 @@ function Dashboard() {
         ] = await Promise.all([
           supabase.from("clientes").select("id, nome, vencimento, valor, status, servidores_ids"),
           supabase.from("transacoes").select("*, clientes(nome, servidores_ids), servidores_iptv(name)").order("created_at", { ascending: false }),
-          supabase.from("servidores_iptv").select("id, name"),
+          supabase.from("servidores_iptv").select("id, name, valor"),
         ]);
 
         const clients = clientsRes.data ?? [];
@@ -246,44 +246,45 @@ function Dashboard() {
           };
         });
 
-        // Agrupamento por servidor para o mês atual
-        const currentMonthTrans = transactions.filter(t => {
-          if (!t.data) return false;
-          const tDate = parseISO(t.data);
-          return format(tDate, "MM") === currentMonth && format(tDate, "yyyy") === currentYear;
-        });
-
+        // Agrupamento por servidor baseado estritamente na carteira de CLIENTES ATIVOS
+        const activeClientsData = clients.filter((c: any) => c.status === "ativo");
+        
         const serverMap = new Map();
-        currentMonthTrans.forEach((t: any) => {
-          const client = clients.find(c => c.id === t.cliente_id);
-          const clientServerIds = client?.servidores_ids;
+        activeClientsData.forEach((c: any) => {
+          const clientServerIds = c.servidores_ids;
           let name = null;
+          let serverCost = 0;
           
           if (clientServerIds && clientServerIds.length > 0) {
-            const fallbackServer = servers.find(s => s.id === clientServerIds[0]);
-            if (fallbackServer) {
-              name = fallbackServer.name;
+            const server = servers.find(s => s.id === clientServerIds[0]);
+            if (server) {
+              name = server.name;
+              serverCost = Number(server.valor ?? 0);
             }
           }
 
-          // Se ainda não tiver nome ou for 'Painel', redistribuímos entre os servidores oficiais
-          // Para este dashboard, se não houver servidor no cliente, ignoramos para não sujar o gráfico
-          // ou atribuímos a um servidor padrão se houver apenas um, mas aqui vamos apenas ignorar 'Painel'
+          // Ignoramos clientes sem servidor ou marcados como 'Painel' para focar nos oficiais
           if (!name || name === "Painel") return;
 
-          const current = serverMap.get(name) || { name, count: 0, faturamento: 0, custo: 0, lucro: 0, clientIds: new Set() };
-          if (t.cliente_id) current.clientIds.add(t.cliente_id);
-          current.faturamento += Number(t.entrada ?? 0);
-          current.custo += Number(t.custo ?? 0);
-          current.lucro += Number(t.lucro_liquido ?? 0);
+          const current = serverMap.get(name) || { 
+            name, 
+            count: 0, 
+            faturamento: 0, 
+            custo: 0, 
+            lucro: 0, 
+            clientIds: new Set() 
+          };
+          
+          current.clientIds.add(c.id);
+          current.count = current.clientIds.size;
+          current.faturamento += Number(c.valor ?? 0);
+          current.custo += serverCost;
+          current.lucro = current.faturamento - current.custo;
+          
           serverMap.set(name, current);
         });
 
         const serverStats = Array.from(serverMap.values())
-          .map(s => ({
-            ...s,
-            count: s.clientIds.size // Quantidade de clientes únicos
-          }))
           .sort((a, b) => b.faturamento - a.faturamento);
 
         return {
