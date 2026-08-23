@@ -107,8 +107,26 @@ function FinanceiroHistory() {
     const serverMap: Record<string, { name: string, clients: Set<string>, receita: number, custo: number }> = {};
     
     transactions.forEach(t => {
-      const serverId = t.serv_id || 'painel';
-      const serverName = t.servidores_iptv?.name || 'Painel/Sistema';
+      // 1. Tentar pegar o servidor diretamente da transação (serv_id)
+      // 2. Senão, tentar pegar o servidor ATUAL do cliente (via join clientes)
+      // 3. Senão, usar 'Painel/Sistema'
+      
+      let serverId = t.serv_id;
+      let serverName = t.servidores_iptv?.name;
+
+      if (!serverId && t.clientes) {
+        // Se a transação não tem serv_id, mas tem cliente, pega o servidor atual do cliente
+        const clientServer = t.clientes.servidores_iptv;
+        if (clientServer) {
+          serverId = clientServer.id || 'painel';
+          serverName = clientServer.name;
+        }
+      }
+
+      if (!serverId) {
+        serverId = 'painel';
+        serverName = 'Painel/Sistema';
+      }
       
       if (!serverMap[serverId]) {
         serverMap[serverId] = { name: serverName, clients: new Set(), receita: 0, custo: 0 };
