@@ -261,8 +261,8 @@ function Dashboard() {
 
         <div className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-black text-owerplay-cyan uppercase tracking-widest bg-owerplay-cyan/10 px-2 py-1 rounded-lg">Faturamento</span>
-            <Users size={18} className="text-owerplay-cyan" />
+            <span className="text-xs font-black text-primary uppercase tracking-widest bg-primary/10 px-2 py-1 rounded-lg">Faturamento</span>
+            <Users size={18} className="text-primary" />
           </div>
           <div className="text-3xl font-black text-foreground dark:text-white">{showValues ? formatBRL(stats?.entradas ?? 0) : "•••••"}</div>
           <div className="text-[10px] font-bold text-muted-foreground mt-2">{stats?.activeClients} clientes ativos pagantes</div>
@@ -282,7 +282,7 @@ function Dashboard() {
       <section className="space-y-6">
         <div className="flex items-center justify-between px-2">
           <h2 className="text-xl font-black tracking-tighter text-foreground uppercase">Extrato Recente</h2>
-          <Button variant="ghost" size="sm" className="text-xs font-bold text-primary hover:bg-primary/10">Ver Histórico</Button>
+          <Button variant="ghost" size="sm" className="text-xs font-bold text-primary hover:bg-primary/10 transition-colors">Ver Histórico</Button>
         </div>
 
         <div className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
@@ -304,7 +304,7 @@ function Dashboard() {
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="font-black text-foreground text-sm tracking-tight uppercase">{t.clientes?.nome || "Cliente"}</span>
-                        <span className="text-[10px] text-muted-foreground font-bold">{t.servidores_iptv?.name || "IPTV"}</span>
+                        <span className="text-[10px] text-muted-foreground font-bold">{t.servidores_iptv?.name || "N/A"}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -362,7 +362,7 @@ function Dashboard() {
                       {t.clientes?.nome || "Cliente"}
                     </span>
                     <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] px-1.5 py-0 font-black h-4 uppercase">
-                      {t.servidores_iptv?.name || "IPTV"}
+                      {t.servidores_iptv?.name || "N/A"}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
