@@ -11,16 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as PortalRouteImport } from './routes/portal'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
-import { Route as AuthenticatedServidoresRouteImport } from './routes/_authenticated/servidores'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as PagarIdRouteImport } from './routes/pagar.$id'
 import { Route as ApiPublicCronNotificationsRouteImport } from './routes/api/public/cron-notifications'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram-webhook'
-import { Route as PublicFaturaIdRouteImport } from './routes/public/fatura.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,11 +26,6 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PortalRoute = PortalRouteImport.update({
-  id: '/portal',
-  path: '/portal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
@@ -49,11 +41,6 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
 const AuthenticatedFinanceiroRoute = AuthenticatedFinanceiroRouteImport.update({
   id: '/financeiro',
   path: '/financeiro',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedServidoresRoute = AuthenticatedServidoresRouteImport.update({
-  id: '/servidores',
-  path: '/servidores',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -78,104 +65,79 @@ const ApiPublicTelegramWebhookRoute =
     path: '/api/public/telegram-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
-const PublicFaturaIdRoute = PublicFaturaIdRouteImport.update({
-  id: '/public/fatura/$id',
-  path: '/public/fatura/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/portal': typeof PortalRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
-  '/servidores': typeof AuthenticatedServidoresRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
-  '/public/fatura/$id': typeof PublicFaturaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/portal': typeof PortalRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
-  '/servidores': typeof AuthenticatedServidoresRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
-  '/public/fatura/$id': typeof PublicFaturaIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/portal': typeof PortalRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
-  '/_authenticated/servidores': typeof AuthenticatedServidoresRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
-  '/public/fatura/$id': typeof PublicFaturaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/portal'
     | '/clientes'
     | '/dashboard'
     | '/financeiro'
-    | '/servidores'
     | '/settings'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
     | '/api/public/telegram-webhook'
-    | '/public/fatura/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/portal'
     | '/clientes'
     | '/dashboard'
     | '/financeiro'
-    | '/servidores'
     | '/settings'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
     | '/api/public/telegram-webhook'
-    | '/public/fatura/$id'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/portal'
     | '/_authenticated/clientes'
     | '/_authenticated/dashboard'
     | '/_authenticated/financeiro'
-    | '/_authenticated/servidores'
     | '/_authenticated/settings'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
     | '/api/public/telegram-webhook'
-    | '/public/fatura/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  PortalRoute: typeof PortalRoute
   PagarIdRoute: typeof PagarIdRoute
   ApiPublicCronNotificationsRoute: typeof ApiPublicCronNotificationsRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
-  PublicFaturaIdRoute: typeof PublicFaturaIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,13 +154,6 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/portal': {
-      id: '/portal'
-      path: '/portal'
-      fullPath: '/portal'
-      preLoaderRoute: typeof PortalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/clientes': {
@@ -220,13 +175,6 @@ declare module '@tanstack/react-router' {
       path: '/financeiro'
       fullPath: '/financeiro'
       preLoaderRoute: typeof AuthenticatedFinanceiroRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/servidores': {
-      id: '/_authenticated/servidores'
-      path: '/servidores'
-      fullPath: '/servidores'
-      preLoaderRoute: typeof AuthenticatedServidoresRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -257,13 +205,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/public/fatura/$id': {
-      id: '/public/fatura/$id'
-      path: '/public/fatura/$id'
-      fullPath: '/public/fatura/$id'
-      preLoaderRoute: typeof PublicFaturaIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -271,7 +212,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
-  AuthenticatedServidoresRoute: typeof AuthenticatedServidoresRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
 }
 
@@ -279,7 +219,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
-  AuthenticatedServidoresRoute: AuthenticatedServidoresRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
 }
 
@@ -289,11 +228,9 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  PortalRoute: PortalRoute,
   PagarIdRoute: PagarIdRoute,
   ApiPublicCronNotificationsRoute: ApiPublicCronNotificationsRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
-  PublicFaturaIdRoute: PublicFaturaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

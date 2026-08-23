@@ -155,7 +155,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <NavLink to="/dashboard" icon={LayoutDashboard} onClick={onNavigate}>Dashboard</NavLink>
         <NavLink to="/financeiro" icon={DollarSign} badge="12" onClick={onNavigate}>Financeiro</NavLink>
         <NavLink to="/clientes" icon={AlertTriangle} badge="4" onClick={onNavigate}>Inadimplência</NavLink>
-        <NavLink to="/servidores" icon={Users} onClick={onNavigate}>Revendedores</NavLink>
+        
         <NavLink to="/settings" icon={Settings} onClick={onNavigate}>Configurações</NavLink>
       </nav>
 
@@ -186,9 +186,9 @@ function RootShell({ children }: { children: ReactNode }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const isCheckoutPage = router.state.location.pathname.startsWith('/pagar/');
   const isMaintenancePage = router.state.location.pathname === '/';
-  const isPortalPage = router.state.location.pathname.startsWith('/portal');
+  
 
-  if (isCheckoutPage || isMaintenancePage || isPortalPage) {
+  if (isCheckoutPage || isMaintenancePage) {
     return (
       <html lang="pt-BR" className="light">
         <head>
