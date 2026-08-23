@@ -153,6 +153,10 @@ function RootShell({ children }: { children: ReactNode }) {
                   <img src={gestorLogo.url} alt="Logo" className="h-7 w-7 rounded-md object-cover" />
                   <span className="inline-block">Owerplay Gestor</span>
                 </Link>
+                <div className="ml-auto flex items-center gap-2">
+                  <ThemeToggle />
+                </div>
+
               </div>
             </header>
           )}
