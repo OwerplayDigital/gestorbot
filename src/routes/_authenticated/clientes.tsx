@@ -63,13 +63,13 @@ function ClientesPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input 
           placeholder="Buscar por nome ou WhatsApp..." 
-          className="pl-10 rounded-2xl bg-card border-border"
+          className="pl-10 rounded-2xl bg-card dark:bg-[#131B2E] border-border dark:border-slate-800"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      <div className="bg-card border border-border rounded-2xl overflow-hidden">
+      <div className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-muted/10">
