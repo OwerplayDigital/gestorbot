@@ -166,9 +166,9 @@ function ServidoresPage() {
         />
       )}
 
-      {selectedReseller && (
+      {selectedReseller && isEditModalOpen && (
         <ResellerModal
-          key={`edit-${selectedReseller.id}-${isEditModalOpen}`}
+          key={`edit-${selectedReseller.id}`}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           onSuccess={() => refetch()}
