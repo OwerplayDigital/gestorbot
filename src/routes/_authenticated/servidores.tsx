@@ -12,7 +12,6 @@ function ServidoresPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-black tracking-tighter text-foreground uppercase">Revendedores</h1>
-          <p className="text-muted-foreground font-medium">Gerencie sua rede de parceiros e créditos.</p>
         </div>
         <Button className="rounded-xl font-bold gap-2">
           <Plus size={18} />
@@ -25,12 +24,6 @@ function ServidoresPage() {
           <Users className="h-8 w-8 text-primary" />
         </div>
         <h3 className="text-xl font-black tracking-tight text-foreground uppercase mb-2">Nenhum revendedor encontrado</h3>
-        <p className="text-muted-foreground font-medium max-w-sm mb-8">
-          Sua lista está vazia. Comece cadastrando seu primeiro parceiro para expandir sua operação.
-        </p>
-        <Button variant="outline" className="rounded-xl font-bold border-primary text-primary hover:bg-primary/10">
-          Cadastrar Primeiro Revendedor
-        </Button>
       </div>
     </div>
   );
