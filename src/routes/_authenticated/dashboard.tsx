@@ -495,32 +495,38 @@ function Dashboard() {
         </div>
       </section>
 
-      {/* Gráfico de Performance Financeira */}
-      <section className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl p-8 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+      <section className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h3 className="text-lg font-black tracking-tight text-foreground dark:text-white uppercase">Performance Mensal</h3>
-            <p className="text-xs text-muted-foreground font-medium">Comparativo de lucros e perdas do ano vigente.</p>
+            <h3 className="text-lg font-black tracking-tight text-foreground dark:text-white uppercase leading-none">Performance Mensal</h3>
+            <p className="text-[10px] text-muted-foreground font-bold mt-1 uppercase tracking-wider">Comparativo de lucros e perdas do ano vigente</p>
           </div>
-          <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-3 py-1 font-black text-[10px]">
-            ALTA DE +18% NO TRIMESTRE
-          </Badge>
+          <div className="bg-muted/30 border border-border/50 rounded-2xl px-3 py-2 text-right">
+            <span className="block text-[8px] font-black text-muted-foreground uppercase leading-none mb-1">VS Mês Anterior</span>
+            <span className="text-xs font-black text-emerald-500">+38.1%</span>
+          </div>
         </div>
         
         <div className="h-[220px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart 
               data={stats?.chartData ?? []} 
-              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
               barGap={2}
-              barCategoryGap="15%"
+              barCategoryGap="20%"
             >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border" opacity={0.5} />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border" opacity={0.3} />
+              <XAxis 
+                dataKey="name" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 9, fontWeight: 700, fill: '#64748b' }} 
+                dy={10}
+              />
               <YAxis 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
+                tick={{ fontSize: 9, fontWeight: 700, fill: '#64748b' }}
                 tickFormatter={(value) => `R$ ${value}`}
               />
               <Tooltip 
@@ -532,7 +538,7 @@ function Dashboard() {
                       <div className="bg-card dark:bg-[#090D16] border border-border dark:border-slate-800 rounded-xl p-3 shadow-2xl text-xs">
                         <p className="font-black text-foreground dark:text-white mb-2 pb-1 border-b border-border dark:border-slate-800">{data.name}</p>
                         <div className="space-y-1">
-                          <p className="text-[#3b82f6] flex justify-between gap-4 font-bold"><span>Entradas</span> <span>{formatBRL(data.entradas)}</span></p>
+                          <p className="text-[#0284c7] flex justify-between gap-4 font-bold"><span>Entradas</span> <span>{formatBRL(data.entradas)}</span></p>
                           <p className="text-[#ef4444] flex justify-between gap-4 font-bold"><span>Saídas</span> <span>{formatBRL(data.saidas)}</span></p>
                           <p className="text-[#22c55e] flex justify-between gap-4 font-bold border-t border-border dark:border-slate-800 pt-1 mt-1"><span>Lucro</span> <span>{formatBRL(data.lucro)}</span></p>
                         </div>
@@ -542,8 +548,14 @@ function Dashboard() {
                   return null;
                 }}
               />
-              <Legend verticalAlign="top" align="right" height={36} iconType="circle" />
-              <Bar name="Entradas" dataKey="entradas" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Legend 
+                verticalAlign="top" 
+                align="center" 
+                height={40} 
+                iconType="rect" 
+                formatter={(value) => <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-4">{value}</span>}
+              />
+              <Bar name="Entradas" dataKey="entradas" fill="#0284c7" radius={[4, 4, 0, 0]} />
               <Bar name="Saídas" dataKey="saidas" fill="#ef4444" radius={[4, 4, 0, 0]} />
               <Bar name="Lucro" dataKey="lucro" fill="#22c55e" radius={[4, 4, 0, 0]} />
             </BarChart>
