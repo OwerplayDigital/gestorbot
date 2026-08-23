@@ -115,11 +115,15 @@ function FinanceiroHistory() {
       let serverName = t.servidores_iptv?.name;
 
       if (!serverId && t.clientes) {
-        // Se a transação não tem serv_id, mas tem cliente, pega o servidor atual do cliente
-        const clientServer = t.clientes.servidores_iptv;
-        if (clientServer) {
-          serverId = clientServer.id || 'painel';
-          serverName = clientServer.name;
+        // Se a transação não tem serv_id, mas tem cliente, tenta pegar o servidor do cliente
+        const clientServers = t.clientes.servidores_iptv;
+        if (clientServers) {
+          // Se for um objeto único ou o primeiro de uma lista (dependendo do schema servidores_ids)
+          const srv = Array.isArray(clientServers) ? clientServers[0] : clientServers;
+          if (srv) {
+            serverId = srv.id || 'painel';
+            serverName = srv.name;
+          }
         }
       }
 
