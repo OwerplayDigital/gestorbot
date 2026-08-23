@@ -127,12 +127,12 @@ function FinanceiroHistory() {
       }
       
       if (!serverMap[serverId]) {
-        serverMap[serverId] = { name: serverName, clients: new Set(), receita: 0, custo: 0 };
+        serverMap[serverId] = { name: serverName!, clients: new Set(), receita: 0, custo: 0 };
       }
       
-      if (t.cliente_id) serverMap[serverId].clients.add(t.cliente_id);
-      serverMap[serverId].receita += Number(t.entrada || 0);
-      serverMap[serverId].custo += Number(t.custo || 0);
+      if (t.cliente_id) serverMap[serverId]!.clients.add(t.cliente_id);
+      serverMap[serverId]!.receita += Number(t.entrada || 0);
+      serverMap[serverId]!.custo += Number(t.custo || 0);
     });
 
     return Object.values(serverMap).sort((a, b) => b.receita - a.receita);
