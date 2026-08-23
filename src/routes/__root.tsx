@@ -16,7 +16,8 @@ import {
   Users, 
   LogOut,
   Settings,
-  Circle
+  Circle,
+  MessageSquare
 } from "lucide-react";
 import gestorLogo from "@/assets/gestor-logo.png.asset.json";
 
@@ -155,6 +156,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <NavLink to="/dashboard" icon={LayoutDashboard} onClick={onNavigate}>Dashboard</NavLink>
         <NavLink to="/financeiro" icon={DollarSign} badge="12" onClick={onNavigate}>Financeiro</NavLink>
         <NavLink to="/clientes" icon={AlertTriangle} badge="4" onClick={onNavigate}>Inadimplência</NavLink>
+        <NavLink to="/mensagens" icon={MessageSquare} onClick={onNavigate}>Mensagens</NavLink>
         {/* Removido Configurações conforme solicitado */}
       </nav>
 
