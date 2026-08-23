@@ -282,7 +282,7 @@ function Dashboard() {
             <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">Saídas</span>
             <div className="text-sm font-black truncate">{showValues ? formatBRL(stats?.saidas ?? 0) : "•••••"}</div>
           </div>
-          <div className="rounded-2xl bg-emerald-500 p-3 text-white shadow-lg shadow-emerald-500/20">
+          <div className="rounded-2xl bg-emerald-500 p-3 text-white shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-400/30">
             <span className="text-[10px] font-bold uppercase tracking-wider block opacity-80">Lucro</span>
             <div className="text-sm font-black truncate">{showValues ? formatBRL(stats?.lucro ?? 0) : "•••••"}</div>
           </div>
