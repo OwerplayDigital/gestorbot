@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Edit2, Info } from "lucide-react";
 import { useState } from "react";
@@ -30,8 +30,9 @@ function Mensagens() {
   const { data: templates, isLoading } = useQuery({
     queryKey: ["templates_whatsapp"],
     queryFn: async () => {
+      // @ts-ignore - Ignore type error if table not yet in generated types
       const { data, error } = await supabase
-        .from("templates_whatsapp")
+        .from("templates_whatsapp" as any)
         .select("*")
         .order("nome");
       if (error) throw error;
@@ -41,8 +42,9 @@ function Mensagens() {
 
   const updateMutation = useMutation({
     mutationFn: async (updated: any) => {
+      // @ts-ignore
       const { error } = await supabase
-        .from("templates_whatsapp")
+        .from("templates_whatsapp" as any)
         .update({
           nome: updated.nome,
           mensagem: updated.mensagem,
@@ -113,7 +115,7 @@ function Mensagens() {
 
       {/* Lista de Templates */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {templates?.map((template) => (
+        {templates?.map((template: any) => (
           <Card key={template.id} className="bg-card border-border rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-lg font-bold truncate">{template.nome}</CardTitle>
@@ -173,7 +175,7 @@ function Mensagens() {
           <DialogFooter className="gap-2 sm:gap-0">
             <Button 
               variant="outline" 
-              onClick={() => setIsSheetOpen(false)}
+              onClick={() => setIsModalOpen(false)}
               className="rounded-xl"
             >
               Cancelar
