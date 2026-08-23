@@ -189,14 +189,16 @@ function Dashboard() {
 
         const monthsLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
         const chartData = monthsLabels.map((m, idx) => {
-          const monthStr = (idx + 1).toString().padStart(2, '0');
+          const monthIndex = idx + 1;
           const monthTrans = transactions.filter(t => {
             if (!t.data) return false;
             const d = parseISO(t.data);
-            return format(d, "MM") === monthStr && format(d, "yyyy") === currentYear;
+            return d.getFullYear() === Number(currentYear) && (d.getMonth() + 1) === monthIndex;
           });
+          
           const ent = monthTrans.reduce((a, b) => a + Number(b.entrada ?? 0), 0);
           const sai = monthTrans.reduce((a, b) => a + Number(b.custo ?? 0), 0);
+          
           return {
             name: m,
             entradas: ent,
