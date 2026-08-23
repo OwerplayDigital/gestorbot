@@ -515,7 +515,6 @@ function Dashboard() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h3 className="text-lg font-black tracking-tight text-foreground dark:text-white uppercase leading-none">Performance Mensal</h3>
-            <p className="text-[10px] text-muted-foreground font-bold mt-1 uppercase tracking-wider">Comparativo de lucros e perdas do ano vigente</p>
           </div>
           <div className="bg-muted/30 border border-border/50 rounded-2xl px-3 py-2 text-right">
             <span className="block text-[8px] font-black text-muted-foreground uppercase leading-none mb-1">VS Mês Anterior</span>
