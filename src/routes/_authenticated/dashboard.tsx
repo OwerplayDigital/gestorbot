@@ -142,19 +142,27 @@ function Dashboard() {
         const activeClients = clients.filter((c: any) => c.status === "ativo").length;
         const totalVencidos = vencidos.length;
 
-        const currentMonthTransactions = transactions.filter(t => {
+        const filteredTransactions = transactions.filter(t => {
           if (!t.data) return false;
           const tDate = parseISO(t.data);
-          return format(tDate, "MM") === selectedMonth && format(tDate, "yyyy") === selectedYear;
+          
+          if (activeTab === "hoje") {
+            return format(tDate, "yyyy-MM-dd") === todayStr;
+          } else if (activeTab === "mes") {
+            return format(tDate, "MM") === currentMonth && format(tDate, "yyyy") === currentYear;
+          } else if (activeTab === "ano") {
+            return format(tDate, "yyyy") === currentYear;
+          }
+          return true;
         });
 
-        const entradas = currentMonthTransactions
+        const entradas = filteredTransactions
           .reduce((acc, t) => acc + Number(t.entrada ?? 0), 0);
         
-        const saidas = currentMonthTransactions
+        const saidas = filteredTransactions
           .reduce((acc, t) => acc + Number(t.custo ?? 0), 0);
 
-        const lucro = currentMonthTransactions
+        const lucro = filteredTransactions
           .reduce((acc, t) => acc + Number(t.lucro_liquido ?? 0), 0);
 
         const monthsLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
