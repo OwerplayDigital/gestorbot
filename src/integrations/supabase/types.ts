@@ -222,6 +222,62 @@ export type Database = {
           },
         ]
       }
+      revendedores: {
+        Row: {
+          created_at: string | null
+          custo_por_credito: number | null
+          id: string
+          nome: string
+          painel_login: string | null
+          painel_senha: string | null
+          preco_venda_por_credito: number | null
+          saldo_creditos: number | null
+          servidor_principal_id: string | null
+          updated_at: string | null
+          user_id: string
+          vencimento_painel: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          custo_por_credito?: number | null
+          id?: string
+          nome: string
+          painel_login?: string | null
+          painel_senha?: string | null
+          preco_venda_por_credito?: number | null
+          saldo_creditos?: number | null
+          servidor_principal_id?: string | null
+          updated_at?: string | null
+          user_id: string
+          vencimento_painel?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          custo_por_credito?: number | null
+          id?: string
+          nome?: string
+          painel_login?: string | null
+          painel_senha?: string | null
+          preco_venda_por_credito?: number | null
+          saldo_creditos?: number | null
+          servidor_principal_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+          vencimento_painel?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revendedores_servidor_principal_id_fkey"
+            columns: ["servidor_principal_id"]
+            isOneToOne: false
+            referencedRelation: "servidores_iptv"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       servidores_iptv: {
         Row: {
           active: boolean | null
