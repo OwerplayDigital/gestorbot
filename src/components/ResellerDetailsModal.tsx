@@ -139,7 +139,7 @@ export function ResellerDetailsModal({
               </div>
               <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Custo Total (mês atual)</span>
-                <span className="text-xl font-black text-rose-600">R$ {stats.totalCusto.toFixed(2)}</span>
+                <span className="text-xl font-black text-slate-900">{stats.totalCusto.toFixed(2).replace('.', ',')}</span>
               </div>
             </div>
           </DialogHeader>
@@ -163,7 +163,7 @@ export function ResellerDetailsModal({
                       <div className="flex flex-col">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{monthYear}</h4>
                         <span className="text-[9px] font-bold text-slate-400 uppercase">
-                          {group.totalCredits} créditos · R$ {group.totalCusto.toFixed(2)}
+                          {group.totalCredits} créditos · {group.totalCusto.toFixed(2).replace('.', ',')}
                         </span>
                       </div>
                       <Button 
@@ -177,32 +177,32 @@ export function ResellerDetailsModal({
                     </div>
                     <div className="space-y-2">
                       {group.items.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between bg-white border border-slate-100 p-3 rounded-xl hover:bg-slate-50 transition-colors">
-                          <div className="grid grid-cols-4 gap-4 flex-1">
-                            <div>
-                              <span className="text-[9px] font-black text-slate-400 uppercase block">Data</span>
+                        <div key={item.id} className="flex items-center justify-between bg-white border border-slate-100 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors">
+                          <div className="flex items-center gap-6 flex-1">
+                            <div className="min-w-[80px]">
+                              <span className="text-[9px] font-black text-slate-400 uppercase block leading-tight">Data</span>
                               <span className="text-xs font-bold text-slate-700">{new Date(item.data + "T00:00:00").toLocaleDateString('pt-BR')}</span>
                             </div>
-                            <div>
-                              <span className="text-[9px] font-black text-slate-400 uppercase block">Créditos</span>
+                            <div className="min-w-[70px]">
+                              <span className="text-[9px] font-black text-slate-400 uppercase block leading-tight">Créditos</span>
                               <span className="text-xs font-black text-slate-900">{item.quantidade_creditos}</span>
                             </div>
-                            <div>
-                              <span className="text-[9px] font-black text-slate-400 uppercase block">Custo</span>
-                              <span className="text-xs font-bold text-rose-600">R$ {Number(item.custo).toFixed(2)}</span>
+                            <div className="min-w-[70px]">
+                              <span className="text-[9px] font-black text-slate-400 uppercase block leading-tight">Custo</span>
+                              <span className="text-xs font-black text-slate-900">{Number(item.custo).toFixed(2).replace('.', ',')}</span>
                             </div>
-                            <div>
-                              <span className="text-[9px] font-black text-slate-400 uppercase block">Servidor</span>
-                              <span className="text-xs font-bold text-slate-500 uppercase truncate">{item.servidor || "-"}</span>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[9px] font-black text-slate-400 uppercase block leading-tight">Servidor</span>
+                              <span className="text-xs font-bold text-slate-500 uppercase truncate block">{item.servidor || "-"}</span>
                             </div>
                           </div>
                           <Button 
                             variant="ghost" 
                             size="icon" 
                             onClick={() => handleDeleteCredit(item.id)}
-                            className="h-8 w-8 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg ml-2"
+                            className="h-7 w-7 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg ml-2"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={12} />
                           </Button>
                         </div>
                       ))}
