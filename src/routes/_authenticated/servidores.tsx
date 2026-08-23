@@ -166,7 +166,14 @@ function ServidoresPage() {
           reseller={selectedReseller}
         />
       )}
-
+      {selectedReseller && (
+        <ResellerModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={() => refetch()}
+          reseller={selectedReseller}
+        />
+      )}
     </div>
   );
 }

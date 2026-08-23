@@ -30,6 +30,11 @@ export function ResellerModal({ isOpen, onClose, onSuccess, reseller }: Reseller
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ResellerFormValues>({
+    defaultValues: {
+      nome: "",
+      whatsapp: "",
+      servidor: "",
+    },
     values: reseller ? {
       nome: reseller.nome || "",
       whatsapp: reseller.whatsapp || "",
