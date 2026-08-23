@@ -17,7 +17,8 @@ import {
   LogOut,
   Settings,
   Circle,
-  MessageSquare
+  MessageSquare,
+  Clock
 } from "lucide-react";
 import gestorLogo from "@/assets/gestor-logo.png.asset.json";
 
