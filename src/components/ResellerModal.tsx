@@ -70,14 +70,14 @@ export function ResellerModal({ isOpen, onClose, onSuccess }: ResellerModalProps
       if (!user) throw new Error("Usuário não autenticado");
 
       const { error } = await supabase
-        .from("revendedores")
+        .from("revendedores" as any)
         .insert({
           ...values,
           user_id: user.id,
           saldo_creditos: Number(values.saldo_creditos),
           custo_por_credito: Number(values.custo_por_credito),
           preco_venda_por_credito: Number(values.preco_venda_por_credito),
-        });
+        } as any);
 
       if (error) throw error;
 
