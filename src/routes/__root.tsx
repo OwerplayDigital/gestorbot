@@ -153,7 +153,7 @@ function SidebarContent() {
         <NavLink to="/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
         <NavLink to="/financeiro" icon={DollarSign} badge="12">Financeiro</NavLink>
         <NavLink to="/clientes" icon={AlertTriangle} badge="4">Inadimplência</NavLink>
-        <NavLink to="/servidores" icon={Users} badge="8">Revendedores</NavLink>
+        <NavLink to="/servidores" icon={Users}>Revendedores</NavLink>
         <NavLink to="/settings" icon={Settings}>Configurações</NavLink>
       </nav>
 
