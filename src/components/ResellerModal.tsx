@@ -31,15 +31,10 @@ export function ResellerModal({ isOpen, onClose, onSuccess, reseller }: Reseller
   
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ResellerFormValues>({
     defaultValues: {
-      nome: "",
-      whatsapp: "",
-      servidor: "",
-    },
-    values: reseller ? {
-      nome: reseller.nome || "",
-      whatsapp: reseller.whatsapp || "",
-      servidor: reseller.servidor || "",
-    } : undefined
+      nome: reseller?.nome || "",
+      whatsapp: reseller?.whatsapp || "",
+      servidor: reseller?.servidor || "",
+    }
   });
 
 
