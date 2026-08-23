@@ -107,6 +107,7 @@ function Dashboard() {
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats-modern", activeTab],
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
     queryFn: async () => {
       try {
         const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
