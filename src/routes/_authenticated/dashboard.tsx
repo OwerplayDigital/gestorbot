@@ -183,7 +183,7 @@ function Dashboard() {
           };
         });
 
-        const transactionsWithResolvedServers = currentMonthTransactions.map((t: any) => {
+        const transactionsWithResolvedServers = filteredTransactions.map((t: any) => {
           const directServerName = t.servidores_iptv?.name;
           const clientServerId = t.clientes?.servidores_ids?.[0];
           const fallbackServerName = clientServerId ? servers.find(s => s.id === clientServerId)?.name : null;
