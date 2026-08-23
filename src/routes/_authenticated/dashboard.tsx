@@ -12,7 +12,8 @@ import {
   History,
   Activity,
   Calendar,
-  Trash2
+  Trash2,
+  RefreshCcw
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toZonedTime, format as formatTz } from "date-fns-tz";
@@ -277,47 +278,54 @@ function Dashboard() {
         </div>
       </section>
 
-      {/* Seção de Revendedores */}
+      {/* Seção de Extrato Recente de Renovações */}
       <section className="space-y-6">
         <div className="flex items-center justify-between px-2">
-          <h2 className="text-xl font-black tracking-tighter text-foreground uppercase">Revendedores Parceiros</h2>
-          <Button variant="ghost" size="sm" className="text-xs font-bold text-primary hover:bg-primary/10">Ver Todos</Button>
+          <h2 className="text-xl font-black tracking-tighter text-foreground uppercase">Extrato Recente</h2>
+          <Button variant="ghost" size="sm" className="text-xs font-bold text-primary hover:bg-primary/10">Ver Histórico</Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            { id: 1, nome: "João Silva", servidor: "P2Braz", creditos: 150, investido: 450, color: "bg-blue-500" },
-            { id: 2, nome: "Maria Santos", servidor: "Goat", creditos: 85, investido: 255, color: "bg-purple-500" },
-            { id: 3, nome: "Pedro Oliveira", servidor: "Uniplay", creditos: 200, investido: 600, color: "bg-emerald-500" },
-            { id: 4, nome: "Ana Costa", servidor: "P2Braz", creditos: 120, investido: 360, color: "bg-amber-500" }
-          ].map((rev) => (
-            <div key={rev.id} className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl p-5 hover:bg-card transition-colors group shadow-sm">
-              <div className="flex items-center gap-4 mb-5">
-                <div className={`h-12 w-12 rounded-xl flex items-center justify-center text-white font-black text-lg ${rev.color} shadow-lg`}>
-                  {rev.nome.charAt(0)}
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-black text-foreground dark:text-white tracking-tight">{rev.nome}</span>
-                  <Badge variant="secondary" className="w-fit text-[10px] h-5 font-bold bg-white/5 border-white/10">{rev.servidor}</Badge>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Créditos</span>
-                  <span className="text-sm font-black text-foreground dark:text-white">{rev.creditos} un.</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Investido</span>
-                  <span className="text-sm font-black text-emerald-500">{formatBRL(rev.investido)}</span>
-                </div>
-              </div>
-
-              <Button className="w-full bg-secondary dark:bg-[#1e293b] hover:bg-secondary/80 dark:hover:bg-[#2e3b4e] text-foreground dark:text-white font-bold rounded-xl h-10 border border-border dark:border-slate-700 transition-all text-xs shadow-sm">
-                Copiar Link
-              </Button>
-            </div>
-          ))}
+        <div className="bg-card dark:bg-[#131B2E] border border-border dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-muted/50 border-b border-border/50">
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Cliente</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Data</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Valor</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {stats?.recentTransactions?.slice(0, 5).map((t: any) => (
+                  <tr key={t.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="font-black text-foreground text-sm tracking-tight uppercase">{t.clientes?.nome || "Cliente"}</span>
+                        <span className="text-[10px] text-muted-foreground font-bold">{t.servidores_iptv?.name || "IPTV"}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">{t.data ? format(parseISO(t.data), "dd/MM/yyyy") : "--/--/--"}</span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <span className="text-sm font-black text-emerald-500">{formatBRL(t.entrada)}</span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase">Renovado</Badge>
+                    </td>
+                  </tr>
+                ))}
+                {(!stats?.recentTransactions || stats.recentTransactions.length === 0) && (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground font-medium text-sm">
+                      Nenhuma renovação registrada recentemente.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
