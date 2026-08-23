@@ -88,7 +88,11 @@ export function ResellerDetailsModal({
   const handleWhatsApp = () => {
     if (!reseller.whatsapp) return;
     const phone = reseller.whatsapp.replace(/\D/g, "");
-    window.open(`https://wa.me/55${phone}`, "_blank");
+    const portalUrl = `${window.location.origin}/portal?id=${reseller.id}`;
+    const message = encodeURIComponent(
+      `Olá, ${reseller.nome}! 👋\n\nAqui está o seu extrato atualizado da Gestor Pro. Você pode consultar seus créditos e histórico de consumo de forma prática pelo link abaixo:\n\n${portalUrl}`
+    );
+    window.open(`https://wa.me/55${phone}?text=${message}`, "_blank");
   };
 
   const handleDeleteCredit = async (id: string) => {
