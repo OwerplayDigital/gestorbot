@@ -19,7 +19,7 @@ function PortalPage() {
       const { data, error } = await supabase
         .from("revendedores")
         .select("*")
-        .eq("id", resellerId)
+        .eq("id", resellerId!)
         .single();
       if (error) throw error;
       return data;
@@ -33,7 +33,7 @@ function PortalPage() {
       const { data, error } = await supabase
         .from("reseller_credits" as any)
         .select("*")
-        .eq("reseller_id", resellerId)
+        .eq("reseller_id", resellerId!)
         .order("data", { ascending: false });
       if (error) throw error;
       return data || [];
