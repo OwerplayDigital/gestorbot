@@ -355,52 +355,61 @@ function Dashboard() {
           {/* Lista Compacta para Mobile */}
           <div className="md:hidden divide-y divide-border/50">
             {stats?.recentTransactions?.slice(0, 5).map((t: any) => (
-              <div key={t.id} className="p-4 flex flex-col gap-3 hover:bg-muted/30 transition-colors">
+              <div key={t.id} className="p-3 flex flex-col gap-1.5 hover:bg-muted/30 transition-colors">
                 <div className="flex justify-between items-start">
-                  <div className="flex flex-col">
-                    <span className="font-black text-foreground text-sm tracking-tight uppercase">{t.clientes?.nome || "Cliente"}</span>
-                    <span className="text-[10px] text-muted-foreground font-bold">{t.servidores_iptv?.name || "IPTV"}</span>
+                  <div className="flex items-center gap-2 flex-wrap flex-1 mr-2">
+                    <span className="font-black text-foreground text-sm tracking-tight uppercase leading-tight">
+                      {t.clientes?.nome || "Cliente"}
+                    </span>
+                    <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] px-1.5 py-0 font-black h-4 uppercase">
+                      {t.servidores_iptv?.name || "IPTV"}
+                    </Badge>
                   </div>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:bg-rose-500/10">
-                        <Trash2 size={14} />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-[90vw] rounded-2xl">
-                      <DialogHeader>
-                        <DialogTitle className="text-center uppercase font-black tracking-tighter">Confirmar Exclusão</DialogTitle>
-                      </DialogHeader>
-                      <p className="text-center text-sm text-muted-foreground font-medium py-4">Deseja realmente excluir este registro de transação?</p>
-                      <div className="flex gap-2">
-                        <DialogTrigger asChild>
-                          <Button variant="outline" className="flex-1 rounded-xl font-bold">Cancelar</Button>
-                        </DialogTrigger>
-                        <Button variant="destructive" className="flex-1 rounded-xl font-black uppercase" onClick={async () => {
-                          const { error } = await supabase.from('transacoes').delete().eq('id', t.id);
-                          if (error) {
-                            toast.error("Erro ao excluir registro");
-                          } else {
-                            toast.success("Registro removido");
-                          }
-                        }}>Excluir</Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] text-muted-foreground font-black uppercase">
+                      {t.data ? format(parseISO(t.data), "dd/MM/yyyy") : "-"}
+                    </span>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors">
+                          <Trash2 size={12} />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-[90vw] rounded-2xl">
+                        <DialogHeader>
+                          <DialogTitle className="text-center uppercase font-black tracking-tighter">Confirmar Exclusão</DialogTitle>
+                        </DialogHeader>
+                        <p className="text-center text-sm text-muted-foreground font-medium py-4">Deseja realmente excluir este registro de transação?</p>
+                        <div className="flex gap-2">
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="flex-1 rounded-xl font-bold">Cancelar</Button>
+                          </DialogTrigger>
+                          <Button variant="destructive" className="flex-1 rounded-xl font-black uppercase" onClick={async () => {
+                            const { error } = await supabase.from('transacoes').delete().eq('id', t.id);
+                            if (error) {
+                              toast.error("Erro ao excluir registro");
+                            } else {
+                              toast.success("Registro removido");
+                            }
+                          }}>Excluir</Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-2 bg-muted/20 p-2 rounded-xl border border-border/50">
                   <div className="flex flex-col">
-                    <span className="text-[8px] font-black text-muted-foreground uppercase">Plano</span>
-                    <span className="text-xs font-black text-foreground">{formatBRL(t.entrada)}</span>
+                    <span className="text-[8px] font-black text-muted-foreground uppercase leading-none mb-0.5">Plano</span>
+                    <span className="text-xs font-black text-foreground leading-tight">{formatBRL(t.entrada)}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[8px] font-black text-muted-foreground uppercase">Custo</span>
-                    <span className="text-xs font-black text-rose-500">{formatBRL(t.custo)}</span>
+                    <span className="text-[8px] font-black text-muted-foreground uppercase leading-none mb-0.5">Custo</span>
+                    <span className="text-xs font-black text-rose-500 leading-tight">{formatBRL(t.custo)}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[8px] font-black text-muted-foreground uppercase">Lucro</span>
-                    <span className="text-xs font-black text-emerald-500">{formatBRL(t.lucro_liquido)}</span>
+                    <span className="text-[8px] font-black text-muted-foreground uppercase leading-none mb-0.5">Lucro</span>
+                    <span className="text-xs font-black text-emerald-500 leading-tight">{formatBRL(t.lucro_liquido)}</span>
                   </div>
                 </div>
               </div>
