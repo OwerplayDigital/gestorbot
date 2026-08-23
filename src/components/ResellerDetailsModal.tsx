@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { Trash2, Plus, ArrowLeft, History, Package, Phone } from "lucide-react";
+import { Trash2, Plus, ArrowLeft, History, Package, Phone, Copy, ExternalLink } from "lucide-react";
 import { ResellerReloadModal } from "./ResellerReloadModal";
 
 interface ResellerDetailsModalProps {
@@ -144,6 +144,32 @@ export function ResellerDetailsModal({
                 <span className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5 sm:mb-1">Custo (mês)</span>
                 <span className="text-lg sm:text-xl font-black text-slate-900">{stats.totalCusto.toFixed(2).replace('.', ',')}</span>
               </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 mt-4">
+              <Button 
+                variant="outline"
+                size="sm"
+                className="flex-1 h-9 rounded-xl font-black uppercase text-[10px] tracking-widest gap-2 border-slate-200 text-slate-600 hover:bg-slate-50"
+                onClick={() => {
+                  const url = `${window.location.origin}/public/fatura/${reseller.id}`;
+                  navigator.clipboard.writeText(url);
+                  toast.success("Link da fatura copiado!");
+                }}
+              >
+                <Copy size={12} />
+                Copiar Link da Fatura
+              </Button>
+              <Button 
+                variant="outline"
+                size="sm"
+                className="flex-1 h-9 rounded-xl font-black uppercase text-[10px] tracking-widest gap-2 border-slate-200 text-slate-600 hover:bg-slate-50"
+                onClick={() => {
+                  window.open(`/public/fatura/${reseller.id}`, "_blank");
+                }}
+              >
+                <ExternalLink size={12} />
+                Abrir Fatura
+              </Button>
             </div>
           </DialogHeader>
 
