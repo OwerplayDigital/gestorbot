@@ -94,7 +94,7 @@ function Dashboard() {
   const [showValues, setShowValues] = useState(true);
   const [activeTab, setActiveTab] = useState("mes");
   const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
-  const currentMonthLabel = formatTz(nowBr, "MMMM/yy", { locale: require('date-fns/locale/pt-BR') })
+  const currentMonthLabel = formatTz(nowBr, "MMMM/yy", { locale: ptBR })
     .replace(/^\w/, (c) => c.toUpperCase());
   
   const selectedMonth = formatTz(toZonedTime(new Date(), 'America/Sao_Paulo'), "MM");
