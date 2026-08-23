@@ -8,8 +8,6 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Menu, ChartBar } from "lucide-react";
 import gestorLogo from "@/assets/gestor-logo.png.asset.json";
 
@@ -119,7 +117,7 @@ function RootShell({ children }: { children: ReactNode }) {
   const isMaintenancePage = router.state.location.pathname === '/';
 
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className="dark">
       <head>
         <HeadContent />
       </head>
@@ -153,10 +151,6 @@ function RootShell({ children }: { children: ReactNode }) {
                   <img src={gestorLogo.url} alt="Logo" className="h-7 w-7 rounded-md object-cover" />
                   <span className="inline-block">Owerplay Gestor</span>
                 </Link>
-                <div className="ml-auto flex items-center gap-2">
-                  <ThemeToggle />
-                </div>
-
               </div>
             </header>
           )}
@@ -177,12 +171,9 @@ function RootComponent() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="dark" storageKey="owerplay-theme">
-          <Outlet />
-          <Toaster position="top-center" richColors />
-        </ThemeProvider>
+        <Outlet />
+        <Toaster position="top-center" richColors />
       </QueryClientProvider>
     </ErrorBoundary>
   );
-
 }
