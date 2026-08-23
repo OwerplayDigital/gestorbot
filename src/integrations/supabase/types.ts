@@ -222,6 +222,47 @@ export type Database = {
           },
         ]
       }
+      reseller_credits: {
+        Row: {
+          created_at: string | null
+          custo: number
+          data: string | null
+          id: string
+          quantidade_creditos: number
+          reseller_id: string
+          servidor: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          custo: number
+          data?: string | null
+          id?: string
+          quantidade_creditos: number
+          reseller_id: string
+          servidor?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          custo?: number
+          data?: string | null
+          id?: string
+          quantidade_creditos?: number
+          reseller_id?: string
+          servidor?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_credits_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "revendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revendedores: {
         Row: {
           created_at: string | null
