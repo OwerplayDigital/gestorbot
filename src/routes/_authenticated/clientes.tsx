@@ -5,9 +5,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Users, Search, ChevronLeft, ChevronRight, MessageCircle, Send, Pencil, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { Calendar } from '@/components/ui/calendar';
+import { Users, Search, ChevronLeft, ChevronRight, MessageCircle, Send, Pencil, ChevronDown, CalendarDays } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { toZonedTime } from 'date-fns-tz';
 import { toast } from 'sonner';
 
@@ -23,6 +25,7 @@ function ClientesPage() {
   const [isMessageOpen, setIsMessageOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isServerPickerOpen, setIsServerPickerOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [plans, setPlans] = useState<Option[]>([]);
   const [servers, setServers] = useState<Option[]>([]);
   const [editForm, setEditForm] = useState({ nome: '', whatsapp: '', vencimento: '', plano_id: '', desconto: '', servidores_ids: [] as string[] });
@@ -46,6 +49,13 @@ function ClientesPage() {
   });
 
   const totalPages = Math.ceil((data?.totalCount || 0) / itemsPerPage);
+
+  useEffect(() => {
+    if (!isEditOpen) {
+      setIsDatePickerOpen(false);
+      setIsServerPickerOpen(false);
+    }
+  }, [isEditOpen]);
 
   const openMessageModal = (client: Client) => { if (!client.whatsapp) { toast.error('Cliente sem WhatsApp cadastrado.'); return; } setSelectedClient(client); setIsMessageOpen(true); };
 
@@ -88,9 +98,11 @@ function ClientesPage() {
 
       <Dialog open={isMessageOpen} onOpenChange={setIsMessageOpen}><DialogContent className="max-w-md rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">Selecionar Mensagem</DialogTitle><DialogDescription>Escolha um template para enviar para {selectedClient?.nome}</DialogDescription></DialogHeader><div className="grid gap-3 py-4">{selectedClient?.templates?.length ? selectedClient.templates.map((template: any) => <Button key={template.id} variant="outline" onClick={() => handleSendMessage(template)} className="justify-between h-14 px-4 rounded-xl"><span className="font-bold uppercase text-sm tracking-wide">{template.nome}</span><Send size={16} /></Button>) : <p className="text-center py-4 text-muted-foreground text-sm">Nenhum template cadastrado em 'Mensagens'.</p>}</div></DialogContent></Dialog>
 
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}><DialogContent className="max-w-md rounded-2xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">Editar Cliente</DialogTitle><DialogDescription>Altere os dados do cadastro sem sair do Gestor.</DialogDescription></DialogHeader><div className="space-y-4 py-3"><label className="block text-sm font-medium">Nome<Input className="mt-1" value={editForm.nome} onChange={e => setEditForm(f => ({ ...f, nome: e.target.value }))} /></label><label className="block text-sm font-medium">WhatsApp<Input className="mt-1" inputMode="tel" value={editForm.whatsapp} onChange={e => setEditForm(f => ({ ...f, whatsapp: e.target.value }))} /></label><label className="block text-sm font-medium">Vencimento<Input className="mt-1" type="date" value={editForm.vencimento} onChange={e => setEditForm(f => ({ ...f, vencimento: e.target.value }))} /></label><label className="block text-sm font-medium">Plano<select className="mt-1 w-full h-10 rounded-md border bg-background px-3 text-sm" value={editForm.plano_id} onChange={e => setEditForm(f => ({ ...f, plano_id: e.target.value }))}><option value="">Selecione</option>{plans.map(p => <option key={p.id} value={p.id}>{p.name} — {money(p.price || 0)}</option>)}</select></label><label className="block text-sm font-medium">Desconto (R$)<Input className="mt-1" inputMode="decimal" value={editForm.desconto} onChange={e => setEditForm(f => ({ ...f, desconto: e.target.value }))} /></label><div><p className="text-sm font-medium mb-2">Servidor</p><Button type="button" variant="outline" onClick={() => setIsServerPickerOpen(true)} className="w-full h-11 justify-between rounded-xl font-normal"><span className="min-w-0 truncate text-left">{editForm.servidores_ids.length ? editForm.servidores_ids.map(id => servers.find(s => s.id === id)?.name).filter(Boolean).join(', ') : 'Selecione o servidor'}</span><ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" /></Button></div></div><div className="grid grid-cols-2 gap-2"><Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancelar</Button><Button onClick={saveEdit}>Salvar alterações</Button></div></DialogContent></Dialog>
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}><DialogContent className="max-w-md rounded-2xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">Editar Cliente</DialogTitle><DialogDescription>Altere os dados do cadastro sem sair do Gestor.</DialogDescription></DialogHeader><div className="space-y-4 py-3"><label className="block text-sm font-medium">Nome<Input autoFocus={false} className="mt-1" value={editForm.nome} onChange={e => setEditForm(f => ({ ...f, nome: e.target.value }))} /></label><label className="block text-sm font-medium">WhatsApp<Input autoFocus={false} className="mt-1" inputMode="tel" value={editForm.whatsapp} onChange={e => setEditForm(f => ({ ...f, whatsapp: e.target.value }))} /></label><div><p className="text-sm font-medium mb-2">Vencimento</p><Button type="button" variant="outline" onClick={() => setIsDatePickerOpen(true)} className="w-full h-11 justify-between rounded-xl font-normal"><span>{editForm.vencimento ? format(parseISO(editForm.vencimento), 'dd/MM/yyyy') : 'Selecione a data'}</span><CalendarDays className="h-4 w-4 text-muted-foreground" /></Button></div><label className="block text-sm font-medium">Plano<select className="mt-1 w-full h-10 rounded-md border bg-background px-3 text-sm" value={editForm.plano_id} onChange={e => setEditForm(f => ({ ...f, plano_id: e.target.value }))}><option value="">Selecione</option>{plans.map(p => <option key={p.id} value={p.id}>{p.name} — {money(p.price || 0)}</option>)}</select></label><label className="block text-sm font-medium">Desconto (R$)<Input autoFocus={false} className="mt-1" inputMode="decimal" value={editForm.desconto} onChange={e => setEditForm(f => ({ ...f, desconto: e.target.value }))} /></label><div><p className="text-sm font-medium mb-2">Servidor</p><Button type="button" variant="outline" onClick={() => setIsServerPickerOpen(true)} className="w-full h-11 justify-between rounded-xl font-normal"><span className="min-w-0 truncate text-left">{editForm.servidores_ids.length ? editForm.servidores_ids.map(id => servers.find(s => s.id === id)?.name).filter(Boolean).join(', ') : 'Selecione o servidor'}</span><ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" /></Button></div></div><div className="grid grid-cols-2 gap-2"><Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancelar</Button><Button onClick={saveEdit}>Salvar alterações</Button></div></DialogContent></Dialog>
 
       <Dialog open={isServerPickerOpen} onOpenChange={setIsServerPickerOpen}><DialogContent className="max-w-md rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">Selecionar Servidor</DialogTitle><DialogDescription>Escolha um ou mais servidores para este cliente.</DialogDescription></DialogHeader><div className="space-y-2 py-2 max-h-[60vh] overflow-y-auto">{servers.length ? servers.map(s => <label key={s.id} className="flex items-center gap-3 rounded-xl border p-4 text-sm cursor-pointer hover:bg-muted/50"><input type="checkbox" className="h-4 w-4" checked={editForm.servidores_ids.includes(s.id)} onChange={e => setEditForm(f => ({ ...f, servidores_ids: e.target.checked ? [...f.servidores_ids, s.id] : f.servidores_ids.filter(id => id !== s.id) }))} /><span className="font-medium break-words">{s.name}</span></label>) : <p className="text-center py-6 text-muted-foreground">Nenhum servidor disponível.</p>}</div><Button onClick={() => setIsServerPickerOpen(false)} className="w-full h-11 rounded-xl">Concluir</Button></DialogContent></Dialog>
+
+      <Dialog open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}><DialogContent className="w-[calc(100%-2rem)] max-w-sm rounded-2xl p-4"><DialogHeader><DialogTitle className="text-lg font-black uppercase tracking-tighter">Data de vencimento</DialogTitle><DialogDescription>Escolha a data do vencimento.</DialogDescription></DialogHeader><div className="flex justify-center py-2"><Calendar mode="single" locale={ptBR} selected={editForm.vencimento ? parseISO(editForm.vencimento) : undefined} onSelect={date => { if (date) { setEditForm(f => ({ ...f, vencimento: format(date, 'yyyy-MM-dd') })); setIsDatePickerOpen(false); } }} initialFocus /></div></DialogContent></Dialog>
     </div>
   );
 }
