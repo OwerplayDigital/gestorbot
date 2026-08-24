@@ -149,7 +149,7 @@ function VencidosPage() {
                     <TableCell className="text-xs">{client.serverName}</TableCell>
                     <TableCell>
                       <span className="text-rose-500 font-bold font-mono">
-                        {client.vencimento.includes('-') 
+                        {client.vencimento && client.vencimento.includes('-') 
                           ? format(parseISO(client.vencimento), 'dd/MM/yyyy') 
                           : client.vencimento}
                       </span>
