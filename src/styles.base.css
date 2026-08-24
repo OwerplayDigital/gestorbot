@@ -1,0 +1,62 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background); --color-foreground: var(--foreground); --color-card: var(--card); --color-card-foreground: var(--card-foreground); --color-popover: var(--popover); --color-popover-foreground: var(--popover-foreground); --color-primary: var(--primary); --color-primary-foreground: var(--primary-foreground); --color-secondary: var(--secondary); --color-secondary-foreground: var(--secondary-foreground); --color-muted: var(--muted); --color-muted-foreground: var(--muted-foreground); --color-accent: var(--accent); --color-accent-foreground: var(--accent-foreground); --color-destructive: var(--destructive); --color-destructive-foreground: var(--destructive-foreground); --color-border: var(--border); --color-input: var(--input); --color-ring: var(--ring); --color-chart-1: var(--chart-1); --color-chart-2: var(--chart-2); --color-chart-3: var(--chart-3); --color-chart-4: var(--chart-4); --color-chart-5: var(--chart-5); --color-sidebar: var(--sidebar); --color-sidebar-foreground: var(--sidebar-foreground); --color-sidebar-primary: var(--sidebar-primary); --color-sidebar-primary-foreground: var(--sidebar-primary-foreground); --color-sidebar-accent: var(--sidebar-accent); --color-sidebar-accent-foreground: var(--sidebar-accent-foreground); --color-sidebar-border: var(--sidebar-border); --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root { --radius: .6rem; --background:#F7F9FC; --foreground:oklch(.15 .02 260); --card:#fff; --card-foreground:oklch(.15 .02 260); --popover:#fff; --popover-foreground:oklch(.15 .02 260); --primary:oklch(.4 .15 260); --primary-foreground:#fff; --secondary:oklch(.96 .01 240); --secondary-foreground:oklch(.15 .02 260); --muted:oklch(.96 .01 240); --muted-foreground:oklch(.48 .02 260); --accent:oklch(.4 .15 260 / 8%); --accent-foreground:oklch(.15 .02 260); --destructive:oklch(.6 .2 25); --destructive-foreground:#fff; --border:#E5E7EB; --input:#E5E7EB; --ring:oklch(.4 .15 260); --chart-1:oklch(.4 .15 260); --chart-2:oklch(.7 .02 240); --chart-3:oklch(.5 .02 240); --chart-4:oklch(.8 .1 190); --chart-5:oklch(.6 .1 190); --sidebar:#fff; --sidebar-foreground:oklch(.15 .02 260); --sidebar-primary:oklch(.4 .15 260); --sidebar-primary-foreground:#fff; --sidebar-accent:oklch(.96 .01 240); --sidebar-accent-foreground:oklch(.15 .02 260); --sidebar-border:#E5E7EB; --sidebar-ring:oklch(.4 .15 260); }
+.dark { --background:#090D16; --foreground:oklch(.95 .01 240); --card:#131B2E; --card-foreground:oklch(.95 .01 240); --popover:#131B2E; --popover-foreground:oklch(.95 .01 240); --primary:oklch(.55 .15 260); --primary-foreground:#fff; --secondary:oklch(.25 .05 260); --secondary-foreground:oklch(.95 .01 240); --muted:oklch(.25 .05 260); --muted-foreground:oklch(.7 .02 240); --accent:oklch(.55 .15 260 / 15%); --accent-foreground:oklch(.95 .01 240); --destructive:oklch(.5 .2 25); --destructive-foreground:#fff; --border:#1E293B; --input:oklch(1 0 0 / 15%); --ring:oklch(.55 .15 260); --chart-1:oklch(.55 .15 260); --chart-2:oklch(.85 .01 240); --chart-3:oklch(.6 .02 240); --chart-4:oklch(.7 .15 190); --chart-5:oklch(.5 .15 190); --sidebar:#090D16; --sidebar-foreground:oklch(.95 .01 240); --sidebar-primary:oklch(.55 .15 260); --sidebar-primary-foreground:#fff; --sidebar-accent:oklch(.25 .05 260); --sidebar-accent-foreground:oklch(.95 .01 240); --sidebar-border:#1E293B; --sidebar-ring:oklch(.55 .15 260); }
+
+@layer base { *{border-color:var(--color-border)} html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility} body{background-color:var(--color-background);color:var(--color-foreground);-webkit-tap-highlight-color:transparent} button,input,textarea,select{font:inherit} ::selection{background:color-mix(in oklch,var(--color-primary) 18%,transparent)} h1,h2,h3{letter-spacing:-.02em} }
+@layer components {
+ .border{border-color:color-mix(in oklch,var(--color-border) 92%,transparent)} .shadow-sm{box-shadow:0 1px 2px rgb(15 23 42 / 4%)} .shadow-lg{box-shadow:0 8px 22px -14px rgb(15 23 42 / 20%)} .dark .shadow-sm{box-shadow:0 1px 2px rgb(0 0 0 / 16%)} .dark .shadow-lg{box-shadow:0 10px 26px -15px rgb(0 0 0 / 55%)} button{transition:transform 120ms ease,opacity 120ms ease,background-color 160ms ease,border-color 160ms ease,color 160ms ease} button:active{transform:scale(.985)} input,textarea,select{transition:border-color 160ms ease,box-shadow 160ms ease,background-color 160ms ease} input:focus,textarea:focus,select:focus{box-shadow:0 0 0 3px color-mix(in oklch,var(--color-primary) 10%,transparent)}
+
+ /* Distinct Dashboard composition */
+ .dashboard-page{max-width:1180px!important;gap:1.25rem!important;padding:1rem 1.25rem 2.5rem!important}
+ .dashboard-toolbar{justify-content:flex-end!important;margin-bottom:.25rem}
+ .dashboard-toolbar .period-switch{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;gap:.35rem!important}
+ .dashboard-toolbar .period-switch button{background:var(--color-card);border:1px solid var(--color-border);border-radius:999px!important;padding:.5rem .9rem!important;box-shadow:none!important}
+ .dashboard-toolbar .period-switch button[class*="bg-primary"]{border-color:var(--color-primary);box-shadow:0 4px 12px color-mix(in oklch,var(--color-primary) 18%,transparent)!important}
+ .dashboard-hero{grid-template-columns:minmax(0,1.7fr) minmax(330px,.9fr)!important;gap:.75rem!important}
+ .hero-profit{min-height:235px!important;border-radius:1.35rem!important;padding:1.6rem!important;background:linear-gradient(135deg,color-mix(in oklch,var(--color-primary) 96%,#111827),color-mix(in oklch,var(--color-primary) 68%,#0f172a))!important;box-shadow:0 18px 40px -28px color-mix(in oklch,var(--color-primary) 70%,transparent)!important}
+ .hero-profit:after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;right:-90px;bottom:-140px;background:color-mix(in oklch,var(--color-primary-foreground) 10%,transparent);box-shadow:-90px -50px 0 -35px color-mix(in oklch,var(--color-primary-foreground) 7%,transparent)}
+ .hero-profit h1{font-size:clamp(2.2rem,4vw,3.5rem)!important;line-height:1!important;letter-spacing:-.055em!important}
+ .hero-profit .h-10{width:3rem!important;height:3rem!important;border-radius:50%!important;background:color-mix(in oklch,var(--color-primary-foreground) 12%,transparent)!important}
+ .dashboard-hero>.grid{grid-template-columns:1fr 1fr!important;gap:.75rem!important}
+ .dashboard-mini-card{min-height:112px!important;border:0!important;border-radius:1.1rem!important;padding:1.1rem!important;background:var(--color-card)!important;box-shadow:inset 0 0 0 1px color-mix(in oklch,var(--color-border) 75%,transparent),0 8px 24px -22px rgb(15 23 42 / 35%)!important}
+ .dashboard-mini-card:nth-child(1){box-shadow:inset 3px 0 0 var(--color-primary),inset 0 0 0 1px color-mix(in oklch,var(--color-border) 75%,transparent)!important}
+ .dashboard-mini-card:nth-child(2){box-shadow:inset 3px 0 0 #ef4444,inset 0 0 0 1px color-mix(in oklch,var(--color-border) 75%,transparent)!important}
+ .dashboard-mini-card:nth-child(3){box-shadow:inset 3px 0 0 #22c55e,inset 0 0 0 1px color-mix(in oklch,var(--color-border) 75%,transparent)!important}
+ .dashboard-mini-card:nth-child(4){box-shadow:inset 3px 0 0 #f59e0b,inset 0 0 0 1px color-mix(in oklch,var(--color-border) 75%,transparent)!important}
+ .dashboard-mini-card .text-xl{font-size:1.45rem!important}
+ .dashboard-page>section:not(.dashboard-hero){gap:.75rem!important}
+ .dashboard-page>section:nth-of-type(2){grid-template-columns:minmax(0,1.6fr) minmax(280px,.7fr)!important}
+ .dashboard-page>section:nth-of-type(2)>div,.dashboard-page>section:nth-of-type(3){border:0!important;border-radius:1.25rem!important;background:var(--color-card)!important;box-shadow:inset 0 0 0 1px color-mix(in oklch,var(--color-border) 75%,transparent),0 12px 30px -28px rgb(15 23 42 / 40%)!important}
+ .dashboard-page>section:nth-of-type(2)>div{padding:1.25rem!important}
+ .dashboard-page>section:nth-of-type(2) h2,.dashboard-page>section:nth-of-type(3) h2{font-size:1rem!important}
+ .dashboard-page>section:nth-of-type(3){overflow:hidden}
+ .dashboard-page>section:nth-of-type(3)>div:first-child{background:linear-gradient(180deg,color-mix(in oklch,var(--color-muted) 55%,transparent),transparent)!important;padding:1rem 1.25rem!important}
+ .dashboard-page>section:nth-of-type(3) tbody tr{transition:background-color 140ms ease}
+ .dashboard-page>section:nth-of-type(3) tbody tr:hover{background:color-mix(in oklch,var(--color-primary) 4%,transparent)!important}
+ .dashboard-page>section:nth-of-type(2)>div:last-child{background:color-mix(in oklch,var(--color-primary) 2%,var(--color-card))!important}
+
+ @media(max-width:767px){
+  h1{font-size:1.45rem;line-height:1.25} h2{font-size:1.15rem;line-height:1.3}
+  .dashboard-page{padding:.65rem .75rem 2rem!important;gap:.8rem!important}
+  .dashboard-toolbar{justify-content:stretch!important}.dashboard-toolbar .period-switch{width:100%;justify-content:space-between}.dashboard-toolbar .period-switch button{flex:1;text-align:center;padding:.45rem .55rem!important}
+  .dashboard-hero{grid-template-columns:1fr!important}.hero-profit{min-height:190px!important;padding:1.25rem!important}.hero-profit h1{font-size:2.2rem!important}.dashboard-hero>.grid{gap:.6rem!important}.dashboard-mini-card{min-height:100px!important;padding:.9rem!important;border-radius:.9rem!important}.dashboard-mini-card .text-xl{font-size:1.25rem!important}
+  .dashboard-page>section:nth-of-type(2){grid-template-columns:1fr!important}.dashboard-page>section:nth-of-type(2)>div{padding:1rem!important}.dashboard-page>section:nth-of-type(2)>div:first-child{min-height:315px}.dashboard-page>section:nth-of-type(3){border-radius:1rem!important}.dashboard-page>section:nth-of-type(3)>div:first-child{padding:.9rem 1rem!important}
+ }
+}
+#lovable-badge{display:none!important}
