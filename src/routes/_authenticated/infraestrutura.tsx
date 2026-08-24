@@ -11,7 +11,7 @@ function money(value: number) { return `R$ ${Number(value).toFixed(2).replace('.
 function Status({ active }: { active: boolean | null }) { return <span className={`inline-flex w-fit rounded-full px-2.5 py-1 text-[11px] font-semibold ${active === false ? 'bg-muted text-muted-foreground' : 'bg-emerald-500/10 text-emerald-600'}`}>{active === false ? 'Inativo' : 'Ativo'}</span> }
 
 function InfraestruturaPage() {
-  const [tab, setTab] = useState<'servidores' | 'aplicativos' | 'planos'>('servidores')
+  const [tab, setTab] = useState<'servidores' | 'planos'>('servidores')
   const [servidores, setServidores] = useState<Server[]>([])
   const [planos, setPlanos] = useState<Plan[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,11 +51,11 @@ function InfraestruturaPage() {
   async function togglePlan(plan: Plan) { await supabase.from('plans').update({ active: plan.active === false }).eq('id', plan.id); await loadData() }
 
   return <div className="w-full max-w-full space-y-5 px-4 py-5 sm:px-6 lg:space-y-6 lg:px-8">
-    <div><h1 className="text-2xl font-semibold tracking-tight">Infraestrutura</h1><p className="mt-1 text-sm text-muted-foreground">Gerencie servidores, aplicativos e planos.</p></div>
-    <div className="grid grid-cols-3 overflow-hidden rounded-lg border bg-muted/30">
-      {[['servidores','Servidores'],['aplicativos','Aplicativos'],['planos','Planos']].map(([v,l]) => <button key={v} type="button" onClick={() => setTab(v as typeof tab)} className={`min-w-0 px-2 py-3 text-xs font-semibold sm:px-4 sm:text-sm ${tab === v ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground'}`}>{l}</button>)}
+    <div><h1 className="text-2xl font-semibold tracking-tight">Infraestrutura</h1><p className="mt-1 text-sm text-muted-foreground">Gerencie servidores e planos.</p></div>
+    <div className="grid grid-cols-2 overflow-hidden rounded-lg border bg-muted/30">
+      {[['servidores','Servidores'],['planos','Planos']].map(([v,l]) => <button key={v} type="button" onClick={() => setTab(v as typeof tab)} className={`min-w-0 px-2 py-3 text-xs font-semibold sm:px-4 sm:text-sm ${tab === v ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground'}`}>{l}</button>)}
     </div>
-    {loading ? <div className="py-10 text-center text-muted-foreground">Carregando...</div> : tab === 'aplicativos' ? <div className="rounded-xl border p-5 text-sm text-muted-foreground">Aplicativos ainda não possuem estrutura própria no banco. Vamos definir essa parte depois.</div> : tab === 'servidores' ? (
+    {loading ? <div className="py-10 text-center text-muted-foreground">Carregando...</div> : tab === 'servidores' ? (
       <section className="space-y-3">
         <div className="flex justify-end"><button type="button" onClick={() => openServer()} className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground sm:w-auto">Novo servidor</button></div>
         {servidores.length === 0 ? <div className="rounded-xl border p-6 text-center text-muted-foreground">Nenhum servidor cadastrado.</div> : servidores.map(s => <div key={s.id} className="rounded-xl border p-4"><div className="min-w-0"><div className="flex items-start justify-between gap-3"><p className="break-words font-medium">{s.name}</p><Status active={s.active} /></div><p className="mt-1 text-sm text-muted-foreground">Custo: {money(s.valor)}</p></div><div className="mt-3 grid grid-cols-2 gap-2"><button type="button" onClick={() => openServer(s)} className="rounded-lg border px-3 py-2 text-sm">Editar</button><button type="button" onClick={() => toggleServer(s)} className="rounded-lg border px-3 py-2 text-sm">{s.active === false ? 'Ativar' : 'Desativar'}</button></div></div>)}
