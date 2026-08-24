@@ -212,7 +212,7 @@ function VencidosPage() {
                 </div>
 
                 <Button 
-                  onClick={() => handleCharge(client)}
+                  onClick={() => openChargeModal(client)}
                   className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl h-11 gap-2"
                 >
                   <MessageCircle size={18} />
