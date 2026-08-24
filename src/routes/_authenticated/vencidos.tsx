@@ -172,7 +172,7 @@ function VencidosPage() {
                     <TableCell className="text-right">
                       <Button 
                         size="sm" 
-                        onClick={() => handleCharge(client)}
+                        onClick={() => openChargeModal(client)}
                         className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl h-8 px-3 gap-2"
                       >
                         <MessageCircle size={14} />
