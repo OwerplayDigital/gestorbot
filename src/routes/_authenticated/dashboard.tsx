@@ -339,9 +339,6 @@ function Dashboard() {
     <div className="flex flex-col gap-8 p-4 md:p-8 pb-12 max-w-7xl mx-auto w-full">
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-3xl font-black tracking-tighter text-foreground uppercase">Gestor Pro</h1>
-        </div>
         <div className="bg-card border border-border p-1 rounded-2xl flex items-center gap-1 self-start md:self-center shadow-sm">
           {[
             { id: "hoje", label: "Hoje" },
