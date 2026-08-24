@@ -89,32 +89,34 @@ function VencidosPage() {
     },
   });
 
-  const handleCharge = (client: any) => {
+  const openChargeModal = (client: any) => {
     if (!client.whatsapp) {
       toast.error("Cliente sem WhatsApp cadastrado.");
       return;
     }
+    setSelectedClient(client);
+    setIsModalOpen(true);
+  };
 
-    if (!client.template) {
-      toast.error("Template de cobrança não encontrado em 'Mensagens'.");
-      return;
-    }
+  const handleCharge = (template: any) => {
+    if (!selectedClient) return;
 
-    let message = client.template.mensagem;
-    const firstName = client.nome.split(' ')[0];
-    const valor = client.plans ? (Number(client.plans.price) - Number(client.desconto || 0)).toFixed(2) : "0.00";
+    let message = template.mensagem;
+    const firstName = selectedClient.nome.split(' ')[0];
+    const valor = selectedClient.plans ? (Number(selectedClient.plans.price) - Number(selectedClient.desconto || 0)).toFixed(2) : "0.00";
     
     // Substituir variáveis
     message = message
-      .replace(/{nome}/g, client.nome)
+      .replace(/{nome}/g, selectedClient.nome)
       .replace(/{primeiro_nome}/g, firstName)
-      .replace(/{vencimento}/g, client.vencimento)
+      .replace(/{vencimento}/g, selectedClient.vencimento)
       .replace(/{valor}/g, `R$ ${valor}`);
 
-    const phone = client.whatsapp.replace(/\D/g, '');
+    const phone = selectedClient.whatsapp.replace(/\D/g, '');
     const encodedMsg = encodeURIComponent(message);
     const url = `https://wa.me/55${phone}?text=${encodedMsg}`;
     
+    setIsModalOpen(false);
     window.open(url, '_blank');
   };
 
