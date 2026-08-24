@@ -10,7 +10,14 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Phone, Clock, MessageCircle } from 'lucide-react';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Phone, Clock, MessageCircle, Send } from 'lucide-react';
 import { useState } from 'react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
@@ -21,6 +28,9 @@ export const Route = createFileRoute('/_authenticated/vencidos')({
 });
 
 function VencidosPage() {
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const { data: clients, isLoading } = useQuery({
     queryKey: ['clients-expired'],
     queryFn: async () => {
@@ -36,9 +46,7 @@ function VencidosPage() {
         supabase
           .from('templates_whatsapp' as any)
           .select('*')
-          .or('nome.ilike.%vencidos%,nome.ilike.%cobrança%')
-          .limit(1)
-          .maybeSingle()
+          .order('nome', { ascending: true })
       ]);
 
       if (clientsRes.error) throw clientsRes.error;
@@ -73,7 +81,7 @@ function VencidosPage() {
           ...c,
           daysOverdue: diff,
           serverName: serverNames || 'N/A',
-          template: templatesRes.data
+          templates: templatesRes.data || []
         };
       });
 
@@ -81,32 +89,34 @@ function VencidosPage() {
     },
   });
 
-  const handleCharge = (client: any) => {
+  const openChargeModal = (client: any) => {
     if (!client.whatsapp) {
       toast.error("Cliente sem WhatsApp cadastrado.");
       return;
     }
+    setSelectedClient(client);
+    setIsModalOpen(true);
+  };
 
-    if (!client.template) {
-      toast.error("Template de cobrança não encontrado em 'Mensagens'.");
-      return;
-    }
+  const handleCharge = (template: any) => {
+    if (!selectedClient) return;
 
-    let message = client.template.mensagem;
-    const firstName = client.nome.split(' ')[0];
-    const valor = client.plans ? (Number(client.plans.price) - Number(client.desconto || 0)).toFixed(2) : "0.00";
+    let message = template.mensagem;
+    const firstName = selectedClient.nome.split(' ')[0];
+    const valor = selectedClient.plans ? (Number(selectedClient.plans.price) - Number(selectedClient.desconto || 0)).toFixed(2) : "0.00";
     
     // Substituir variáveis
     message = message
-      .replace(/{nome}/g, client.nome)
+      .replace(/{nome}/g, selectedClient.nome)
       .replace(/{primeiro_nome}/g, firstName)
-      .replace(/{vencimento}/g, client.vencimento)
+      .replace(/{vencimento}/g, selectedClient.vencimento)
       .replace(/{valor}/g, `R$ ${valor}`);
 
-    const phone = client.whatsapp.replace(/\D/g, '');
+    const phone = selectedClient.whatsapp.replace(/\D/g, '');
     const encodedMsg = encodeURIComponent(message);
     const url = `https://wa.me/55${phone}?text=${encodedMsg}`;
     
+    setIsModalOpen(false);
     window.open(url, '_blank');
   };
 
@@ -162,7 +172,7 @@ function VencidosPage() {
                     <TableCell className="text-right">
                       <Button 
                         size="sm" 
-                        onClick={() => handleCharge(client)}
+                        onClick={() => openChargeModal(client)}
                         className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl h-8 px-3 gap-2"
                       >
                         <MessageCircle size={14} />
@@ -202,7 +212,7 @@ function VencidosPage() {
                 </div>
 
                 <Button 
-                  onClick={() => handleCharge(client)}
+                  onClick={() => openChargeModal(client)}
                   className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl h-11 gap-2"
                 >
                   <MessageCircle size={18} />
@@ -213,6 +223,39 @@ function VencidosPage() {
           </div>
         </>
       )}
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-md bg-white dark:bg-[#131B2E] border-border dark:border-slate-800 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase tracking-tighter">
+              Selecionar Mensagem
+            </DialogTitle>
+            <DialogDescription>
+              Escolha um template para enviar para {selectedClient?.nome}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-3 py-4">
+            {selectedClient?.templates?.length > 0 ? (
+              selectedClient.templates.map((template: any) => (
+                <Button
+                  key={template.id}
+                  variant="outline"
+                  onClick={() => handleCharge(template)}
+                  className="justify-between h-14 px-4 border-muted/20 hover:border-emerald-500 hover:bg-emerald-500/5 group transition-all rounded-xl"
+                >
+                  <span className="font-bold uppercase text-sm tracking-wide">{template.nome}</span>
+                  <Send size={16} className="text-muted-foreground group-hover:text-emerald-500 transition-colors" />
+                </Button>
+              ))
+            ) : (
+              <p className="text-center py-4 text-muted-foreground text-sm">
+                Nenhum template cadastrado em 'Mensagens'.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
