@@ -156,7 +156,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <nav className="flex-1 px-3 space-y-1">
         <NavLink to="/dashboard" icon={LayoutDashboard} onClick={onNavigate}>Dashboard</NavLink>
         <NavLink to="/financeiro" icon={DollarSign} badge="12" onClick={onNavigate}>Financeiro</NavLink>
-        <NavLink to="/clientes" icon={AlertTriangle} badge="4" onClick={onNavigate}>Inadimplência</NavLink>
+        <NavLink to="/clientes" icon={Users} onClick={onNavigate}>Clientes</NavLink>
         <NavLink to="/vencidos" icon={Clock} onClick={onNavigate}>Vencidos</NavLink>
         <NavLink to="/mensagens" icon={MessageSquare} onClick={onNavigate}>Mensagens</NavLink>
         {/* Removido Configurações conforme solicitado */}
