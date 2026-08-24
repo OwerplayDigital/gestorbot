@@ -223,6 +223,39 @@ function VencidosPage() {
           </div>
         </>
       )}
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-md bg-white dark:bg-[#131B2E] border-border dark:border-slate-800 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase tracking-tighter">
+              Selecionar Mensagem
+            </DialogTitle>
+            <DialogDescription>
+              Escolha um template para enviar para {selectedClient?.nome}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-3 py-4">
+            {selectedClient?.templates?.length > 0 ? (
+              selectedClient.templates.map((template: any) => (
+                <Button
+                  key={template.id}
+                  variant="outline"
+                  onClick={() => handleCharge(template)}
+                  className="justify-between h-14 px-4 border-muted/20 hover:border-emerald-500 hover:bg-emerald-500/5 group transition-all rounded-xl"
+                >
+                  <span className="font-bold uppercase text-sm tracking-wide">{template.nome}</span>
+                  <Send size={16} className="text-muted-foreground group-hover:text-emerald-500 transition-colors" />
+                </Button>
+              ))
+            ) : (
+              <p className="text-center py-4 text-muted-foreground text-sm">
+                Nenhum template cadastrado em 'Mensagens'.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
