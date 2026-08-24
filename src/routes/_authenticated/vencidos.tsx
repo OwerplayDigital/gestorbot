@@ -195,7 +195,7 @@ function VencidosPage() {
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-muted-foreground">Vencimento:</span>
                   <span className="text-rose-500 font-bold font-mono">
-                    {client.vencimento.includes('-') 
+                    {client.vencimento && client.vencimento.includes('-') 
                       ? format(parseISO(client.vencimento), 'dd/MM/yyyy') 
                       : client.vencimento}
                   </span>
