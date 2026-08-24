@@ -144,6 +144,89 @@
     h1 { font-size: 1.45rem; line-height: 1.25; }
     h2 { font-size: 1.15rem; line-height: 1.3; }
   }
+
+  /* Dashboard: a more deliberate, compact visual hierarchy without touching its logic. */
+  main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] {
+    gap: 1.5rem;
+    padding-top: 1.25rem;
+  }
+
+  main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] > div:first-child {
+    margin-bottom: -0.25rem;
+  }
+
+  main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] > div:first-child > div {
+    border-radius: 0.8rem;
+    padding: 0.2rem;
+  }
+
+  main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] > div:first-child button {
+    min-width: 4.5rem;
+    padding: 0.5rem 0.8rem;
+    font-weight: 650;
+  }
+
+  main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] section:first-of-type {
+    gap: 1rem;
+  }
+
+  main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] section:first-of-type > div {
+    padding: 1.15rem 1.25rem;
+    border-radius: 1rem;
+  }
+
+  main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] section:first-of-type > div > div:first-child {
+    margin-bottom: 0.7rem;
+  }
+
+  main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] section:first-of-type > div > div:nth-child(2) {
+    font-size: 1.65rem;
+    line-height: 1.15;
+    letter-spacing: -0.035em;
+  }
+
+  main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] section:first-of-type > div span {
+    letter-spacing: 0.07em;
+  }
+
+  main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] section:nth-of-type(2) {
+    gap: 0.9rem;
+  }
+
+  main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] section:nth-of-type(2) h2,
+  main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] section:nth-of-type(3) h3 {
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+
+  main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] section:nth-of-type(2) > div:nth-child(2),
+  main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] section:nth-of-type(3) {
+    border-radius: 1rem;
+  }
+
+  @media (max-width: 767px) {
+    main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] {
+      gap: 1.1rem;
+      padding: 0.9rem 0.85rem 2rem;
+    }
+
+    main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] section:first-of-type > div {
+      padding: 1rem;
+    }
+
+    main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] section:first-of-type > div > div:nth-child(2) {
+      font-size: 1.45rem;
+    }
+
+    main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] section:nth-of-type(2) > div:first-child {
+      padding-left: 0.25rem;
+      padding-right: 0.25rem;
+    }
+
+    main > div[class~="max-w-7xl"][class~="gap-8"][class~="pb-12"] section:nth-of-type(3) {
+      padding: 1rem;
+    }
+  }
 }
 
 #lovable-badge { display: none !important; }
