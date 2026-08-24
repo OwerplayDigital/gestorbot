@@ -10,7 +10,14 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Phone, Clock, MessageCircle } from 'lucide-react';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Phone, Clock, MessageCircle, Send } from 'lucide-react';
 import { useState } from 'react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
