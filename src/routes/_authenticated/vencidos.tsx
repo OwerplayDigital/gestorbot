@@ -28,6 +28,9 @@ export const Route = createFileRoute('/_authenticated/vencidos')({
 });
 
 function VencidosPage() {
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const { data: clients, isLoading } = useQuery({
     queryKey: ['clients-expired'],
     queryFn: async () => {
@@ -43,9 +46,7 @@ function VencidosPage() {
         supabase
           .from('templates_whatsapp' as any)
           .select('*')
-          .or('nome.ilike.%vencidos%,nome.ilike.%cobrança%')
-          .limit(1)
-          .maybeSingle()
+          .order('nome', { ascending: true })
       ]);
 
       if (clientsRes.error) throw clientsRes.error;
@@ -80,7 +81,7 @@ function VencidosPage() {
           ...c,
           daysOverdue: diff,
           serverName: serverNames || 'N/A',
-          template: templatesRes.data
+          templates: templatesRes.data || []
         };
       });
 
