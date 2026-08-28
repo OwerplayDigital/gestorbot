@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Users, Search, ChevronLeft, ChevronRight, MessageCircle, Send, Pencil, ChevronDown, CalendarDays } from 'lucide-react';
+import { ServerBadge } from '@/components/ServerBadge';
 import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';

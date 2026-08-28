@@ -22,6 +22,7 @@ import { useState } from 'react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { toast } from 'sonner';
+import { ServerBadge } from '@/components/ServerBadge';
 
 export const Route = createFileRoute('/_authenticated/vencidos')({
   component: VencidosPage,
