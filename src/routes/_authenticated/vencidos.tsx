@@ -22,6 +22,7 @@ import { useState } from 'react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { toast } from 'sonner';
+import { ServerBadge } from '@/components/ServerBadge';
 
 export const Route = createFileRoute('/_authenticated/vencidos')({
   component: VencidosPage,
@@ -156,7 +157,7 @@ function VencidosPage() {
                 {clients.map((client) => (
                   <TableRow key={client.id} className="hover:bg-muted/50 border-muted/10 transition-colors">
                     <TableCell className="font-bold">{client.nome}</TableCell>
-                    <TableCell className="text-xs">{client.serverName}</TableCell>
+                    <TableCell><ServerBadge name={client.serverName} /></TableCell>
                     <TableCell>
                       <span className="text-rose-500 font-bold font-mono">
                         {client.vencimento && client.vencimento.includes('-') 
@@ -195,7 +196,7 @@ function VencidosPage() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-black text-lg uppercase leading-tight">{client.nome}</h3>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">{client.serverName}</p>
+                    <p><ServerBadge name={client.serverName} /></p>
                   </div>
                   <span className="bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full text-[10px] font-black uppercase whitespace-nowrap">
                     {client.daysOverdue} dias
