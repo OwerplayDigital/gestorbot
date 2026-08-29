@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
-import { Users, Search, ChevronLeft, ChevronRight, MessageCircle, Send, Pencil, ChevronDown, CalendarDays } from 'lucide-react';
+import { Users, Search, ChevronLeft, ChevronRight, MessageCircle, Send, Pencil, ChevronDown, CalendarDays, FileSpreadsheet } from 'lucide-react';
 import { ServerBadge } from '@/components/ServerBadge';
 import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
@@ -60,6 +60,39 @@ function ClientesPage() {
 
   const openMessageModal = (client: Client) => { if (!client.whatsapp) { toast.error('Cliente sem WhatsApp cadastrado.'); return; } setSelectedClient(client); setIsMessageOpen(true); };
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  async function exportCsv() {
+    setIsExporting(true);
+    try {
+      const [{ data: allClients, error }, { data: serversData }, { data: devices }] = await Promise.all([
+        supabase.from('clientes').select('*, plans(name, price)').order('nome', { ascending: true }),
+        supabase.from('servidores_iptv').select('id, name'),
+        supabase.from('dispositivos').select('cliente_id, app_nome'),
+      ]);
+      if (error) throw error;
+      const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const header = ['Nome', 'Telefone', 'Servidor', 'Vencimento', 'Status', 'Aplicativo', 'Valor'];
+      const rows = (allClients || []).map((c: any) => {
+        const serverNames = (c.servidores_ids || []).map((id: string) => serversData?.find(s => s.id === id)?.name).filter(Boolean).join(', ');
+        const apps = (devices || []).filter(d => d.cliente_id === c.id).map(d => d.app_nome).filter(Boolean).join(', ');
+        const valor = c.plans ? Math.max(0, Number(c.plans.price) - Number(c.desconto || 0)).toFixed(2).replace('.', ',') : '0,00';
+        const venc = c.vencimento?.includes('-') ? format(parseISO(c.vencimento), 'dd/MM/yyyy') : (c.vencimento || '');
+        return [esc(c.nome), esc(c.whatsapp), esc(serverNames), esc(venc), esc(c.status), esc(apps), esc(`R$ ${valor}`)].join(';');
+      });
+      const csv = '\uFEFF' + header.join(';') + '\n' + rows.join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'todos_clientes.csv'; a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`${rows.length} clientes exportados.`);
+    } catch (e) {
+      toast.error('Não foi possível exportar os clientes.');
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
   const handleSendMessage = (template: any) => {
     if (!selectedClient) return;
     const firstName = selectedClient.nome.split(' ')[0]; const valor = selectedClient.plans ? (Number(selectedClient.plans.price) - Number(selectedClient.desconto || 0)).toFixed(2) : '0.00';
@@ -90,7 +123,7 @@ function ClientesPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4"><div><h1 className="text-3xl font-black tracking-tighter uppercase flex items-center gap-2"><Users className="text-primary" />Clientes</h1><p className="text-muted-foreground">Listagem de clientes ativos e em dia.</p></div><div className="relative w-full md:w-72"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" /><Input placeholder="Buscar por nome..." className="pl-10 bg-card border-border rounded-xl h-11" value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }} /></div></div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4"><div><h1 className="text-3xl font-black tracking-tighter uppercase flex items-center gap-2"><Users className="text-primary" />Clientes</h1><p className="text-muted-foreground">Listagem de clientes ativos e em dia.</p></div><div className="flex items-center gap-2 w-full md:w-auto"><div className="relative w-full md:w-72"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" /><Input placeholder="Buscar por nome..." className="pl-10 bg-card border-border rounded-xl h-11" value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }} /></div><Button variant="outline" onClick={exportCsv} disabled={isExporting} className="rounded-xl h-11 gap-2 shrink-0 font-bold"><FileSpreadsheet size={16} className="text-emerald-500" />{isExporting ? 'Exportando...' : 'Exportar CSV'}</Button></div></div>
       {isLoading ? <div className="bg-card border border-border rounded-2xl p-8 text-center text-muted-foreground">Carregando clientes...</div> : !data?.clients?.length ? <div className="bg-card border border-border rounded-2xl p-8 text-center text-muted-foreground">Nenhum cliente ativo encontrado.</div> : <>
         <div className="hidden md:block bg-card border border-border rounded-2xl overflow-hidden shadow-sm"><Table><TableHeader><TableRow><TableHead className="font-bold">Cliente</TableHead><TableHead className="font-bold">Servidor/App</TableHead><TableHead className="font-bold">Vencimento</TableHead><TableHead className="text-right font-bold">Ação</TableHead></TableRow></TableHeader><TableBody>{data.clients.map((client: Client) => <TableRow key={client.id}><TableCell className="font-bold">{client.nome}</TableCell><TableCell><ServerBadge name={client.serverName} /></TableCell><TableCell><span className="text-primary font-bold font-mono">{client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento}</span></TableCell><TableCell className="text-right"><div className="flex justify-end gap-2"><Button size="sm" variant="outline" onClick={() => openEdit(client)} className="rounded-xl gap-2"><Pencil size={14} />Editar</Button><Button size="sm" onClick={() => openMessageModal(client)} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl h-8 px-3 gap-2"><MessageCircle size={14} />Mensagem</Button></div></TableCell></TableRow>)}</TableBody></Table></div>
         <div className="md:hidden space-y-4">{data.clients.map((client: Client) => <div key={client.id} className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3"><div><h3 className="font-black text-lg uppercase leading-tight break-words">{client.nome}</h3><p className="break-words"><ServerBadge name={client.serverName} /></p></div><div className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Vencimento:</span><span className="text-primary font-bold font-mono">{client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento}</span></div><div className="grid grid-cols-2 gap-2"><Button variant="outline" onClick={() => openEdit(client)} className="w-full rounded-xl h-11 gap-2"><Pencil size={16} />Editar</Button><Button onClick={() => openMessageModal(client)} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl h-11 gap-2"><MessageCircle size={18} />Mensagem</Button></div></div>)}</div>
