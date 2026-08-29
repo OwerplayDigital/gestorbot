@@ -59,7 +59,8 @@ function RenewPage() {
   };
 
   if (loading) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white font-medium italic">Carregando...</div>;
-  if (!client) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white font-medium">Cliente não encontrado.</div>;
+  if (!client) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-center px-6 text-white font-medium">{errorMsg ?? 'Cliente não encontrado.'}</div>;
+
 
   const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
   const discount = Number(client.desconto || 0);
