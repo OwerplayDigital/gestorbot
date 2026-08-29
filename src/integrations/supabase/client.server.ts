@@ -105,7 +105,7 @@ function createSupabaseAdminClient() {
     }
   });
 
-  const originalFrom = client.from.bind(client);
+  const originalFrom = client.from.bind(client) as (table: string) => any;
 
   // The Telegram new-client flow inserts into `clientes` and then calls
   // `.select().single()`. Hook that exact server-side operation so the
