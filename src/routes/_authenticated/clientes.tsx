@@ -80,7 +80,7 @@ function ClientesPage() {
         const venc = c.vencimento?.includes('-') ? format(parseISO(c.vencimento), 'dd/MM/yyyy') : (c.vencimento || '');
         return [esc(c.nome), esc(c.whatsapp), esc(serverNames), esc(venc), esc(c.status), esc(apps), esc(`R$ ${valor}`)].join(';');
       });
-      const csv = '﻿' + header.join(';') + '\n' + rows.join('\n');
+      const csv = '\uFEFF' + header.join(';') + '\n' + rows.join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = 'todos_clientes.csv'; a.click();
