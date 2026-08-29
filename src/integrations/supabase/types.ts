@@ -483,7 +483,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_checkout_info: {
+        Args: { p_ref: string }
+        Returns: {
+          desconto: number
+          id: string
+          nome: string
+          plan_name: string
+          plan_price: number
+          vencimento: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
