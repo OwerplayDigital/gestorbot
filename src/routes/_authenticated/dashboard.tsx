@@ -23,7 +23,7 @@ type DashboardStats = {
 const parseDate=(d:any):Date|null=>{if(!d||typeof d!=="string")return null;const p=d.split(/[/-]/);if(p.length!==3)return null;const nums=p.map(Number) as number[];const a=nums[0]!,b=nums[1]!,c=nums[2]!;let r=d.includes("/")||(d.includes("-")&&(p[0]??"").length===2)?new Date(c,b-1,a):d.includes("-")&&(p[0]??"").length===4?new Date(a,b-1,c):null;if(r&&!isNaN(r.getTime())){r.setHours(0,0,0,0);return r}return null};
 
 function Dashboard(){
- const [showValues]=useState(true); const [showLucro,setShowLucro]=useState(true); const [activeTab,setActiveTab]=useState("mes"); const nowBr=toZonedTime(new Date(),"America/Sao_Paulo");
+ const [showLucro,setShowLucro]=useState(true); const [activeTab,setActiveTab]=useState("mes"); const nowBr=toZonedTime(new Date(),"America/Sao_Paulo");
  const currentMonthLabel=formatTz(nowBr,"MMMM/yy",{locale:ptBR}).replace(/^\w/,c=>c.toUpperCase());
  const {data:stats,isLoading}=useQuery<DashboardStats>({queryKey:["dashboard-stats-modern",activeTab],staleTime:300000,queryFn:async()=>{
   const now=toZonedTime(new Date(),"America/Sao_Paulo"),todayStr=formatTz(now,"yyyy-MM-dd"),currentMonth=formatTz(now,"MM"),currentYear=formatTz(now,"yyyy");
