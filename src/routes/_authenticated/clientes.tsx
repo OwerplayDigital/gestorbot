@@ -60,6 +60,39 @@ function ClientesPage() {
 
   const openMessageModal = (client: Client) => { if (!client.whatsapp) { toast.error('Cliente sem WhatsApp cadastrado.'); return; } setSelectedClient(client); setIsMessageOpen(true); };
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  async function exportCsv() {
+    setIsExporting(true);
+    try {
+      const [{ data: allClients, error }, { data: serversData }, { data: devices }] = await Promise.all([
+        supabase.from('clientes').select('*, plans(name, price)').order('nome', { ascending: true }),
+        supabase.from('servidores_iptv').select('id, name'),
+        supabase.from('dispositivos').select('cliente_id, app_nome'),
+      ]);
+      if (error) throw error;
+      const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const header = ['Nome', 'Telefone', 'Servidor', 'Vencimento', 'Status', 'Aplicativo', 'Valor'];
+      const rows = (allClients || []).map((c: any) => {
+        const serverNames = (c.servidores_ids || []).map((id: string) => serversData?.find(s => s.id === id)?.name).filter(Boolean).join(', ');
+        const apps = (devices || []).filter(d => d.cliente_id === c.id).map(d => d.app_nome).filter(Boolean).join(', ');
+        const valor = c.plans ? Math.max(0, Number(c.plans.price) - Number(c.desconto || 0)).toFixed(2).replace('.', ',') : '0,00';
+        const venc = c.vencimento?.includes('-') ? format(parseISO(c.vencimento), 'dd/MM/yyyy') : (c.vencimento || '');
+        return [esc(c.nome), esc(c.whatsapp), esc(serverNames), esc(venc), esc(c.status), esc(apps), esc(`R$ ${valor}`)].join(';');
+      });
+      const csv = '﻿' + header.join(';') + '\n' + rows.join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'todos_clientes.csv'; a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`${rows.length} clientes exportados.`);
+    } catch (e) {
+      toast.error('Não foi possível exportar os clientes.');
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
   const handleSendMessage = (template: any) => {
     if (!selectedClient) return;
     const firstName = selectedClient.nome.split(' ')[0]; const valor = selectedClient.plans ? (Number(selectedClient.plans.price) - Number(selectedClient.desconto || 0)).toFixed(2) : '0.00';
