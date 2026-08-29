@@ -25,28 +25,31 @@ function RenewPage() {
   const [client, setClient] = useState<any>(null);
   const [plan, setPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const { data: c, error: ce } = await supabase
-          .from('clientes')
-          .select('*, plans(*)')
-          .eq('id', id)
-          .single();
-        
-        if (ce) throw ce;
-        setClient(c);
-        setPlan(c.plans);
-      } catch (err) {
-        console.error("Erro ao buscar cliente:", err);
+        const { data, error } = await supabase.rpc('get_checkout_info' as any, { p_ref: id });
+        if (error) throw error;
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row) {
+          setErrorMsg('Cliente não encontrado.');
+          return;
+        }
+        setClient(row);
+        setPlan({ price: (row as any).plan_price, name: (row as any).plan_name });
+      } catch (err: any) {
+        console.error('Erro ao buscar cliente:', err);
+        setErrorMsg('Não foi possível carregar os dados da cobrança. Tente novamente.');
       } finally {
         setLoading(false);
       }
     }
     fetchData();
   }, [id]);
+
 
   const copyPix = () => {
     navigator.clipboard.writeText("82iptv@gmail.com");
@@ -56,7 +59,8 @@ function RenewPage() {
   };
 
   if (loading) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white font-medium italic">Carregando...</div>;
-  if (!client) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white font-medium">Cliente não encontrado.</div>;
+  if (!client) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-center px-6 text-white font-medium">{errorMsg ?? 'Cliente não encontrado.'}</div>;
+
 
   const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
   const discount = Number(client.desconto || 0);
