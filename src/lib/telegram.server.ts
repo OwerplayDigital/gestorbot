@@ -457,6 +457,31 @@ export const getFinancialSummary = async () => {
   return { entradas, saidas, lucro };
 };
 
+// Regra de renovação por servidor:
+// - Uniplay: Data Fixa (mesmo dia do mês seguinte, respeitando últimos dias de meses curtos)
+// - Goat (e demais): 30 dias exatos (+30 dias corridos)
+export function calcularNovoVencimento(baseDate: Date, serverNames: (string | null | undefined)[]): string {
+  const next = new Date(baseDate);
+  next.setHours(12, 0, 0, 0);
+
+  const isUniplay = serverNames.some(n => n?.toLowerCase().includes('uniplay'));
+
+  if (isUniplay) {
+    const day = baseDate.getDate();
+    const month = baseDate.getMonth() + 1; // 1-12
+    const year = baseDate.getFullYear();
+    let nextMonth = month === 12 ? 1 : month + 1;
+    let nextYear = month === 12 ? year + 1 : year;
+    const lastDay = new Date(nextYear, nextMonth, 0).getDate(); // último dia do próximo mês
+    next.setFullYear(nextYear, nextMonth - 1, Math.min(day, lastDay));
+  } else {
+    // Goat / padrão: +30 dias exatos
+    next.setDate(next.getDate() + 30);
+  }
+
+  return next.toISOString().split('T')[0];
+}
+
 export const renewClient = async (
   clientId: string,
   newVencimento: string,
@@ -486,16 +511,18 @@ export const renewClient = async (
     throw new Error("Plano não encontrado.");
   }
 
-  // 3. Buscar custo dos servidores
+  // 3. Buscar custo dos servidores e nomes (para regra de renovação por servidor)
   let totalCusto = 0;
+  let serverNames: string[] = [];
   if (client.servidores_ids && client.servidores_ids.length > 0) {
     const { data: servers, error: serverError } = await supabaseAdmin
       .from("servidores_iptv")
-      .select("valor")
+      .select("valor, name")
       .in("id", client.servidores_ids);
     
     if (!serverError && servers) {
       totalCusto = servers.reduce((sum, s) => sum + Number(s.valor), 0);
+      serverNames = servers.map((s: any) => s.name);
     }
   }
 
@@ -509,11 +536,14 @@ export const renewClient = async (
   // para evitar problemas de timezone na conversão da string
   const currentVenc = client.vencimento ? new Date(client.vencimento + 'T12:00:00') : today;
   
-  // Regra de data: Se vencido, Hoje + 30 dias. Se em dia, Vencimento + 30 dias.
+  // Regra de data por servidor: Uniplay => data fixa no mês seguinte; Goat/outros => +30 dias exatos.
+  // Se vencido, a base vira Hoje; se em dia, a base é o próprio vencimento.
   const baseDate = currentVenc < today ? today : currentVenc;
-  const nextDate = new Date(baseDate);
-  nextDate.setDate(nextDate.getDate() + 30);
-  const calculatedNewVencimento = nextDate.toISOString().split('T')[0];
+  const calculatedNewVencimento = calcularNovoVencimento(baseDate, serverNames);
+
+  // O webhook já calcula a data pela regra do servidor e envia o valor final
+  // (incluindo ajustes manuais +1/-1). O cálculo interno serve apenas de fallback.
+  const novoVencimentoFinal = newVencimento || calculatedNewVencimento;
 
   const valorEntrada = Number(plan.price) - Number(client.desconto || 0);
   const vencimentoAnterior = client.vencimento;
@@ -532,7 +562,7 @@ export const renewClient = async (
       valor: valorEntrada,
       desconto: client.desconto,
       vencimento_anterior: vencimentoAnterior,
-      novo_vencimento: calculatedNewVencimento || newVencimento,
+      novo_vencimento: novoVencimentoFinal,
       data_renovacao: nowBr.toISOString(),
     });
 
@@ -564,7 +594,7 @@ export const renewClient = async (
   const { data: updatedClient, error: updateError } = await supabaseAdmin
     .from("clientes")
     .update({
-      vencimento: calculatedNewVencimento || newVencimento,
+      vencimento: novoVencimentoFinal,
       status: 'ativo'
     })
     .eq("id", clientId)

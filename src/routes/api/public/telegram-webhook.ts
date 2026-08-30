@@ -14,6 +14,7 @@ import {
   listExpiredClients,
   listClientsExpiringToday,
   renewClient,
+  calcularNovoVencimento,
   getClientById,
   BOT_TEMPLATES,
   trackBotMessage,
@@ -665,17 +666,27 @@ async function handleTelegramEvent(body: any): Promise<Response> {
             }
             else if (data.startsWith('renew_init:')) {
               const id = data.split(':')[1];
-              const { data: c } = await supabaseAdmin.from('clientes').select('vencimento').eq('id', id).single();
+              const { data: c } = await supabaseAdmin.from('clientes').select('vencimento, servidores_ids').eq('id', id).single();
               if (c) {
                 const currentVenc = new Date(c.vencimento + 'T12:00:00');
                 const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
                 const today = new Date(nowBr);
                 today.setHours(0, 0, 0, 0);
                 
-                // Regra visual no Bot: se vencido, Hoje + 30. Se em dia, Vencimento + 30.
+                // Base: se vencido, Hoje. Se em dia, próprio vencimento.
                 const baseDate = currentVenc < today ? today : currentVenc;
-                const nextMonth = new Date(baseDate);
-                nextMonth.setDate(nextMonth.getDate() + 30);
+
+                // Identificar servidor do cliente (Uniplay => data fixa; Goat/outros => +30 dias)
+                let serverNames: string[] = [];
+                if (c.servidores_ids && c.servidores_ids.length > 0) {
+                  const { data: sData } = await supabaseAdmin
+                    .from('servidores_iptv')
+                    .select('name')
+                    .in('id', c.servidores_ids);
+                  serverNames = (sData || []).map((s: any) => s.name);
+                }
+                const nextVencISO = calcularNovoVencimento(baseDate, serverNames);
+                const nextMonth = new Date(nextVencISO + 'T12:00:00');
                 userState.set(chatId, { action: 'renovar_cliente', step: 1, data: { id, vencimento_temp: nextMonth.toISOString() } as any });
                 const br = formatBRDate(nextMonth);
                 await editMessage(chatId, messageId, `<b>Renovação de Assinatura</b>\nSugestão de novo vencimento: <b>${br}</b>`, {
