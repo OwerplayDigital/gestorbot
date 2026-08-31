@@ -17,3 +17,20 @@ export const BOT_TEMPLATES = {
     `✅ Sua assinatura foi renovada com sucesso!\n\n` +
     `🗓️ *PRÓXIMO VENCIMENTO:* ${data}`
 };
+
+/**
+ * Substitui variáveis dinâmicas ({nome}, {vencimento}, {valor}...) pelo conteúdo
+ * real do cliente. Tags desconhecidas permanecem intactas no texto original.
+ */
+export const renderClientTemplate = (
+  content: string,
+  vars: Record<string, string>
+): string =>
+  content.replace(/\{([a-z_]+)\}/gi, (match, key: string) => {
+    const value = vars[key];
+    return value !== undefined && value !== null ? value : match;
+  });
+
+/** Escapa caracteres especiais para exibição segura com parse_mode HTML. */
+export const escapeHtml = (value: string): string =>
+  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

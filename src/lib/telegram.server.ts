@@ -1,8 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { BOT_TEMPLATES } from "./templates";
+import { BOT_TEMPLATES, renderClientTemplate, escapeHtml } from "./templates";
 
-export { BOT_TEMPLATES };
+export { BOT_TEMPLATES, renderClientTemplate, escapeHtml };
 
 export const getAuthorizedUser = async (chatId: number) => {
   const allowedId = process.env['TELEGRAM_ALLOWED_USER_ID'];
@@ -163,6 +163,19 @@ export const listServers = async () => {
     throw new Error("Erro ao listar servidores.");
   }
   return data;
+};
+
+export const listTemplates = async () => {
+  const { data, error } = await supabaseAdmin
+    .from("templates_whatsapp")
+    .select("id, nome, mensagem")
+    .order("nome");
+
+  if (error) {
+    console.error("Erro Supabase (templates_whatsapp select):", error);
+    return [];
+  }
+  return data || [];
 };
 
 export const getClientsSummary = async () => {
