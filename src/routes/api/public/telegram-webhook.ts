@@ -560,7 +560,18 @@ async function handleTelegramEvent(body: any): Promise<Response> {
 
             if (data.startsWith('send_tpl_menu:')) {
               const id = data.split(':')[1];
-              const templates = await listTemplates();
+              console.log(`[BOT] send_tpl_menu acionado para cliente ${id}`);
+              let templates: any[] = [];
+              try {
+                templates = await listTemplates();
+                console.log(`[BOT] Templates encontrados: ${templates?.length ?? 0}`);
+              } catch (tplErr) {
+                console.error("[BOT] Erro ao buscar templates_whatsapp:", tplErr);
+                await editMessage(chatId, messageId, "❌ <b>Erro ao carregar templates.</b>\n\nTente novamente em instantes.", {
+                  inline_keyboard: [[{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]]
+                });
+                return new Response('OK');
+              }
 
               if (!templates || templates.length === 0) {
                 await editMessage(chatId, messageId, "📭 <b>Nenhum template cadastrado.</b>\n\nCadastre mensagens na aba <b>Mensagens</b> do Gestor para enviá-las pelo bot.", {

@@ -492,7 +492,7 @@ export function calcularNovoVencimento(baseDate: Date, serverNames: (string | nu
     next.setDate(next.getDate() + 30);
   }
 
-  return next.toISOString().split('T')[0];
+  return next.toISOString().split('T')[0] ?? '';
 }
 
 export const renewClient = async (
