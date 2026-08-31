@@ -561,20 +561,22 @@ async function handleTelegramEvent(body: any): Promise<Response> {
             if (data.startsWith('send_tpl_menu:')) {
               const id = data.split(':')[1];
               console.log(`[BOT] send_tpl_menu acionado para cliente ${id}`);
+              console.log("[BOT] Buscando templates...");
               let templates: any[] = [];
               try {
                 templates = await listTemplates();
-                console.log(`[BOT] Templates encontrados: ${templates?.length ?? 0}`);
+                console.log("[BOT] Templates encontrados:", templates);
               } catch (tplErr) {
-                console.error("[BOT] Erro ao buscar templates_whatsapp:", tplErr);
-                await editMessage(chatId, messageId, "❌ <b>Erro ao carregar templates.</b>\n\nTente novamente em instantes.", {
+                console.error("[BOT] Erro Supabase:", tplErr);
+                await editMessage(chatId, messageId, "⚠️ Nenhum template de mensagem encontrado no banco de dados.\n\n❌ Falha ao buscar templates (verifique RLS/permissões em <b>templates_whatsapp</b>).", {
                   inline_keyboard: [[{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]]
                 });
                 return new Response('OK');
               }
 
               if (!templates || templates.length === 0) {
-                await editMessage(chatId, messageId, "📭 <b>Nenhum template cadastrado.</b>\n\nCadastre mensagens na aba <b>Mensagens</b> do Gestor para enviá-las pelo bot.", {
+                console.warn("[BOT] Busca retornou ZERO templates.");
+                await editMessage(chatId, messageId, "⚠️ Nenhum template de mensagem encontrado no banco de dados.\n\nCadastre mensagens na aba <b>Mensagens</b> do Gestor.", {
                   inline_keyboard: [[{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]]
                 });
                 return new Response('OK');
