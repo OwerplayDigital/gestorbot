@@ -568,23 +568,23 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                 console.log("[BOT] Templates encontrados:", templates);
               } catch (tplErr) {
                 console.error("[BOT] Erro Supabase:", tplErr);
-                await editMessage(chatId, messageId, "⚠️ Nenhum template de mensagem encontrado no banco de dados.\n\n❌ Falha ao buscar templates (verifique RLS/permissões em <b>templates_whatsapp</b>).", {
-                  inline_keyboard: [[{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]]
+                await editMessage(chatId, messageId, "📭 Nenhum template cadastrado\n\n❌ Falha ao buscar templates (verifique RLS/permissões em <b>templates_whatsapp</b>).", {
+                  inline_keyboard: [[{ text: "⬅️ Voltar", callback_data: `client_details:${id}` }]]
                 });
                 return new Response('OK');
               }
 
               if (!templates || templates.length === 0) {
                 console.warn("[BOT] Busca retornou ZERO templates.");
-                await editMessage(chatId, messageId, "⚠️ Nenhum template de mensagem encontrado no banco de dados.\n\nCadastre mensagens na aba <b>Mensagens</b> do Gestor.", {
-                  inline_keyboard: [[{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]]
+                await editMessage(chatId, messageId, "📭 Nenhum template cadastrado\n\nCadastre mensagens na aba <b>Mensagens</b> do Gestor.", {
+                  inline_keyboard: [[{ text: "⬅️ Voltar", callback_data: `client_details:${id}` }]]
                 });
                 return new Response('OK');
               }
 
               const buttons = templates
                 .map((t: any) => [{ text: t.nome, callback_data: `send_tpl:${t.id}:${id}` }]);
-              buttons.push([{ text: "⬅️ Voltar", callback_data: `client_menu:${id}` }]);
+              buttons.push([{ text: "⬅️ Voltar", callback_data: `client_details:${id}` }]);
 
               await editMessage(chatId, messageId, "📩 <b>Enviar Mensagem</b>\n\nSelecione o template de mensagem:", { inline_keyboard: buttons });
               return new Response('OK');
@@ -602,7 +602,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
 
                 if (!tpl || !client) {
                   await editMessage(chatId, messageId, "❌ Template ou cliente não encontrado.", {
-                    inline_keyboard: [[{ text: "⬅️ Voltar", callback_data: `client_menu:${clientId}` }]]
+                    inline_keyboard: [[{ text: "⬅️ Voltar", callback_data: `client_details:${clientId}` }]]
                   });
                   return new Response('OK');
                 }
@@ -616,9 +616,14 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                 } else {
                   buttons.push([{ text: "⚠️ Cliente sem WhatsApp cadastrado", callback_data: "noop" }]);
                 }
-                buttons.push([{ text: "⬅️ Voltar", callback_data: `send_tpl_menu:${clientId}` }]);
+                buttons.push([{ text: "⬅️ Voltar", callback_data: `client_details:${clientId}` }]);
 
-                await editMessage(chatId, messageId, `📩 <b>${escapeHtml(tpl.nome)}</b>\n\n${escapeHtml(rendered)}`, { inline_keyboard: buttons });
+                // Envia a mensagem renderizada diretamente no chat do Telegram
+                await sendMessage(chatId, `📩 <b>${escapeHtml(tpl.nome)}</b>\n\n${escapeHtml(rendered)}`, { inline_keyboard: buttons });
+                // Confirma visualmente no menu original
+                await editMessage(chatId, messageId, `✅ Mensagem "<b>${escapeHtml(tpl.nome)}</b>" enviada acima.`, {
+                  inline_keyboard: [[{ text: "⬅️ Voltar", callback_data: `client_details:${clientId}` }]]
+                });
               } catch (err) {
                 console.error("[BOT] Erro em send_tpl:", err);
                 await answerCallbackQuery(cb.id, "Erro ao processar o template.");
