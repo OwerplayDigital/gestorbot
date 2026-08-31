@@ -17,9 +17,6 @@ import {
   calcularNovoVencimento,
   getClientById,
   BOT_TEMPLATES,
-  listTemplates,
-  renderClientTemplate,
-  escapeHtml,
   trackBotMessage,
   getBotMessages,
   clearBotMessages,
@@ -232,33 +229,9 @@ async function sendClientFicha(chatId: number, c: any) {
         { text: "Renovar", callback_data: `renew_init:${c.id}` },
         { text: "Editar", callback_data: `edit_client_full:${c.id}` }
       ],
-      [
-        { text: "📩 Enviar Mensagem", callback_data: `send_tpl_menu:${c.id}` },
-        { text: "Excluir", callback_data: `delete_client_confirm:${c.id}` }
-      ]
+      [{ text: "Excluir", callback_data: `delete_client_confirm:${c.id}` }]
     ]
   });
-}
-
-function buildTemplateVars(c: any): Record<string, string> {
-  const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
-  const brDate = c.vencimento ? formatBRDate(new Date(c.vencimento + 'T12:00:00')) : '';
-  const plan = c.plans;
-  const planPrice = Number(plan?.price || plan?.preco || plan?.valor || 0);
-  const valorFinal = Math.max(0, planPrice - Number(c.desconto || 0)).toFixed(2).replace('.', ',');
-  const serverNames = (c.servidores || []).map((s: any) => s.name).join(', ');
-  const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
-
-  return {
-    nome: c.nome || '',
-    primeiro_nome: primeiroNome,
-    vencimento: brDate,
-    valor: `R$ ${valorFinal}`,
-    plano: plan?.name || '',
-    servidor: serverNames,
-    whatsapp: c.whatsapp || '',
-    link: paymentUrl,
-  };
 }
 
 function parseBRDate(brDate: string): string | null {
@@ -558,76 +531,9 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               return new Response('OK');
             }
 
-            if (data.startsWith('send_tpl_menu:')) {
-              const id = data.split(':')[1];
-              console.log(`[BOT] send_tpl_menu acionado para cliente ${id}`);
-              console.log("[BOT] Buscando templates...");
-              let templates: any[] = [];
-              try {
-                templates = await listTemplates();
-                console.log("[BOT] Templates encontrados:", templates);
-              } catch (tplErr) {
-                console.error("[BOT] Erro Supabase:", tplErr);
-                await editMessage(chatId, messageId, "📭 Nenhum template cadastrado\n\n❌ Falha ao buscar templates (verifique RLS/permissões em <b>templates_whatsapp</b>).", {
-                  inline_keyboard: [[{ text: "⬅️ Voltar", callback_data: `client_details:${id}` }]]
-                });
-                return new Response('OK');
-              }
-
-              if (!templates || templates.length === 0) {
-                console.warn("[BOT] Busca retornou ZERO templates.");
-                await editMessage(chatId, messageId, "📭 Nenhum template cadastrado\n\nCadastre mensagens na aba <b>Mensagens</b> do Gestor.", {
-                  inline_keyboard: [[{ text: "⬅️ Voltar", callback_data: `client_details:${id}` }]]
-                });
-                return new Response('OK');
-              }
-
-              const buttons = templates
-                .map((t: any) => [{ text: t.nome, callback_data: `send_tpl:${t.id}:${id}` }]);
-              buttons.push([{ text: "⬅️ Voltar", callback_data: `client_details:${id}` }]);
-
-              await editMessage(chatId, messageId, "📩 <b>Enviar Mensagem</b>\n\nSelecione o template de mensagem:", { inline_keyboard: buttons });
-              return new Response('OK');
-            }
-
-            if (data.startsWith('send_tpl:')) {
-              const [, tplId, clientId] = data.split(':');
-              try {
-                const client = await getClientById(clientId);
-                const { data: tpl } = await supabaseAdmin
-                  .from("templates_whatsapp")
-                  .select("id, nome, mensagem")
-                  .eq("id", tplId)
-                  .maybeSingle();
-
-                if (!tpl || !client) {
-                  await editMessage(chatId, messageId, "❌ Template ou cliente não encontrado.", {
-                    inline_keyboard: [[{ text: "⬅️ Voltar", callback_data: `client_details:${clientId}` }]]
-                  });
-                  return new Response('OK');
-                }
-
-                const rendered = renderClientTemplate(tpl.mensagem, buildTemplateVars(client));
-                const phone = cleanPhone(client.whatsapp || '');
-                const buttons: any[][] = [];
-
-                if (phone) {
-                  buttons.push([{ text: "📤 Enviar via WhatsApp", url: `https://wa.me/${phone}?text=${encodeURIComponent(rendered)}` }]);
-                } else {
-                  buttons.push([{ text: "⚠️ Cliente sem WhatsApp cadastrado", callback_data: "noop" }]);
-                }
-                buttons.push([{ text: "⬅️ Voltar", callback_data: `client_details:${clientId}` }]);
-
-                // Envia a mensagem renderizada diretamente no chat do Telegram
-                await sendMessage(chatId, `📩 <b>${escapeHtml(tpl.nome)}</b>\n\n${escapeHtml(rendered)}`, { inline_keyboard: buttons });
-                // Confirma visualmente no menu original
-                await editMessage(chatId, messageId, `✅ Mensagem "<b>${escapeHtml(tpl.nome)}</b>" enviada acima.`, {
-                  inline_keyboard: [[{ text: "⬅️ Voltar", callback_data: `client_details:${clientId}` }]]
-                });
-              } catch (err) {
-                console.error("[BOT] Erro em send_tpl:", err);
-                await answerCallbackQuery(cb.id, "Erro ao processar o template.");
-              }
+            if (data.startsWith('send_tpl_menu:') || data.startsWith('send_tpl:')) {
+              await answerCallbackQuery(cb.id);
+              await sendMessage(chatId, "⚠️ O envio de mensagens pelo bot foi descontinuado. Use a área <b>Mensagens</b> do Gestor Web para copiar seus templates.");
               return new Response('OK');
             }
 
