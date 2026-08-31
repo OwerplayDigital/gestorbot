@@ -583,41 +583,46 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               }
 
               const buttons = templates
-                .map((t: any) => [{ text: t.nome, callback_data: `send_tpl_pick:${t.id}:${id}` }]);
-              buttons.push([{ text: "🔙 Voltar", callback_data: `client_menu:${id}` }]);
+                .map((t: any) => [{ text: t.nome, callback_data: `send_tpl:${t.id}:${id}` }]);
+              buttons.push([{ text: "⬅️ Voltar", callback_data: `client_menu:${id}` }]);
 
               await editMessage(chatId, messageId, "📩 <b>Enviar Mensagem</b>\n\nSelecione o template de mensagem:", { inline_keyboard: buttons });
               return new Response('OK');
             }
 
-            if (data.startsWith('send_tpl_pick:')) {
+            if (data.startsWith('send_tpl:')) {
               const [, tplId, clientId] = data.split(':');
-              const client = await getClientById(clientId);
-              const { data: tpl } = await supabaseAdmin
-                .from("templates_whatsapp")
-                .select("id, nome, mensagem")
-                .eq("id", tplId)
-                .maybeSingle();
+              try {
+                const client = await getClientById(clientId);
+                const { data: tpl } = await supabaseAdmin
+                  .from("templates_whatsapp")
+                  .select("id, nome, mensagem")
+                  .eq("id", tplId)
+                  .maybeSingle();
 
-              if (!tpl || !client) {
-                await editMessage(chatId, messageId, "❌ Template ou cliente não encontrado.", {
-                  inline_keyboard: [[{ text: "🔙 Voltar", callback_data: `client_menu:${clientId}` }]]
-                });
-                return new Response('OK');
+                if (!tpl || !client) {
+                  await editMessage(chatId, messageId, "❌ Template ou cliente não encontrado.", {
+                    inline_keyboard: [[{ text: "⬅️ Voltar", callback_data: `client_menu:${clientId}` }]]
+                  });
+                  return new Response('OK');
+                }
+
+                const rendered = renderClientTemplate(tpl.mensagem, buildTemplateVars(client));
+                const phone = cleanPhone(client.whatsapp || '');
+                const buttons: any[][] = [];
+
+                if (phone) {
+                  buttons.push([{ text: "📤 Enviar via WhatsApp", url: `https://wa.me/${phone}?text=${encodeURIComponent(rendered)}` }]);
+                } else {
+                  buttons.push([{ text: "⚠️ Cliente sem WhatsApp cadastrado", callback_data: "noop" }]);
+                }
+                buttons.push([{ text: "⬅️ Voltar", callback_data: `send_tpl_menu:${clientId}` }]);
+
+                await editMessage(chatId, messageId, `📩 <b>${escapeHtml(tpl.nome)}</b>\n\n${escapeHtml(rendered)}`, { inline_keyboard: buttons });
+              } catch (err) {
+                console.error("[BOT] Erro em send_tpl:", err);
+                await answerCallbackQuery(cb.id, "Erro ao processar o template.");
               }
-
-              const rendered = renderClientTemplate(tpl.mensagem, buildTemplateVars(client));
-              const phone = cleanPhone(client.whatsapp || '');
-              const buttons: any[][] = [];
-
-              if (phone) {
-                buttons.push([{ text: "📤 Enviar via WhatsApp", url: `https://wa.me/${phone}?text=${encodeURIComponent(rendered)}` }]);
-              } else {
-                buttons.push([{ text: "⚠️ Cliente sem WhatsApp cadastrado", callback_data: "noop" }]);
-              }
-              buttons.push([{ text: "🔙 Voltar", callback_data: `send_tpl_menu:${clientId}` }]);
-
-              await editMessage(chatId, messageId, `📩 <b>${escapeHtml(tpl.nome)}</b>\n\n${escapeHtml(rendered)}`, { inline_keyboard: buttons });
               return new Response('OK');
             }
 
