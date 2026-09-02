@@ -15,6 +15,11 @@ import {
   listClientsExpiringToday,
   renewClient,
   calcularNovoVencimento,
+  calcularNovoVencimentoISO,
+  todayISOBr,
+  addDaysISO,
+  isoToBR,
+  brToISO,
   getClientById,
   BOT_TEMPLATES,
   trackBotMessage,
@@ -146,6 +151,9 @@ function formatBRDate(date: Date): string {
   return formatTz(brDate, 'dd/MM/yyyy');
 }
 
+// Datas de vencimento são sempre texto YYYY-MM-DD (sem timezone).
+const isoOnly = (v: string) => (v.includes('T') ? v.split('T')[0]! : v);
+
 function cleanPhone(phone: string): string {
   const cleaned = phone.replace(/\D/g, '');
   if (cleaned.length === 0) return '';
@@ -154,7 +162,7 @@ function cleanPhone(phone: string): string {
 
 async function sendClientCompact(chatId: number, c: any) {
   const plan = c.plans;
-  const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+  const brDate = isoToBR(c.vencimento);
   const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
   
@@ -189,7 +197,7 @@ async function sendClientFicha(chatId: number, c: any) {
   const servers = c.servidores || [];
   const serverNames = servers.map((s: any) => s.name).join(', ') || 'Painel';
   
-  const brDate = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+  const brDate = isoToBR(c.vencimento);
   const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0];
   
   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
@@ -235,12 +243,7 @@ async function sendClientFicha(chatId: number, c: any) {
 }
 
 function parseBRDate(brDate: string): string | null {
-  const parts = brDate.split('/');
-  if (parts.length !== 3) return null;
-  const d = parts[0], m = parts[1], y = parts[2];
-  if (!d || !m || !y) return null;
-  const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-  return isNaN(date.getTime()) ? null : (date.toISOString().split('T')[0] ?? null);
+  return brToISO(brDate);
 }
 
 async function handleTelegramEvent(body: any): Promise<Response> {
@@ -465,7 +468,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                 for (const c of expiredWithServers) {
                   // Reusando a lógica de exibição compacta
                   const vDate = parseDate(c.vencimento);
-                  const brDate = vDate ? formatBRDate(vDate) : 'N/A';
+                  const brDate = isoToBR(c.vencimento);
                   const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
                   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
                   
@@ -672,13 +675,10 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               const id = data.split(':')[1];
               const { data: c } = await supabaseAdmin.from('clientes').select('vencimento, servidores_ids').eq('id', id).single();
               if (c) {
-                const currentVenc = new Date(c.vencimento + 'T12:00:00');
-                const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
-                const today = new Date(nowBr);
-                today.setHours(0, 0, 0, 0);
-                
+                const todayIso = todayISOBr();
+                const currentVencIso = c.vencimento ? isoOnly(String(c.vencimento)) : todayIso;
                 // Base: se vencido, Hoje. Se em dia, próprio vencimento.
-                const baseDate = currentVenc < today ? today : currentVenc;
+                const baseIso = currentVencIso < todayIso ? todayIso : currentVencIso;
 
                 // Identificar servidor do cliente (Uniplay => data fixa; Goat/outros => +30 dias)
                 let serverNames: string[] = [];
@@ -689,10 +689,9 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                     .in('id', c.servidores_ids);
                   serverNames = (sData || []).map((s: any) => s.name);
                 }
-                const nextVencISO = calcularNovoVencimento(baseDate, serverNames);
-                const nextMonth = new Date(nextVencISO + 'T12:00:00');
-                userState.set(chatId, { action: 'renovar_cliente', step: 1, data: { id, vencimento_temp: nextMonth.toISOString() } as any });
-                const br = formatBRDate(nextMonth);
+                const nextVencISO = calcularNovoVencimentoISO(baseIso, serverNames);
+                userState.set(chatId, { action: 'renovar_cliente', step: 1, data: { id, vencimento_temp: nextVencISO } as any });
+                const br = isoToBR(nextVencISO);
                 await editMessage(chatId, messageId, `<b>Renovação de Assinatura</b>\nSugestão de novo vencimento: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
@@ -704,18 +703,17 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               }
             }
             else if (state?.action === 'renovar_cliente') {
-              const currentIso = state.data.vencimento_temp;
+              const currentIso = state.data.vencimento_temp ? isoOnly(state.data.vencimento_temp) : '';
               if (!currentIso) return new Response('OK');
-              const d = new Date(currentIso);
-              
-              if (data === 'erenew_m5') d.setDate(d.getDate() - 5);
-              else if (data === 'erenew_m1') d.setDate(d.getDate() - 1);
-              else if (data === 'erenew_p1') d.setDate(d.getDate() + 1);
-              else if (data === 'erenew_p5') d.setDate(d.getDate() + 5);
+              let novoIso = currentIso;
+              if (data === 'erenew_m5') novoIso = addDaysISO(currentIso, -5);
+              else if (data === 'erenew_m1') novoIso = addDaysISO(currentIso, -1);
+              else if (data === 'erenew_p1') novoIso = addDaysISO(currentIso, 1);
+              else if (data === 'erenew_p5') novoIso = addDaysISO(currentIso, 5);
               
               if (data.startsWith('erenew_') && data !== 'erenew_confirm') {
-                state.data.vencimento_temp = d.toISOString();
-                const br = formatBRDate(d);
+                state.data.vencimento_temp = novoIso;
+                const br = isoToBR(novoIso);
                 await editMessage(chatId, messageId, `<b>Renovação de Assinatura</b>\nNovo vencimento: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "erenew_m5" }, { text: "-1d", callback_data: "erenew_m1" }, { text: "+1d", callback_data: "erenew_p1" }, { text: "+5d", callback_data: "erenew_p5" }],
@@ -725,11 +723,11 @@ async function handleTelegramEvent(body: any): Promise<Response> {
 
                 });
               } else if (data === 'erenew_confirm') {
-                const isoDate = state.data.vencimento_temp?.split('T')[0];
+                const isoDate = state.data.vencimento_temp ? isoOnly(state.data.vencimento_temp) : null;
                 const userId = await getAuthorizedUser(chatId);
                 if (isoDate && state.data.id && userId) {
                   const updated = await renewClient(state.data.id, isoDate, userId);
-                  const br = formatBRDate(new Date(isoDate + 'T12:00:00'));
+                  const br = isoToBR(isoDate);
                   const primeiroNome = updated.nome ? updated.nome.trim().split(' ')[0] : 'Cliente';
                   const phone = cleanPhone(updated.whatsapp || '');
                   const encodedReceipt = encodeURIComponent(
@@ -754,7 +752,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               const { data: c } = await supabaseAdmin.from('clientes').select('vencimento').eq('id', id).single();
               if (c) {
                 userState.set(chatId, { action: 'editar_vencimento', step: 1, data: { id, vencimento_temp: new Date(c.vencimento + 'T12:00:00').toISOString() } as any });
-                const br = formatBRDate(new Date(c.vencimento + 'T12:00:00'));
+                const br = isoToBR(c.vencimento);
                 await editMessage(chatId, messageId, `<b>Alterar Vencimento</b>\nAtual: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
@@ -798,18 +796,17 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               userState.delete(chatId);
             }
             else if (state?.action === 'editar_vencimento') {
-              const currentIso = state.data.vencimento_temp;
+              const currentIso = state.data.vencimento_temp ? isoOnly(state.data.vencimento_temp) : '';
               if (!currentIso) return new Response('OK');
-              const d = new Date(currentIso);
-              
-              if (data === 'evenc_m5') d.setDate(d.getDate() - 5);
-              else if (data === 'evenc_m1') d.setDate(d.getDate() - 1);
-              else if (data === 'evenc_p1') d.setDate(d.getDate() + 1);
-              else if (data === 'evenc_p5') d.setDate(d.getDate() + 5);
+              let novoIso = currentIso;
+              if (data === 'evenc_m5') novoIso = addDaysISO(currentIso, -5);
+              else if (data === 'evenc_m1') novoIso = addDaysISO(currentIso, -1);
+              else if (data === 'evenc_p1') novoIso = addDaysISO(currentIso, 1);
+              else if (data === 'evenc_p5') novoIso = addDaysISO(currentIso, 5);
               
               if (data.startsWith('evenc_') && data !== 'evenc_save') {
-                state.data.vencimento_temp = d.toISOString();
-                const br = formatBRDate(d);
+                state.data.vencimento_temp = novoIso;
+                const br = isoToBR(novoIso);
                 await editMessage(chatId, messageId, `<b>Alterar Vencimento</b>\nNovo: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "evenc_m5" }, { text: "-1d", callback_data: "evenc_m1" }, { text: "+1d", callback_data: "evenc_p1" }, { text: "+5d", callback_data: "evenc_p5" }],
@@ -819,7 +816,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
 
                 });
               } else if (data === 'evenc_save') {
-                const isoDate = state.data.vencimento_temp?.split('T')[0];
+                const isoDate = state.data.vencimento_temp ? isoOnly(state.data.vencimento_temp) : null;
                 if (isoDate && state.data.id) {
                   const { data: updated } = await supabaseAdmin.from('clientes').update({ vencimento: isoDate }).eq('id', state.data.id).select('nome').single();
                   await editMessage(chatId, messageId, `Vencimento atualizado!`);
@@ -891,18 +888,17 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               }
             }
             else if (state && state.action === 'cadastrar_cliente' && state.step === 6) {
-              const currentIso = state.data.vencimento_temp;
+              const currentIso = state.data.vencimento_temp ? isoOnly(state.data.vencimento_temp) : '';
               if (!currentIso) return new Response('OK');
-              const d = new Date(currentIso);
-              
-              if (data === 'venc_m5') d.setDate(d.getDate() - 5);
-              else if (data === 'venc_m1') d.setDate(d.getDate() - 1);
-              else if (data === 'venc_p1') d.setDate(d.getDate() + 1);
-              else if (data === 'venc_p5') d.setDate(d.getDate() + 5);
+              let novoIso = currentIso;
+              if (data === 'venc_m5') novoIso = addDaysISO(currentIso, -5);
+              else if (data === 'venc_m1') novoIso = addDaysISO(currentIso, -1);
+              else if (data === 'venc_p1') novoIso = addDaysISO(currentIso, 1);
+              else if (data === 'venc_p5') novoIso = addDaysISO(currentIso, 5);
               
               if (data.startsWith('venc_') && data !== 'venc_confirm' && data !== 'venc_edit') {
-                state.data.vencimento_temp = d.toISOString();
-                const br = formatBRDate(d);
+                state.data.vencimento_temp = novoIso;
+                const br = isoToBR(novoIso);
                 await editMessage(chatId, messageId, `<b>Passo 6: Seleção de Vencimento</b>\nVencimento: <b>${br}</b>`, {
                   inline_keyboard: [
                     [{ text: "-5d", callback_data: "venc_m5" }, { text: "-1d", callback_data: "venc_m1" }, { text: "+1d", callback_data: "venc_p1" }, { text: "+5d", callback_data: "venc_p5" }],
@@ -913,11 +909,11 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               } else if (data === 'venc_confirm') {
                 const vt = state.data.vencimento_temp;
                 if (!vt) return new Response('OK');
-                const isoDate = vt.split('T')[0];
+                const isoDate = isoOnly(vt);
                 if (isoDate) state.data.vencimento = isoDate;
                 
                 state.step = 7;
-                const brDate = formatBRDate(new Date((state.data.vencimento || '') + 'T12:00:00'));
+                const brDate = isoToBR(state.data.vencimento);
                 const resumo = `<b>RESUMO DO CADASTRO:</b>\n` +
                   `Nome: ${state.data.nome}\n` +
                   `WhatsApp: ${state.data.whatsapp === '0' ? 'Não informado' : state.data.whatsapp}\n` +
@@ -945,7 +941,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                 }
 
                 // Conversão de formato de data (DD/MM/AAAA ou ISO -> YYYY-MM-DD)
-                const finalDate = d.vencimento.includes('T') ? d.vencimento.split('T')[0] : d.vencimento;
+                const finalDate = isoOnly(d.vencimento);
 
                 const userId = await getAuthorizedUser(chatId);
                 if (!userId) throw new Error("Usuário não autorizado.");
@@ -960,7 +956,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                   vencimento: finalDate!
                 });
 
-                const brDate = formatBRDate(new Date(finalDate + 'T12:00:00'));
+                const brDate = isoToBR(finalDate);
                 const { data: plan } = await supabaseAdmin.from('plans').select('*').eq('id', d.plano_id!).single();
                 const planAny = plan as any;
                 const planPrice = Number(planAny?.price || planAny?.preco || planAny?.valor || 0);
@@ -1289,9 +1285,9 @@ async function handleTelegramEvent(body: any): Promise<Response> {
               const val = parseFloat(text.replace(',', '.'));
               if (isNaN(val)) return new Response('OK');
               state.data.desconto = val; state.step = 6;
-              const d = new Date(); d.setDate(d.getDate() + 30);
-              state.data.vencimento_temp = d.toISOString();
-              const br = formatBRDate(d);
+              const vencIso = addDaysISO(todayISOBr(), 30);
+              state.data.vencimento_temp = vencIso;
+              const br = isoToBR(vencIso);
               await sendMessage(chatId, `<b>Passo 6: Seleção de Vencimento</b>\nVencimento: <b>${br}</b>`, {
                 inline_keyboard: [
                   [{ text: "-5d", callback_data: "venc_m5" }, { text: "-1d", callback_data: "venc_m1" }, { text: "+1d", callback_data: "venc_p1" }, { text: "+5d", callback_data: "venc_p5" }],
@@ -1302,8 +1298,8 @@ async function handleTelegramEvent(body: any): Promise<Response> {
             } else if (state.step === 6) {
               const iso = parseBRDate(text);
               if (!iso) return new Response('OK');
-              state.data.vencimento_temp = new Date(iso + 'T12:00:00').toISOString();
-              const br = formatBRDate(new Date(state.data.vencimento_temp));
+              state.data.vencimento_temp = iso;
+              const br = isoToBR(iso);
               await sendMessage(chatId, `Data: <b>${br}</b>`, {
                 inline_keyboard: [[{ text: `Confirmar: ${br}`, callback_data: "venc_confirm" }]]
               });
