@@ -468,7 +468,7 @@ async function handleTelegramEvent(body: any): Promise<Response> {
                 for (const c of expiredWithServers) {
                   // Reusando a lógica de exibição compacta
                   const vDate = parseDate(c.vencimento);
-                  const brDate = vDate ? formatBRDate(vDate) : 'N/A';
+                  const brDate = isoToBR(c.vencimento);
                   const primeiroNome = (c.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
                   const paymentUrl = `https://gestorbot.lovable.app/pagar/${c.id}`;
                   
