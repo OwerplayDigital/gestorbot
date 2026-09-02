@@ -473,26 +473,50 @@ export const getFinancialSummary = async () => {
 // Regra de renovação por servidor:
 // - Uniplay: Data Fixa (mesmo dia do mês seguinte, respeitando últimos dias de meses curtos)
 // - Goat (e demais): 30 dias exatos (+30 dias corridos)
-export function calcularNovoVencimento(baseDate: Date, serverNames: (string | null | undefined)[]): string {
-  const next = new Date(baseDate);
-  next.setHours(12, 0, 0, 0);
 
+// ===== Helpers de data (string YYYY-MM-DD, sem conversões UTC) =====
+export function todayISOBr(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+}
+
+export function addDaysISO(iso: string, days: number): string {
+  const [y, m, d] = iso.split('-').map(Number) as [number, number, number];
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
+
+export function isoToBR(iso: string | null | undefined): string {
+  if (!iso) return 'N/A';
+  const base = iso.includes('T') ? iso.split('T')[0]! : iso;
+  if (base.includes('/')) return base;
+  const [y, m, d] = base.split('-');
+  return (y && m && d) ? `${d}/${m}/${y}` : base;
+}
+
+export function brToISO(br: string): string | null {
+  const parts = br.trim().split('/');
+  if (parts.length !== 3) return null;
+  const [d, m, y] = parts as [string, string, string];
+  if (!/^\d{1,2}$/.test(d) || !/^\d{1,2}$/.test(m) || !/^\d{4}$/.test(y)) return null;
+  return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+}
+
+// Uniplay: mesmo dia do mês seguinte. Demais: +30 dias.
+export function calcularNovoVencimentoISO(baseIso: string, serverNames: (string | null | undefined)[]): string {
   const isUniplay = serverNames.some(n => n?.toLowerCase().includes('uniplay'));
+  if (!isUniplay) return addDaysISO(baseIso, 30);
+  const [y, m, d] = baseIso.split('-').map(Number) as [number, number, number];
+  const nextMonth = m === 12 ? 1 : m + 1;
+  const nextYear = m === 12 ? y + 1 : y;
+  const lastDay = new Date(Date.UTC(nextYear, nextMonth, 0)).getUTCDate();
+  const day = Math.min(d, lastDay);
+  return `${nextYear}-${String(nextMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
 
-  if (isUniplay) {
-    const day = baseDate.getDate();
-    const month = baseDate.getMonth() + 1; // 1-12
-    const year = baseDate.getFullYear();
-    let nextMonth = month === 12 ? 1 : month + 1;
-    let nextYear = month === 12 ? year + 1 : year;
-    const lastDay = new Date(nextYear, nextMonth, 0).getDate(); // último dia do próximo mês
-    next.setFullYear(nextYear, nextMonth - 1, Math.min(day, lastDay));
-  } else {
-    // Goat / padrão: +30 dias exatos
-    next.setDate(next.getDate() + 30);
-  }
-
-  return next.toISOString().split('T')[0] ?? '';
+export function calcularNovoVencimento(baseDate: Date, serverNames: (string | null | undefined)[]): string {
+  const iso = `${baseDate.getFullYear()}-${String(baseDate.getMonth() + 1).padStart(2, '0')}-${String(baseDate.getDate()).padStart(2, '0')}`;
+  return calcularNovoVencimentoISO(iso, serverNames);
 }
 
 export const renewClient = async (
@@ -542,17 +566,11 @@ export const renewClient = async (
   const { toZonedTime, format: formatTz } = await import('date-fns-tz');
   const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo');
   
-  const today = new Date(nowBr);
-  today.setHours(0, 0, 0, 0);
-  
-  // O banco armazena apenas data (YYYY-MM-DD), ao ler transformamos em um objeto Date de meio-dia 
-  // para evitar problemas de timezone na conversão da string
-  const currentVenc = client.vencimento ? new Date(client.vencimento + 'T12:00:00') : today;
-  
-  // Regra de data por servidor: Uniplay => data fixa no mês seguinte; Goat/outros => +30 dias exatos.
-  // Se vencido, a base vira Hoje; se em dia, a base é o próprio vencimento.
-  const baseDate = currentVenc < today ? today : currentVenc;
-  const calculatedNewVencimento = calcularNovoVencimento(baseDate, serverNames);
+  // Datas tratadas como texto YYYY-MM-DD no fuso de São Paulo (evita erro de 1 dia).
+  const todayIso = todayISOBr();
+  const currentVencIso = client.vencimento ? String(client.vencimento).slice(0, 10) : todayIso;
+  const baseIso = currentVencIso < todayIso ? todayIso : currentVencIso;
+  const calculatedNewVencimento = calcularNovoVencimentoISO(baseIso, serverNames);
 
   // O webhook já calcula a data pela regra do servidor e envia o valor final
   // (incluindo ajustes manuais +1/-1). O cálculo interno serve apenas de fallback.
@@ -576,7 +594,7 @@ export const renewClient = async (
       desconto: client.desconto,
       vencimento_anterior: vencimentoAnterior,
       novo_vencimento: novoVencimentoFinal,
-      data_renovacao: nowBr.toISOString(),
+      data_renovacao: new Date().toISOString(),
     });
 
   if (renewRecordError) {
@@ -594,7 +612,7 @@ export const renewClient = async (
       entrada: valorEntrada,
       custo: totalCusto,
       valor: valorEntrada,
-      data: formatTz(nowBr, 'yyyy-MM-dd'),
+      data: todayISOBr(),
       descricao: `Renovação cliente ${clientId}`,
       serv_id: client.servidores_ids?.[0] || null
     });
