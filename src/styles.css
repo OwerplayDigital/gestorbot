@@ -2,8 +2,7 @@
 
 /* Dashboard visual overhaul — intentionally obvious */
 .dashboard-page{max-width:1280px!important;padding:1.5rem 1.5rem 3rem!important;gap:1.5rem!important}
-.dashboard-toolbar{justify-content:space-between!important;align-items:center!important;padding:.25rem 0 .5rem!important}
-.dashboard-toolbar:before{content:"Visão geral";font-size:1.55rem;font-weight:750;letter-spacing:-.04em;color:var(--color-foreground)}
+.dashboard-toolbar{justify-content:flex-start!important;align-items:center!important;padding:0!important}
 .dashboard-toolbar .period-switch{gap:.5rem!important}
 .dashboard-toolbar .period-switch button{border-radius:.8rem!important;padding:.6rem 1rem!important;font-size:.75rem!important;font-weight:700!important}
 .dashboard-hero{grid-template-columns:minmax(0,1.65fr) minmax(360px,.95fr)!important;gap:1rem!important}
