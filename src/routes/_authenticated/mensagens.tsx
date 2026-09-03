@@ -149,9 +149,6 @@ function Mensagens() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <h1 className="text-3xl font-black tracking-tight text-foreground uppercase">Mensagens</h1>
-          <p className="text-muted-foreground">
-            Cadastre templates de mensagens independentes do bot. Copie o texto e use onde quiser (WhatsApp, e-mail...).
-          </p>
         </div>
         <Button onClick={handleNew} className="rounded-xl font-bold shrink-0">
           <Plus size={16} className="mr-2" />
@@ -159,7 +156,6 @@ function Mensagens() {
         </Button>
       </div>
 
-      {/* Card de Variáveis */}
       <Card className="bg-primary/5 border-primary/20 rounded-2xl">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
@@ -181,7 +177,6 @@ function Mensagens() {
         </CardContent>
       </Card>
 
-      {/* Lista de Templates */}
       {templates?.length === 0 ? (
         <Card className="bg-card border-dashed border-border rounded-2xl">
           <CardContent className="py-12 text-center space-y-3">
@@ -199,35 +194,17 @@ function Mensagens() {
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-bold truncate">{template.nome}</CardTitle>
                 <div className="flex items-center gap-1 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-xl text-primary hover:bg-primary/10"
-                    onClick={() => handleEdit(template)}
-                    title="Editar"
-                  >
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl text-primary hover:bg-primary/10" onClick={() => handleEdit(template)} title="Editar">
                     <Edit2 size={16} />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10"
-                    onClick={() => setToDelete(template)}
-                    title="Excluir"
-                  >
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10" onClick={() => setToDelete(template)} title="Excluir">
                     <Trash2 size={16} />
                   </Button>
                 </div>
               </CardHeader>
               <CardContent className="flex flex-col gap-3 flex-1">
-                <p className="text-sm text-muted-foreground line-clamp-3 bg-muted/50 p-3 rounded-xl italic flex-1">
-                  "{template.mensagem}"
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => handleCopy(template)}
-                  className="rounded-xl w-full"
-                >
+                <p className="text-sm text-muted-foreground line-clamp-3 bg-muted/50 p-3 rounded-xl italic flex-1">"{template.mensagem}"</p>
+                <Button variant="outline" onClick={() => handleCopy(template)} className="rounded-xl w-full">
                   {copiedId === template.id ? <Check size={16} className="mr-2 text-green-600" /> : <Copy size={16} className="mr-2" />}
                   {copiedId === template.id ? "Copiado!" : "Copiar Texto"}
                 </Button>
@@ -237,78 +214,40 @@ function Mensagens() {
         </div>
       )}
 
-      {/* Modal de Criação/Edição */}
       <Dialog open={isModalOpen} onOpenChange={(open) => !open && closeModal()}>
         <DialogContent className="sm:max-w-[500px] rounded-3xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">{isNew ? "Novo Template" : "Editar Template"}</DialogTitle>
-            <DialogDescription>
-              {isNew ? "Crie uma nova mensagem modelo independente do bot." : "Modifique o nome ou o conteúdo da mensagem."}
-            </DialogDescription>
+            <DialogDescription>{isNew ? "Crie uma nova mensagem modelo independente do bot." : "Modifique o nome ou o conteúdo da mensagem."}</DialogDescription>
           </DialogHeader>
-
           {editingTemplate && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="nome">Nome do Template</Label>
-                <Input
-                  id="nome"
-                  value={editingTemplate.nome || ""}
-                  onChange={(e) => setEditingTemplate({ ...editingTemplate, nome: e.target.value })}
-                  className="rounded-xl bg-muted/50 border-border"
-                  placeholder="Ex: Cobrança Vencimento"
-                />
+                <Input id="nome" value={editingTemplate.nome || ""} onChange={(e) => setEditingTemplate({ ...editingTemplate, nome: e.target.value })} className="rounded-xl bg-muted/50 border-border" placeholder="Ex: Cobrança Vencimento" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="mensagem">Mensagem</Label>
-                <Textarea
-                  id="mensagem"
-                  rows={6}
-                  value={editingTemplate.mensagem || ""}
-                  onChange={(e) => setEditingTemplate({ ...editingTemplate, mensagem: e.target.value })}
-                  className="rounded-xl bg-muted/50 border-border resize-none"
-                  placeholder="Escreva a mensagem aqui... Use {nome}, {vencimento}, {valor}..."
-                />
+                <Textarea id="mensagem" rows={6} value={editingTemplate.mensagem || ""} onChange={(e) => setEditingTemplate({ ...editingTemplate, mensagem: e.target.value })} className="rounded-xl bg-muted/50 border-border resize-none" placeholder="Escreva a mensagem aqui... Use {nome}, {vencimento}, {valor}..." />
               </div>
             </div>
           )}
-
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={closeModal}
-              className="rounded-xl"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSave}
-              className="rounded-xl font-bold"
-              disabled={saveMutation.isPending}
-            >
-              {saveMutation.isPending ? "Salvando..." : "Salvar"}
-            </Button>
+            <Button variant="outline" onClick={closeModal} className="rounded-xl">Cancelar</Button>
+            <Button onClick={handleSave} className="rounded-xl font-bold" disabled={saveMutation.isPending}>{saveMutation.isPending ? "Salvando..." : "Salvar"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Confirmação de Exclusão */}
       <AlertDialog open={!!toDelete} onOpenChange={(open) => !open && setToDelete(null)}>
         <AlertDialogContent className="rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir template?</AlertDialogTitle>
-            <AlertDialogDescription>
-              O template "{toDelete?.nome}" será removido permanentemente. Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
+            <AlertDialogDescription>O template "{toDelete?.nome}" será removido permanentemente. Esta ação não pode ser desfeita.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => toDelete && deleteMutation.mutate(toDelete.id)}
-            >
-              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
-            </AlertDialogAction>
+            <AlertDialogAction className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => toDelete && deleteMutation.mutate(toDelete.id)}>{deleteMutation.isPending ? "Excluindo..." : "Excluir"}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
