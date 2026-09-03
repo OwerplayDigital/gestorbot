@@ -25,9 +25,9 @@ import {
   BarChart, 
   Bar, 
   XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   Cell
 } from "recharts";
@@ -90,7 +90,6 @@ function FinanceiroHistory() {
   });
 
   const stats = useMemo(() => {
-    // Soma direta sem depender de JOINS ou vínculos externos
     const entradas = transactions.reduce((acc: number, t: any) => acc + Number(t.entrada || 0), 0);
     const saidas = transactions.reduce((acc: number, t: any) => acc + Number(t.custo || 0), 0);
     const lucro = entradas - saidas;
@@ -101,7 +100,6 @@ function FinanceiroHistory() {
     const serverMap: Record<string, { name: string, clients: Set<string>, receita: number, custo: number }> = {};
     
     transactions.forEach((t: any) => {
-      // Se não houver servidor vinculado, agrupa em "Importados / Diversos"
       let serverName = t.serv_name || 'Servidores Diversos / Importados';
       let serverId = t.serv_id || 'diversos';
       
@@ -156,7 +154,6 @@ function FinanceiroHistory() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tighter text-foreground uppercase">Histórico Financeiro</h1>
-          <p className="text-sm text-muted-foreground font-medium">Consulte transações e balanços de períodos anteriores.</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -193,7 +190,6 @@ function FinanceiroHistory() {
         </div>
       </div>
 
-      {/* Cards de Resumo */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="rounded-2xl border-border shadow-sm overflow-hidden bg-card">
           <CardHeader className="pb-2">
@@ -235,7 +231,6 @@ function FinanceiroHistory() {
         </Card>
       </section>
 
-      {/* Gráfico e Resumo por Servidor */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="rounded-2xl border-border bg-card shadow-sm overflow-hidden">
           <CardHeader className="border-b border-border/50 bg-muted/20">
@@ -328,4 +323,3 @@ function FinanceiroHistory() {
     </div>
   );
 }
-
