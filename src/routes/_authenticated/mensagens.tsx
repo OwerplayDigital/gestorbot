@@ -55,7 +55,7 @@ function Mensagens() {
         .select("*")
         .order("nome");
       if (error) throw error;
-      return data as Template[];
+      return (data ?? []) as unknown as Template[];
     },
   });
 
