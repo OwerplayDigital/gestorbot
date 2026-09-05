@@ -8,14 +8,14 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { Menu, LayoutDashboard, DollarSign, AlertTriangle, Users, LogOut, Settings, Circle, MessageSquare, Clock, Server } from "lucide-react";
+import { Menu, LayoutDashboard, DollarSign, Users, LogOut, MessageSquare, Clock, Server, BarChart3 } from "lucide-react";
 import gestorLogo from "@/assets/gestor-logo.png.asset.json";
 import { Toaster } from "@/components/ui/sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
@@ -40,7 +40,7 @@ function NavLink({ to, icon: Icon, children, badge, onClick }: { to: string; ico
 }
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
-  return <div className="flex flex-col h-full py-6"><div className="px-6 mb-8 flex items-center gap-2"><img src={gestorLogo.url} alt="Logo" className="h-8 w-8 rounded-xl object-cover" /><span className="text-lg font-semibold tracking-tight text-foreground">Owerplay Gestor</span></div><nav className="flex-1 px-3 space-y-1"><NavLink to="/dashboard" icon={LayoutDashboard} onClick={onNavigate}>Dashboard</NavLink><NavLink to="/financeiro" icon={DollarSign} badge="12" onClick={onNavigate}>Financeiro</NavLink><NavLink to="/clientes" icon={Users} onClick={onNavigate}>Clientes</NavLink><NavLink to="/vencidos" icon={Clock} onClick={onNavigate}>Vencidos</NavLink><NavLink to="/mensagens" icon={MessageSquare} onClick={onNavigate}>Mensagens</NavLink><NavLink to="/infraestrutura" icon={Server} onClick={onNavigate}>Infraestrutura</NavLink></nav><div className="px-3 pt-6 border-t border-border mt-auto space-y-4"><div className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-emerald-500 bg-emerald-500/10 rounded-xl"><div className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></div>Bot Conectado</div><Link to="/" onClick={onNavigate} className="flex items-center gap-3 px-3 py-2 text-sm font-semibold text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors"><LogOut size={18} />Sair</Link></div></div>;
+  return <div className="flex flex-col h-full py-6"><div className="px-6 mb-8 flex items-center gap-2"><img src={gestorLogo.url} alt="Logo" className="h-8 w-8 rounded-xl object-cover" /><span className="text-lg font-semibold tracking-tight text-foreground">Owerplay Gestor</span></div><nav className="flex-1 px-3 space-y-1"><NavLink to="/dashboard" icon={LayoutDashboard} onClick={onNavigate}>Dashboard</NavLink><NavLink to="/financeiro" icon={DollarSign} badge="12" onClick={onNavigate}>Financeiro</NavLink><NavLink to="/clientes" icon={Users} onClick={onNavigate}>Clientes</NavLink><NavLink to="/vencidos" icon={Clock} onClick={onNavigate}>Vencidos</NavLink><NavLink to="/mensagens" icon={MessageSquare} onClick={onNavigate}>Mensagens</NavLink><NavLink to="/infraestrutura" icon={Server} onClick={onNavigate}>Infraestrutura</NavLink><NavLink to="/analises" icon={BarChart3} onClick={onNavigate}>Análises</NavLink></nav><div className="px-3 pt-6 border-t border-border mt-auto space-y-4"><div className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-emerald-500 bg-emerald-500/10 rounded-xl"><div className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></div>Bot Conectado</div><Link to="/" onClick={onNavigate} className="flex items-center gap-3 px-3 py-2 text-sm font-semibold text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors"><LogOut size={18} />Sair</Link></div></div>;
 }
 
 function RootShell({ children }: { children: ReactNode }) {
