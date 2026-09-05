@@ -115,12 +115,9 @@ function AnalisesPage() {
   const leastUsedPlan = data.planRanking.length > 0 ? data.planRanking[data.planRanking.length - 1] : undefined
 
   return <div className="mx-auto w-full max-w-6xl space-y-5 p-4 md:space-y-6 md:p-8">
-    <div>
-      <div className="flex items-center gap-2">
-        <BarChart3 className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Análises</h1>
-      </div>
-      <p className="mt-1 text-sm text-muted-foreground">Visão da distribuição dos clientes ativos.</p>
+    <div className="flex items-center gap-2">
+      <BarChart3 className="h-6 w-6 text-primary" />
+      <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Análises</h1>
     </div>
 
     <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
