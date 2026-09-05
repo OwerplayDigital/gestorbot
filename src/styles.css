@@ -72,3 +72,13 @@
  .hero-profit{min-height:0!important;height:fit-content!important;padding:1rem 1.1rem!important}
  .hero-profit h1{font-size:2rem!important}
 }
+
+/* Summary cards — mesmos tamanhos, mais compactos e sem texto redundante */
+.dashboard-hero>.grid{grid-auto-rows:1fr!important;align-items:stretch!important}
+.dashboard-mini-card{height:104px!important;min-height:104px!important;box-sizing:border-box!important;padding:1rem!important;display:flex!important;flex-direction:column!important;justify-content:center!important}
+.dashboard-mini-card>span:last-child{display:none!important}
+.dashboard-mini-card .text-xl{margin-top:.45rem!important}
+@media(max-width:767px){
+ .dashboard-mini-card{height:92px!important;min-height:92px!important;padding:.85rem!important}
+ .dashboard-mini-card .text-xl{margin-top:.35rem!important}
+}
