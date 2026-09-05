@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { BarChart3, Layers3, Server } from 'lucide-react'
+import { BarChart3, Layers3, Server, TrendingDown } from 'lucide-react'
 import { supabase } from '@/integrations/supabase/client'
 import { ServerBadge } from '@/components/ServerBadge'
 
@@ -112,6 +112,7 @@ function AnalisesPage() {
 
   const topServer = data.serverRanking[0]
   const topPlan = data.planRanking[0]
+  const leastUsedPlan = data.planRanking.length > 0 ? data.planRanking[data.planRanking.length - 1] : undefined
 
   return <div className="mx-auto w-full max-w-6xl space-y-5 p-4 md:space-y-6 md:p-8">
     <div>
@@ -122,7 +123,7 @@ function AnalisesPage() {
       <p className="mt-1 text-sm text-muted-foreground">Visão da distribuição dos clientes ativos.</p>
     </div>
 
-    <section className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+    <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <div className="min-w-0 rounded-2xl border bg-card p-4 shadow-sm">
         <div className="flex items-start justify-between gap-2">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Servidor líder</p>
@@ -136,7 +137,7 @@ function AnalisesPage() {
 
       <SummaryCard label="Plano líder" value={topPlan?.name ?? '—'} detail={topPlan ? `${topPlan.count} clientes` : undefined} icon={Layers3} />
 
-      <div className="col-span-2 min-w-0 rounded-2xl border bg-card p-4 shadow-sm lg:col-span-1">
+      <div className="min-w-0 rounded-2xl border bg-card p-4 shadow-sm">
         <div className="flex items-start justify-between gap-2">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Multi-servidor</p>
           <BarChart3 className="h-4 w-4 shrink-0 text-primary" />
@@ -144,6 +145,8 @@ function AnalisesPage() {
         <p className="mt-2 text-xl font-bold tracking-tight md:text-2xl">{data.multiServerClients}</p>
         <p className="mt-1 text-xs text-muted-foreground">clientes com mais de um servidor</p>
       </div>
+
+      <SummaryCard label="Plano menos usado" value={leastUsedPlan?.name ?? '—'} detail={leastUsedPlan ? `${leastUsedPlan.count} clientes` : undefined} icon={TrendingDown} />
     </section>
 
     <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
