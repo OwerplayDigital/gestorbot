@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client'
 export const Route = createFileRoute('/extrato/$token')({
   head: () => ({
     meta: [
-      { title: 'Extrato de créditos — Owerplay' },
+      { title: 'Extrato de créditos | Owerplay' },
       { name: 'description', content: 'Histórico de créditos e pagamentos.' },
       { name: 'robots', content: 'noindex, nofollow' },
     ],
@@ -84,21 +84,21 @@ function StatementPage() {
     purchases: rows.length,
   }), [rows])
 
-  if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-sm text-slate-400">Carregando extrato...</div>
-  if (invalid || !statement) return <div className="min-h-screen bg-slate-950 flex items-center justify-center px-6 text-center text-slate-300">Este extrato não está disponível.</div>
+  if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-sm text-slate-500">Carregando extrato...</div>
+  if (invalid || !statement) return <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6 text-center text-slate-600">Este extrato não está disponível.</div>
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 px-4 py-8 sm:py-12">
+    <main className="min-h-screen bg-slate-50 text-slate-900 px-4 py-8 sm:py-12">
       <div className="mx-auto w-full max-w-2xl space-y-6">
         <header>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-400">Owerplay</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-600">Owerplay</p>
           <h1 className="mt-2 text-2xl font-bold">Olá, {statement.nome.split(' ')[0]}</h1>
-          <p className="mt-1 text-sm text-slate-400">Seu histórico de créditos e pagamentos.</p>
+          <p className="mt-1 text-sm text-slate-500">Seu histórico de créditos e pagamentos.</p>
         </header>
 
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/70 p-3">
-          <div className="flex items-center gap-2 text-sm text-slate-300"><CalendarDays size={17} /> Período</div>
-          <select value={month} onChange={(e) => setMonth(e.target.value)} className="max-w-[190px] rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
+          <div className="flex items-center gap-2 text-sm text-slate-700"><CalendarDays size={17} /> Período</div>
+          <select value={month} onChange={(e) => setMonth(e.target.value)} className="max-w-[190px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none shadow-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
             {availableMonths.map((value) => <option key={value} value={value}>{monthLabel(value)}</option>)}
           </select>
         </div>
@@ -110,12 +110,12 @@ function StatementPage() {
             <p className="mt-1 text-xl font-bold">{totals.credits}</p>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3 sm:p-4">
-            <ReceiptText size={17} className="text-emerald-400" />
+            <ReceiptText size={17} className="text-emerald-600" />
             <p className="mt-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Investido</p>
             <p className="mt-1 text-base font-bold sm:text-xl">{money(totals.value)}</p>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3 sm:p-4">
-            <CalendarDays size={17} className="text-violet-400" />
+            <CalendarDays size={17} className="text-violet-600" />
             <p className="mt-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Compras</p>
             <p className="mt-1 text-xl font-bold">{totals.purchases}</p>
           </div>
@@ -127,11 +127,11 @@ function StatementPage() {
             <span className="text-xs text-slate-500">{monthLabel(month)}</span>
           </div>
           {rows.length === 0 ? (
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-8 text-center text-sm text-slate-500">Nenhuma compra neste período.</div>
+            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">Nenhuma compra neste período.</div>
           ) : (
             <div className="space-y-2.5">
               {rows.map((m) => (
-                <article key={m.id} className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+                <article key={m.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="font-semibold">{m.quantidade_creditos} créditos</p>
@@ -145,7 +145,7 @@ function StatementPage() {
           )}
         </section>
 
-        <footer className="pt-3 text-center text-[11px] text-slate-600">Owerplay TV</footer>
+        <footer className="pt-3 text-center text-[11px] text-slate-400">Owerplay TV</footer>
       </div>
     </main>
   )
