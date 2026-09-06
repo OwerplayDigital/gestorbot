@@ -226,31 +226,37 @@ export type Database = {
         Row: {
           created_at: string | null
           custo: number
-          data: string | null
+          data: string
           id: string
+          observacao: string | null
           quantidade_creditos: number
           reseller_id: string
           servidor: string | null
+          servidor_id: string | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
           custo: number
-          data?: string | null
+          data?: string
           id?: string
+          observacao?: string | null
           quantidade_creditos: number
           reseller_id: string
           servidor?: string | null
-          user_id: string
+          servidor_id?: string | null
+          user_id?: string
         }
         Update: {
           created_at?: string | null
           custo?: number
-          data?: string | null
+          data?: string
           id?: string
+          observacao?: string | null
           quantidade_creditos?: number
           reseller_id?: string
           servidor?: string | null
+          servidor_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -261,10 +267,18 @@ export type Database = {
             referencedRelation: "revendedores"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reseller_credits_servidor_id_fkey"
+            columns: ["servidor_id"]
+            isOneToOne: false
+            referencedRelation: "servidores_iptv"
+            referencedColumns: ["id"]
+          },
         ]
       }
       revendedores: {
         Row: {
+          ativo: boolean
           created_at: string | null
           custo_por_credito: number | null
           id: string
@@ -281,6 +295,7 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          ativo?: boolean
           created_at?: string | null
           custo_por_credito?: number | null
           id?: string
@@ -297,6 +312,7 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          ativo?: boolean
           created_at?: string | null
           custo_por_credito?: number | null
           id?: string

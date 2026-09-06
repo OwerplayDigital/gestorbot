@@ -17,6 +17,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
 import { Route as AuthenticatedInfraestruturaRouteImport } from './routes/_authenticated/infraestrutura'
 import { Route as AuthenticatedMensagensRouteImport } from './routes/_authenticated/mensagens'
+import { Route as AuthenticatedRevendedoresRouteImport } from './routes/_authenticated/revendedores'
 import { Route as AuthenticatedVencidosRouteImport } from './routes/_authenticated/vencidos'
 import { Route as PagarIdRouteImport } from './routes/pagar.$id'
 import { Route as ApiPublicCronNotificationsRouteImport } from './routes/api/public/cron-notifications'
@@ -62,6 +63,12 @@ const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({
   path: '/mensagens',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRevendedoresRoute =
+  AuthenticatedRevendedoresRouteImport.update({
+    id: '/revendedores',
+    path: '/revendedores',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedVencidosRoute = AuthenticatedVencidosRouteImport.update({
   id: '/vencidos',
   path: '/vencidos',
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/infraestrutura': typeof AuthenticatedInfraestruturaRoute
   '/mensagens': typeof AuthenticatedMensagensRoute
+  '/revendedores': typeof AuthenticatedRevendedoresRoute
   '/vencidos': typeof AuthenticatedVencidosRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
@@ -106,6 +114,7 @@ export interface FileRoutesByTo {
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/infraestrutura': typeof AuthenticatedInfraestruturaRoute
   '/mensagens': typeof AuthenticatedMensagensRoute
+  '/revendedores': typeof AuthenticatedRevendedoresRoute
   '/vencidos': typeof AuthenticatedVencidosRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
@@ -121,6 +130,7 @@ export interface FileRoutesById {
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
   '/_authenticated/infraestrutura': typeof AuthenticatedInfraestruturaRoute
   '/_authenticated/mensagens': typeof AuthenticatedMensagensRoute
+  '/_authenticated/revendedores': typeof AuthenticatedRevendedoresRoute
   '/_authenticated/vencidos': typeof AuthenticatedVencidosRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/infraestrutura'
     | '/mensagens'
+    | '/revendedores'
     | '/vencidos'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/infraestrutura'
     | '/mensagens'
+    | '/revendedores'
     | '/vencidos'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
@@ -163,6 +175,7 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro'
     | '/_authenticated/infraestrutura'
     | '/_authenticated/mensagens'
+    | '/_authenticated/revendedores'
     | '/_authenticated/vencidos'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
@@ -235,6 +248,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMensagensRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/revendedores': {
+      id: '/_authenticated/revendedores'
+      path: '/revendedores'
+      fullPath: '/revendedores'
+      preLoaderRoute: typeof AuthenticatedRevendedoresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/vencidos': {
       id: '/_authenticated/vencidos'
       path: '/vencidos'
@@ -273,6 +293,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
   AuthenticatedInfraestruturaRoute: typeof AuthenticatedInfraestruturaRoute
   AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRoute
+  AuthenticatedRevendedoresRoute: typeof AuthenticatedRevendedoresRoute
   AuthenticatedVencidosRoute: typeof AuthenticatedVencidosRoute
 }
 
@@ -283,6 +304,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
   AuthenticatedInfraestruturaRoute: AuthenticatedInfraestruturaRoute,
   AuthenticatedMensagensRoute: AuthenticatedMensagensRoute,
+  AuthenticatedRevendedoresRoute: AuthenticatedRevendedoresRoute,
   AuthenticatedVencidosRoute: AuthenticatedVencidosRoute,
 }
 
