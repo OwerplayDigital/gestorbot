@@ -36,6 +36,7 @@ function ClientesPage() {
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['clients-active', searchTerm, planFilter, serverFilter, currentPage],
+    placeholderData: (prev) => prev,
     queryFn: async () => {
       const nowBr = toZonedTime(new Date(), 'America/Sao_Paulo'); nowBr.setHours(0, 0, 0, 0); const todayStr = format(nowBr, 'yyyy-MM-dd');
       const [{ data: serversData }, { data: templates }, { data: filterPlans }] = await Promise.all([
