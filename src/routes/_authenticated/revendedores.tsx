@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, MessageCircle, Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { ServerBadge } from '@/components/ServerBadge'
@@ -70,6 +70,7 @@ function RevendedoresPage() {
   const [ativo, setAtivo] = useState(true)
 
   const [movModal, setMovModal] = useState(false)
+  const [editingMovement, setEditingMovement] = useState<Movement | null>(null)
   const [movData, setMovData] = useState(todayISO())
   const [movCreditos, setMovCreditos] = useState('')
   const [movValor, setMovValor] = useState('')
@@ -140,12 +141,13 @@ function RevendedoresPage() {
     loadData()
   }
 
-  function openMovement() {
-    setMovData(todayISO())
-    setMovCreditos('')
-    setMovValor('')
-    setMovServidor(selected?.servidor_principal_id ?? '')
-    setMovObs('')
+  function openMovement(movement?: Movement) {
+    setEditingMovement(movement ?? null)
+    setMovData(movement?.data ?? todayISO())
+    setMovCreditos(movement ? String(movement.quantidade_creditos) : '')
+    setMovValor(movement ? String(movement.custo).replace('.', ',') : '')
+    setMovServidor(movement?.servidor_id ?? selected?.servidor_principal_id ?? '')
+    setMovObs(movement?.observacao ?? '')
     setMovModal(true)
   }
 
@@ -156,7 +158,7 @@ function RevendedoresPage() {
     if (!creditos || creditos <= 0) { toast.error('Informe a quantidade de créditos.'); return }
     if (Number.isNaN(valor)) { toast.error('Informe o valor pago.'); return }
     setSaving(true)
-    const { error } = await supabase.from('reseller_credits').insert({
+    const payload = {
       reseller_id: selected.id,
       data: movData,
       quantidade_creditos: creditos,
@@ -164,11 +166,15 @@ function RevendedoresPage() {
       servidor_id: movServidor || null,
       servidor: movServidor ? serverName(movServidor) : null,
       observacao: movObs.trim() || null,
-    } as never)
+    }
+    const { error } = editingMovement
+      ? await supabase.from('reseller_credits').update(payload as never).eq('id', editingMovement.id)
+      : await supabase.from('reseller_credits').insert(payload as never)
     setSaving(false)
     if (error) { toast.error(error.message); return }
-    toast.success('Movimentação registrada.')
+    toast.success(editingMovement ? 'Movimentação atualizada.' : 'Movimentação registrada.')
     setMovModal(false)
+    setEditingMovement(null)
     loadData()
   }
 
@@ -181,6 +187,20 @@ function RevendedoresPage() {
     toast.success('Movimentação excluída.')
     setConfirmDelete(null)
     loadData()
+  }
+
+  function openWhatsApp() {
+    if (!selected?.whatsapp) {
+      toast.error('Revendedor sem WhatsApp cadastrado.')
+      return
+    }
+    const digits = selected.whatsapp.replace(/\D/g, '')
+    if (!digits) {
+      toast.error('WhatsApp inválido.')
+      return
+    }
+    const phone = digits.startsWith('55') ? digits : `55${digits}`
+    window.open(`https://wa.me/${phone}`, '_blank', 'noopener,noreferrer')
   }
 
   if (loading) {
@@ -228,9 +248,14 @@ function RevendedoresPage() {
               </button>
               <h1 className="truncate text-lg font-semibold text-foreground">{selected.nome}</h1>
             </div>
-            <button type="button" onClick={() => openReseller(selected)} aria-label="Editar revendedor" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted">
-              <Pencil size={16} />
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button type="button" onClick={openWhatsApp} aria-label="Abrir WhatsApp" className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500 text-white hover:bg-emerald-600">
+                <MessageCircle size={16} />
+              </button>
+              <button type="button" onClick={() => openReseller(selected)} aria-label="Editar revendedor" className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted">
+                <Pencil size={16} />
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2.5">
@@ -244,7 +269,7 @@ function RevendedoresPage() {
             </div>
           </div>
 
-          <button type="button" onClick={openMovement} className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground sm:w-auto">
+          <button type="button" onClick={() => openMovement()} className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground sm:w-auto">
             <Plus size={16} />Nova movimentação
           </button>
 
@@ -262,9 +287,14 @@ function RevendedoresPage() {
                     </div>
                     {m.observacao && <p className="mt-1 truncate text-xs text-muted-foreground">{m.observacao}</p>}
                   </div>
-                  <button type="button" onClick={() => setConfirmDelete(m)} aria-label="Excluir movimentação" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/10">
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button type="button" onClick={() => openMovement(m)} aria-label="Editar movimentação" className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted">
+                      <Pencil size={16} />
+                    </button>
+                    <button type="button" onClick={() => setConfirmDelete(m)} aria-label="Excluir movimentação" className="flex h-9 w-9 items-center justify-center rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/10">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -301,7 +331,7 @@ function RevendedoresPage() {
       {movModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 sm:items-center sm:p-4">
           <div className="w-full max-w-md rounded-2xl bg-background p-5 shadow-xl sm:p-6">
-            <h2 className="text-lg font-semibold text-foreground">Nova movimentação</h2>
+            <h2 className="text-lg font-semibold text-foreground">{editingMovement ? 'Editar movimentação' : 'Nova movimentação'}</h2>
             <div className="mt-4 space-y-3">
               <label className="block text-sm">Data<input type="date" value={movData} onChange={(e) => setMovData(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2.5" /></label>
               <div className="grid grid-cols-2 gap-2">
@@ -317,7 +347,7 @@ function RevendedoresPage() {
               <label className="block text-sm">Observação<input value={movObs} onChange={(e) => setMovObs(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2.5" /></label>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
-              <button type="button" disabled={saving} onClick={() => setMovModal(false)} className="rounded-lg border border-border px-4 py-2.5 text-sm disabled:opacity-50">Cancelar</button>
+              <button type="button" disabled={saving} onClick={() => { setMovModal(false); setEditingMovement(null) }} className="rounded-lg border border-border px-4 py-2.5 text-sm disabled:opacity-50">Cancelar</button>
               <button type="button" disabled={saving} onClick={saveMovement} className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50">{saving ? 'Salvando...' : 'Salvar'}</button>
             </div>
           </div>
