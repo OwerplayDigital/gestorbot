@@ -104,17 +104,17 @@ function StatementPage() {
         </div>
 
         <section className="grid grid-cols-3 gap-2.5">
-          <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3 sm:p-4">
-            <CreditCard size={17} className="text-blue-400" />
+          <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm">
+            <CreditCard size={17} className="text-blue-600" />
             <p className="mt-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Créditos</p>
             <p className="mt-1 text-xl font-bold">{totals.credits}</p>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3 sm:p-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm">
             <ReceiptText size={17} className="text-emerald-600" />
             <p className="mt-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Investido</p>
             <p className="mt-1 text-base font-bold sm:text-xl">{money(totals.value)}</p>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3 sm:p-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm">
             <CalendarDays size={17} className="text-violet-600" />
             <p className="mt-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Compras</p>
             <p className="mt-1 text-xl font-bold">{totals.purchases}</p>
@@ -137,7 +137,7 @@ function StatementPage() {
                       <p className="font-semibold">{m.quantidade_creditos} créditos</p>
                       <p className="mt-1 text-xs text-slate-500">{dateBR(m.data)} · {m.servidor}</p>
                     </div>
-                    <p className="whitespace-nowrap font-bold text-emerald-400">{money(Number(m.custo))}</p>
+                    <p className="whitespace-nowrap font-bold text-emerald-600">{money(Number(m.custo))}</p>
                   </div>
                 </article>
               ))}
