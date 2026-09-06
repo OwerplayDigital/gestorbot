@@ -91,7 +91,7 @@ function StatementPage() {
     <main className="min-h-screen bg-slate-50 text-slate-900 px-4 py-8 sm:py-12">
       <div className="mx-auto w-full max-w-2xl space-y-5">
         <header className="pb-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-600">Owerplay</p>
+
           <h1 className="mt-2 text-2xl font-bold">Olá, {statement.nome.split(' ')[0]}</h1>
           <p className="mt-1 text-sm text-slate-500">Seu histórico de créditos e pagamentos.</p>
         </header>
