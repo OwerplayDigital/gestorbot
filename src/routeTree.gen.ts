@@ -20,6 +20,7 @@ import { Route as AuthenticatedMensagensRouteImport } from './routes/_authentica
 import { Route as AuthenticatedRevendedoresRouteImport } from './routes/_authenticated/revendedores'
 import { Route as AuthenticatedVencidosRouteImport } from './routes/_authenticated/vencidos'
 import { Route as ExtratoTokenRouteImport } from './routes/extrato.$token'
+import { Route as ExtratoDemoRouteImport } from './routes/extrato-demo'
 import { Route as PagarIdRouteImport } from './routes/pagar.$id'
 import { Route as ApiPublicCronNotificationsRouteImport } from './routes/api/public/cron-notifications'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram-webhook'
@@ -35,6 +36,7 @@ const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({ i
 const AuthenticatedRevendedoresRoute = AuthenticatedRevendedoresRouteImport.update({ id: '/revendedores', path: '/revendedores', getParentRoute: () => AuthenticatedRouteRoute } as any)
 const AuthenticatedVencidosRoute = AuthenticatedVencidosRouteImport.update({ id: '/vencidos', path: '/vencidos', getParentRoute: () => AuthenticatedRouteRoute } as any)
 const ExtratoTokenRoute = ExtratoTokenRouteImport.update({ id: '/extrato/$token', path: '/extrato/$token', getParentRoute: () => rootRouteImport } as any)
+const ExtratoDemoRoute = ExtratoDemoRouteImport.update({ id: '/extrato-demo', path: '/extrato-demo', getParentRoute: () => rootRouteImport } as any)
 const PagarIdRoute = PagarIdRouteImport.update({ id: '/pagar/$id', path: '/pagar/$id', getParentRoute: () => rootRouteImport } as any)
 const ApiPublicCronNotificationsRoute = ApiPublicCronNotificationsRouteImport.update({ id: '/api/public/cron-notifications', path: '/api/public/cron-notifications', getParentRoute: () => rootRouteImport } as any)
 const ApiPublicTelegramWebhookRoute = ApiPublicTelegramWebhookRouteImport.update({ id: '/api/public/telegram-webhook', path: '/api/public/telegram-webhook', getParentRoute: () => rootRouteImport } as any)
@@ -50,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/revendedores': typeof AuthenticatedRevendedoresRoute
   '/vencidos': typeof AuthenticatedVencidosRoute
   '/extrato/$token': typeof ExtratoTokenRoute
+  '/extrato-demo': typeof ExtratoDemoRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
@@ -84,6 +87,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   ExtratoTokenRoute: typeof ExtratoTokenRoute
+  ExtratoDemoRoute: typeof ExtratoDemoRoute
   PagarIdRoute: typeof PagarIdRoute
   ApiPublicCronNotificationsRoute: typeof ApiPublicCronNotificationsRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
@@ -102,6 +106,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated/revendedores': { id: '/_authenticated/revendedores'; path: '/revendedores'; fullPath: '/revendedores'; preLoaderRoute: typeof AuthenticatedRevendedoresRouteImport; parentRoute: typeof AuthenticatedRouteRoute }
     '/_authenticated/vencidos': { id: '/_authenticated/vencidos'; path: '/vencidos'; fullPath: '/vencidos'; preLoaderRoute: typeof AuthenticatedVencidosRouteImport; parentRoute: typeof AuthenticatedRouteRoute }
     '/extrato/$token': { id: '/extrato/$token'; path: '/extrato/$token'; fullPath: '/extrato/$token'; preLoaderRoute: typeof ExtratoTokenRouteImport; parentRoute: typeof rootRouteImport }
+    '/extrato-demo': { id: '/extrato-demo'; path: '/extrato-demo'; fullPath: '/extrato-demo'; preLoaderRoute: typeof ExtratoDemoRouteImport; parentRoute: typeof rootRouteImport }
     '/pagar/$id': { id: '/pagar/$id'; path: '/pagar/$id'; fullPath: '/pagar/$id'; preLoaderRoute: typeof PagarIdRouteImport; parentRoute: typeof rootRouteImport }
     '/api/public/cron-notifications': { id: '/api/public/cron-notifications'; path: '/api/public/cron-notifications'; fullPath: '/api/public/cron-notifications'; preLoaderRoute: typeof ApiPublicCronNotificationsRouteImport; parentRoute: typeof rootRouteImport }
     '/api/public/telegram-webhook': { id: '/api/public/telegram-webhook'; path: '/api/public/telegram-webhook'; fullPath: '/api/public/telegram-webhook'; preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport; parentRoute: typeof rootRouteImport }
@@ -135,6 +140,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   ExtratoTokenRoute,
+  ExtratoDemoRoute,
   PagarIdRoute,
   ApiPublicCronNotificationsRoute,
   ApiPublicTelegramWebhookRoute,
