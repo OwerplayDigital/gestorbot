@@ -89,14 +89,14 @@ function StatementPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 px-4 py-8 sm:py-12">
-      <div className="mx-auto w-full max-w-2xl space-y-6">
-        <header>
+      <div className="mx-auto w-full max-w-2xl space-y-5">
+        <header className="pb-1">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-600">Owerplay</p>
           <h1 className="mt-2 text-2xl font-bold">Olá, {statement.nome.split(' ')[0]}</h1>
           <p className="mt-1 text-sm text-slate-500">Seu histórico de créditos e pagamentos.</p>
         </header>
 
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
           <div className="flex items-center gap-2 text-sm text-slate-700"><CalendarDays size={17} /> Período</div>
           <select value={month} onChange={(e) => setMonth(e.target.value)} className="max-w-[190px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none shadow-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
             {availableMonths.map((value) => <option key={value} value={value}>{monthLabel(value)}</option>)}
@@ -124,7 +124,7 @@ function StatementPage() {
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-semibold">Histórico</h2>
-            <span className="text-xs text-slate-500">{monthLabel(month)}</span>
+            <span className="text-[11px] font-medium text-slate-500">{monthLabel(month)}</span>
           </div>
           {rows.length === 0 ? (
             <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">Nenhuma compra neste período.</div>
@@ -145,7 +145,7 @@ function StatementPage() {
           )}
         </section>
 
-        <footer className="pt-3 text-center text-[11px] text-slate-400">Owerplay TV</footer>
+        <footer className="pt-1 text-center text-[11px] text-slate-400">Owerplay TV</footer>
       </div>
     </main>
   )
