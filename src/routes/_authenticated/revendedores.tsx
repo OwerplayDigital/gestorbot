@@ -122,7 +122,7 @@ function RevendedoresPage() {
   }
 
   async function saveReseller() {
-    if (!nome.trim()) return toast.error('Informe o nome.')
+    if (!nome.trim()) { toast.error('Informe o nome.'); return }
     setSaving(true)
     const payload = {
       nome: nome.trim(),
@@ -134,7 +134,7 @@ function RevendedoresPage() {
       ? await supabase.from('revendedores').update(payload).eq('id', editing.id)
       : await supabase.from('revendedores').insert(payload as never)
     setSaving(false)
-    if (error) return toast.error(error.message)
+    if (error) { toast.error(error.message); return }
     toast.success(editing ? 'Revendedor atualizado.' : 'Revendedor cadastrado.')
     setResellerModal(false)
     loadData()
@@ -153,8 +153,8 @@ function RevendedoresPage() {
     if (!selected) return
     const creditos = parseInt(movCreditos, 10)
     const valor = Number(movValor.replace(',', '.'))
-    if (!creditos || creditos <= 0) return toast.error('Informe a quantidade de créditos.')
-    if (Number.isNaN(valor)) return toast.error('Informe o valor pago.')
+    if (!creditos || creditos <= 0) { toast.error('Informe a quantidade de créditos.'); return }
+    if (Number.isNaN(valor)) { toast.error('Informe o valor pago.'); return }
     setSaving(true)
     const { error } = await supabase.from('reseller_credits').insert({
       reseller_id: selected.id,
@@ -166,7 +166,7 @@ function RevendedoresPage() {
       observacao: movObs.trim() || null,
     } as never)
     setSaving(false)
-    if (error) return toast.error(error.message)
+    if (error) { toast.error(error.message); return }
     toast.success('Movimentação registrada.')
     setMovModal(false)
     loadData()
@@ -177,7 +177,7 @@ function RevendedoresPage() {
     setSaving(true)
     const { error } = await supabase.from('reseller_credits').delete().eq('id', confirmDelete.id)
     setSaving(false)
-    if (error) return toast.error(error.message)
+    if (error) { toast.error(error.message); return }
     toast.success('Movimentação excluída.')
     setConfirmDelete(null)
     loadData()
