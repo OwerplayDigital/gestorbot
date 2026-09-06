@@ -131,17 +131,21 @@ function RevendedoresPage() {
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
   }
 
+  function currentMonthName() {
+    return new Intl.DateTimeFormat('pt-BR', { month: 'long', timeZone: 'America/Sao_Paulo' }).format(new Date())
+  }
+
   function sendPurchase(movement: Movement) {
     if (!selected) return
     sendWhatsApp(
-      `Olá, ${selected.nome.split(' ')[0]}!\n\nCompra registrada:\n${movement.quantidade_creditos} créditos\n${serverName(movement.servidor_id)}\n${money(Number(movement.custo))}\nData: ${formatDate(movement.data)}\n\nAcompanhe seu extrato atualizado:\n${statementUrl(selected)}`,
+      `Olá, ${selected.nome.trim().split(/\s+/)[0]}! Foram adicionados ${movement.quantidade_creditos} créditos, no valor de ${money(Number(movement.custo))}.\n\nAcompanhe seu histórico atualizado:\n${statementUrl(selected)}`,
     )
   }
 
   function sendMonthlyReport() {
     if (!selected) return
     sendWhatsApp(
-      `Olá, ${selected.nome.split(' ')[0]}!\n\nSeu relatório do mês está atualizado:\nCréditos: ${monthTotals.creditos}\nInvestido: ${money(monthTotals.pago)}\nCompras: ${monthTotals.compras}\n\nConsulte o histórico completo:\n${statementUrl(selected)}`,
+      `Olá, ${selected.nome.trim().split(/\s+/)[0]}! Seu relatório de ${currentMonthName()} já está disponível.\n\nConfira seu histórico completo de créditos e pagamentos:\n${statementUrl(selected)}`,
     )
   }
 
