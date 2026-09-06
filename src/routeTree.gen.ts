@@ -19,78 +19,25 @@ import { Route as AuthenticatedInfraestruturaRouteImport } from './routes/_authe
 import { Route as AuthenticatedMensagensRouteImport } from './routes/_authenticated/mensagens'
 import { Route as AuthenticatedRevendedoresRouteImport } from './routes/_authenticated/revendedores'
 import { Route as AuthenticatedVencidosRouteImport } from './routes/_authenticated/vencidos'
+import { Route as ExtratoTokenRouteImport } from './routes/extrato.$token'
 import { Route as PagarIdRouteImport } from './routes/pagar.$id'
 import { Route as ApiPublicCronNotificationsRouteImport } from './routes/api/public/cron-notifications'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram-webhook'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedAnalisesRoute = AuthenticatedAnalisesRouteImport.update({
-  id: '/analises',
-  path: '/analises',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
-  id: '/clientes',
-  path: '/clientes',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedFinanceiroRoute = AuthenticatedFinanceiroRouteImport.update({
-  id: '/financeiro',
-  path: '/financeiro',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedInfraestruturaRoute =
-  AuthenticatedInfraestruturaRouteImport.update({
-    id: '/infraestrutura',
-    path: '/infraestrutura',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({
-  id: '/mensagens',
-  path: '/mensagens',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedRevendedoresRoute =
-  AuthenticatedRevendedoresRouteImport.update({
-    id: '/revendedores',
-    path: '/revendedores',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedVencidosRoute = AuthenticatedVencidosRouteImport.update({
-  id: '/vencidos',
-  path: '/vencidos',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const PagarIdRoute = PagarIdRouteImport.update({
-  id: '/pagar/$id',
-  path: '/pagar/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicCronNotificationsRoute =
-  ApiPublicCronNotificationsRouteImport.update({
-    id: '/api/public/cron-notifications',
-    path: '/api/public/cron-notifications',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTelegramWebhookRoute =
-  ApiPublicTelegramWebhookRouteImport.update({
-    id: '/api/public/telegram-webhook',
-    path: '/api/public/telegram-webhook',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+const IndexRoute = IndexRouteImport.update({ id: '/', path: '/', getParentRoute: () => rootRouteImport } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({ id: '/_authenticated', getParentRoute: () => rootRouteImport } as any)
+const AuthenticatedAnalisesRoute = AuthenticatedAnalisesRouteImport.update({ id: '/analises', path: '/analises', getParentRoute: () => AuthenticatedRouteRoute } as any)
+const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({ id: '/clientes', path: '/clientes', getParentRoute: () => AuthenticatedRouteRoute } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({ id: '/dashboard', path: '/dashboard', getParentRoute: () => AuthenticatedRouteRoute } as any)
+const AuthenticatedFinanceiroRoute = AuthenticatedFinanceiroRouteImport.update({ id: '/financeiro', path: '/financeiro', getParentRoute: () => AuthenticatedRouteRoute } as any)
+const AuthenticatedInfraestruturaRoute = AuthenticatedInfraestruturaRouteImport.update({ id: '/infraestrutura', path: '/infraestrutura', getParentRoute: () => AuthenticatedRouteRoute } as any)
+const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({ id: '/mensagens', path: '/mensagens', getParentRoute: () => AuthenticatedRouteRoute } as any)
+const AuthenticatedRevendedoresRoute = AuthenticatedRevendedoresRouteImport.update({ id: '/revendedores', path: '/revendedores', getParentRoute: () => AuthenticatedRouteRoute } as any)
+const AuthenticatedVencidosRoute = AuthenticatedVencidosRouteImport.update({ id: '/vencidos', path: '/vencidos', getParentRoute: () => AuthenticatedRouteRoute } as any)
+const ExtratoTokenRoute = ExtratoTokenRouteImport.update({ id: '/extrato/$token', path: '/extrato/$token', getParentRoute: () => rootRouteImport } as any)
+const PagarIdRoute = PagarIdRouteImport.update({ id: '/pagar/$id', path: '/pagar/$id', getParentRoute: () => rootRouteImport } as any)
+const ApiPublicCronNotificationsRoute = ApiPublicCronNotificationsRouteImport.update({ id: '/api/public/cron-notifications', path: '/api/public/cron-notifications', getParentRoute: () => rootRouteImport } as any)
+const ApiPublicTelegramWebhookRoute = ApiPublicTelegramWebhookRouteImport.update({ id: '/api/public/telegram-webhook', path: '/api/public/telegram-webhook', getParentRoute: () => rootRouteImport } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -102,24 +49,12 @@ export interface FileRoutesByFullPath {
   '/mensagens': typeof AuthenticatedMensagensRoute
   '/revendedores': typeof AuthenticatedRevendedoresRoute
   '/vencidos': typeof AuthenticatedVencidosRoute
+  '/extrato/$token': typeof ExtratoTokenRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
 }
-export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/analises': typeof AuthenticatedAnalisesRoute
-  '/clientes': typeof AuthenticatedClientesRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
-  '/financeiro': typeof AuthenticatedFinanceiroRoute
-  '/infraestrutura': typeof AuthenticatedInfraestruturaRoute
-  '/mensagens': typeof AuthenticatedMensagensRoute
-  '/revendedores': typeof AuthenticatedRevendedoresRoute
-  '/vencidos': typeof AuthenticatedVencidosRoute
-  '/pagar/$id': typeof PagarIdRoute
-  '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
-  '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
-}
+export interface FileRoutesByTo extends FileRoutesByFullPath {}
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
@@ -132,59 +67,23 @@ export interface FileRoutesById {
   '/_authenticated/mensagens': typeof AuthenticatedMensagensRoute
   '/_authenticated/revendedores': typeof AuthenticatedRevendedoresRoute
   '/_authenticated/vencidos': typeof AuthenticatedVencidosRoute
+  '/extrato/$token': typeof ExtratoTokenRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/analises'
-    | '/clientes'
-    | '/dashboard'
-    | '/financeiro'
-    | '/infraestrutura'
-    | '/mensagens'
-    | '/revendedores'
-    | '/vencidos'
-    | '/pagar/$id'
-    | '/api/public/cron-notifications'
-    | '/api/public/telegram-webhook'
+  fullPaths: keyof FileRoutesByFullPath
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/analises'
-    | '/clientes'
-    | '/dashboard'
-    | '/financeiro'
-    | '/infraestrutura'
-    | '/mensagens'
-    | '/revendedores'
-    | '/vencidos'
-    | '/pagar/$id'
-    | '/api/public/cron-notifications'
-    | '/api/public/telegram-webhook'
-  id:
-    | '__root__'
-    | '/'
-    | '/_authenticated'
-    | '/_authenticated/analises'
-    | '/_authenticated/clientes'
-    | '/_authenticated/dashboard'
-    | '/_authenticated/financeiro'
-    | '/_authenticated/infraestrutura'
-    | '/_authenticated/mensagens'
-    | '/_authenticated/revendedores'
-    | '/_authenticated/vencidos'
-    | '/pagar/$id'
-    | '/api/public/cron-notifications'
-    | '/api/public/telegram-webhook'
+  to: keyof FileRoutesByTo
+  id: keyof FileRoutesById
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ExtratoTokenRoute: typeof ExtratoTokenRoute
   PagarIdRoute: typeof PagarIdRoute
   ApiPublicCronNotificationsRoute: typeof ApiPublicCronNotificationsRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
@@ -192,97 +91,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/analises': {
-      id: '/_authenticated/analises'
-      path: '/analises'
-      fullPath: '/analises'
-      preLoaderRoute: typeof AuthenticatedAnalisesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/clientes': {
-      id: '/_authenticated/clientes'
-      path: '/clientes'
-      fullPath: '/clientes'
-      preLoaderRoute: typeof AuthenticatedClientesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/financeiro': {
-      id: '/_authenticated/financeiro'
-      path: '/financeiro'
-      fullPath: '/financeiro'
-      preLoaderRoute: typeof AuthenticatedFinanceiroRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/infraestrutura': {
-      id: '/_authenticated/infraestrutura'
-      path: '/infraestrutura'
-      fullPath: '/infraestrutura'
-      preLoaderRoute: typeof AuthenticatedInfraestruturaRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/mensagens': {
-      id: '/_authenticated/mensagens'
-      path: '/mensagens'
-      fullPath: '/mensagens'
-      preLoaderRoute: typeof AuthenticatedMensagensRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/revendedores': {
-      id: '/_authenticated/revendedores'
-      path: '/revendedores'
-      fullPath: '/revendedores'
-      preLoaderRoute: typeof AuthenticatedRevendedoresRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/vencidos': {
-      id: '/_authenticated/vencidos'
-      path: '/vencidos'
-      fullPath: '/vencidos'
-      preLoaderRoute: typeof AuthenticatedVencidosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/pagar/$id': {
-      id: '/pagar/$id'
-      path: '/pagar/$id'
-      fullPath: '/pagar/$id'
-      preLoaderRoute: typeof PagarIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron-notifications': {
-      id: '/api/public/cron-notifications'
-      path: '/api/public/cron-notifications'
-      fullPath: '/api/public/cron-notifications'
-      preLoaderRoute: typeof ApiPublicCronNotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/telegram-webhook': {
-      id: '/api/public/telegram-webhook'
-      path: '/api/public/telegram-webhook'
-      fullPath: '/api/public/telegram-webhook'
-      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+    '/': { id: '/'; path: '/'; fullPath: '/'; preLoaderRoute: typeof IndexRouteImport; parentRoute: typeof rootRouteImport }
+    '/_authenticated': { id: '/_authenticated'; path: ''; fullPath: '/'; preLoaderRoute: typeof AuthenticatedRouteRouteImport; parentRoute: typeof rootRouteImport }
+    '/_authenticated/analises': { id: '/_authenticated/analises'; path: '/analises'; fullPath: '/analises'; preLoaderRoute: typeof AuthenticatedAnalisesRouteImport; parentRoute: typeof AuthenticatedRouteRoute }
+    '/_authenticated/clientes': { id: '/_authenticated/clientes'; path: '/clientes'; fullPath: '/clientes'; preLoaderRoute: typeof AuthenticatedClientesRouteImport; parentRoute: typeof AuthenticatedRouteRoute }
+    '/_authenticated/dashboard': { id: '/_authenticated/dashboard'; path: '/dashboard'; fullPath: '/dashboard'; preLoaderRoute: typeof AuthenticatedDashboardRouteImport; parentRoute: typeof AuthenticatedRouteRoute }
+    '/_authenticated/financeiro': { id: '/_authenticated/financeiro'; path: '/financeiro'; fullPath: '/financeiro'; preLoaderRoute: typeof AuthenticatedFinanceiroRouteImport; parentRoute: typeof AuthenticatedRouteRoute }
+    '/_authenticated/infraestrutura': { id: '/_authenticated/infraestrutura'; path: '/infraestrutura'; fullPath: '/infraestrutura'; preLoaderRoute: typeof AuthenticatedInfraestruturaRouteImport; parentRoute: typeof AuthenticatedRouteRoute }
+    '/_authenticated/mensagens': { id: '/_authenticated/mensagens'; path: '/mensagens'; fullPath: '/mensagens'; preLoaderRoute: typeof AuthenticatedMensagensRouteImport; parentRoute: typeof AuthenticatedRouteRoute }
+    '/_authenticated/revendedores': { id: '/_authenticated/revendedores'; path: '/revendedores'; fullPath: '/revendedores'; preLoaderRoute: typeof AuthenticatedRevendedoresRouteImport; parentRoute: typeof AuthenticatedRouteRoute }
+    '/_authenticated/vencidos': { id: '/_authenticated/vencidos'; path: '/vencidos'; fullPath: '/vencidos'; preLoaderRoute: typeof AuthenticatedVencidosRouteImport; parentRoute: typeof AuthenticatedRouteRoute }
+    '/extrato/$token': { id: '/extrato/$token'; path: '/extrato/$token'; fullPath: '/extrato/$token'; preLoaderRoute: typeof ExtratoTokenRouteImport; parentRoute: typeof rootRouteImport }
+    '/pagar/$id': { id: '/pagar/$id'; path: '/pagar/$id'; fullPath: '/pagar/$id'; preLoaderRoute: typeof PagarIdRouteImport; parentRoute: typeof rootRouteImport }
+    '/api/public/cron-notifications': { id: '/api/public/cron-notifications'; path: '/api/public/cron-notifications'; fullPath: '/api/public/cron-notifications'; preLoaderRoute: typeof ApiPublicCronNotificationsRouteImport; parentRoute: typeof rootRouteImport }
+    '/api/public/telegram-webhook': { id: '/api/public/telegram-webhook'; path: '/api/public/telegram-webhook'; fullPath: '/api/public/telegram-webhook'; preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport; parentRoute: typeof rootRouteImport }
   }
 }
 
@@ -298,29 +120,26 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAnalisesRoute: AuthenticatedAnalisesRoute,
-  AuthenticatedClientesRoute: AuthenticatedClientesRoute,
-  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
-  AuthenticatedInfraestruturaRoute: AuthenticatedInfraestruturaRoute,
-  AuthenticatedMensagensRoute: AuthenticatedMensagensRoute,
-  AuthenticatedRevendedoresRoute: AuthenticatedRevendedoresRoute,
-  AuthenticatedVencidosRoute: AuthenticatedVencidosRoute,
+  AuthenticatedAnalisesRoute,
+  AuthenticatedClientesRoute,
+  AuthenticatedDashboardRoute,
+  AuthenticatedFinanceiroRoute,
+  AuthenticatedInfraestruturaRoute,
+  AuthenticatedMensagensRoute,
+  AuthenticatedRevendedoresRoute,
+  AuthenticatedVencidosRoute,
 }
-
-const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+const AuthenticatedRouteRouteWithChildren = AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  PagarIdRoute: PagarIdRoute,
-  ApiPublicCronNotificationsRoute: ApiPublicCronNotificationsRoute,
-  ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
+  ExtratoTokenRoute,
+  PagarIdRoute,
+  ApiPublicCronNotificationsRoute,
+  ApiPublicTelegramWebhookRoute,
 }
-export const routeTree = rootRouteImport
-  ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+export const routeTree = rootRouteImport._addFileChildren(rootRouteChildren)._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
 import type { startInstance } from './start.ts'
