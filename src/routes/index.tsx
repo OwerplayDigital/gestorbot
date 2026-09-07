@@ -92,7 +92,7 @@ function Index() {
   if (!isSecretDoorOpen) {
     return (
       <div className="flex flex-col min-h-screen items-center justify-center bg-[#F8FAFC] dark:bg-[#090D16] p-4 text-center">
-        <img src={gestorLogo.url} alt="Logo" className="h-20 w-20 rounded-2xl mb-6 shadow-2xl border border-border dark:border-slate-800" />
+        <img src={gestorLogo.url} alt="Logo" className="h-20 w-auto object-contain rounded-2xl mb-6 shadow-2xl border border-border dark:border-slate-800" />
         <h1 className="text-2xl font-black tracking-tighter mb-2 text-foreground dark:text-white uppercase">GESTOR PRO</h1>
         <p className="text-muted-foreground text-sm font-medium max-w-[250px]">
           Estamos realizando atualizações importantes. Voltaremos em breve.
@@ -107,7 +107,7 @@ function Index() {
       <Card className="max-w-md w-full bg-card dark:bg-[#131B2E] border-border dark:border-slate-800 rounded-2xl shadow-2xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <img src={gestorLogo.url} alt="Logo" className="h-12 w-12 rounded-lg" />
+            <img src={gestorLogo.url} alt="Logo" className="h-12 w-auto object-contain rounded-lg" />
           </div>
           <CardTitle className="text-2xl font-bold">Acesso Restrito</CardTitle>
           <CardDescription>Identifique-se para continuar</CardDescription>
