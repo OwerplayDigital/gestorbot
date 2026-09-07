@@ -161,10 +161,34 @@ function RevendedoresPage() {
   async function saveReseller() {
     if (!nome.trim()) { toast.error('Informe o nome.'); return }
     setSaving(true)
-    const payload = { nome: nome.trim(), whatsapp: whatsapp.trim() || null, servidor_principal_id: servidorId || null, ativo }
-    const { error } = editing
-      ? await supabase.from('revendedores').update(payload).eq('id', editing.id)
-      : await supabase.from('revendedores').insert(payload as never)
+
+    const payload = {
+      nome: nome.trim(),
+      whatsapp: whatsapp.trim() || null,
+      servidor_principal_id: servidorId || null,
+      ativo,
+    }
+
+    let error: { message: string } | null = null
+
+    if (editing) {
+      const result = await supabase.from('revendedores').update(payload).eq('id', editing.id)
+      error = result.error
+    } else {
+      const { data: authData, error: authError } = await supabase.auth.getUser()
+      if (authError || !authData.user) {
+        setSaving(false)
+        toast.error('Sessão inválida. Entre novamente no sistema.')
+        return
+      }
+
+      const result = await supabase.from('revendedores').insert({
+        ...payload,
+        user_id: authData.user.id,
+      } as never)
+      error = result.error
+    }
+
     setSaving(false)
     if (error) { toast.error(error.message); return }
     toast.success(editing ? 'Revendedor atualizado.' : 'Revendedor cadastrado.')
