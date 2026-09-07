@@ -30,6 +30,13 @@ function cleanPhone(phone: string): string {
   return cleaned.startsWith('55') ? cleaned : `55${cleaned}`;
 }
 
+function addDaysISO(iso: string, days: number): string {
+  const [year, month, day] = iso.split('-').map(Number) as [number, number, number];
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 async function telegramRequest(method: string, body: Record<string, unknown>) {
   try {
     const response = await fetch(`${TELEGRAM_API}/${method}`, {
@@ -169,6 +176,35 @@ async function sendTodayClients(chatId: number, userId: string) {
   }
 }
 
+async function showRenewalDate(
+  chatId: number,
+  messageId: number,
+  clientId: string,
+  clientName: string,
+  dateIso: string,
+) {
+  const brDate = isoToBR(dateIso);
+  const previousDate = addDaysISO(dateIso, -1);
+  const nextDate = addDaysISO(dateIso, 1);
+
+  await editMessage(
+    chatId,
+    messageId,
+    `<b>Renovar ${clientName}</b>\n\nData sugerida: <b>${brDate}</b>`,
+    {
+      inline_keyboard: [
+        [
+          { text: '−', callback_data: `renew_date:${clientId}:${previousDate}` },
+          { text: brDate, callback_data: 'renew_noop' },
+          { text: '+', callback_data: `renew_date:${clientId}:${nextDate}` },
+        ],
+        [{ text: 'Confirmar renovação', callback_data: `renew_confirm:${clientId}:${dateIso}` }],
+        [{ text: 'Cancelar', callback_data: 'vencendo_hoje' }],
+      ],
+    },
+  );
+}
+
 async function prepareRenewal(chatId: number, messageId: number, clientId: string, userId: string) {
   const { data: client, error } = await supabaseAdmin
     .from('clientes')
@@ -194,20 +230,31 @@ async function prepareRenewal(chatId: number, messageId: number, clientId: strin
   const today = todayISOBr();
   const current = String(client.vencimento || today).slice(0, 10);
   const base = current < today ? today : current;
-  const nextDate = calcularNovoVencimentoISO(base, serverNames);
-  const brDate = isoToBR(nextDate);
+  const suggestedDate = calcularNovoVencimentoISO(base, serverNames);
 
-  await editMessage(
-    chatId,
-    messageId,
-    `<b>Renovar ${client.nome}</b>\n\nNovo vencimento: <b>${brDate}</b>`,
-    {
-      inline_keyboard: [
-        [{ text: `Confirmar renovação — ${brDate}`, callback_data: `renew_confirm:${client.id}:${nextDate}` }],
-        [{ text: 'Cancelar', callback_data: 'vencendo_hoje' }],
-      ],
-    },
-  );
+  await showRenewalDate(chatId, messageId, client.id, client.nome, suggestedDate);
+}
+
+async function adjustRenewalDate(
+  chatId: number,
+  messageId: number,
+  clientId: string,
+  dateIso: string,
+  userId: string,
+) {
+  const { data: client, error } = await supabaseAdmin
+    .from('clientes')
+    .select('id, nome')
+    .eq('id', clientId)
+    .eq('user_id', userId)
+    .single();
+
+  if (error || !client) {
+    await sendMessage(chatId, 'Cliente não encontrado.');
+    return;
+  }
+
+  await showRenewalDate(chatId, messageId, client.id, client.nome, dateIso);
 }
 
 async function confirmRenewal(
@@ -286,9 +333,21 @@ async function handleTelegramEvent(body: any): Promise<Response> {
         return new Response('OK');
       }
 
+      if (data === 'renew_noop') {
+        return new Response('OK');
+      }
+
       if (data.startsWith('renew_init:')) {
         const clientId = data.split(':')[1];
         if (clientId) await prepareRenewal(chatId, messageId, clientId, userId);
+        return new Response('OK');
+      }
+
+      if (data.startsWith('renew_date:')) {
+        const [, clientId, dateIso] = data.split(':');
+        if (clientId && dateIso) {
+          await adjustRenewalDate(chatId, messageId, clientId, dateIso, userId);
+        }
         return new Response('OK');
       }
 
