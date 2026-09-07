@@ -134,10 +134,7 @@ async function sendTodayClients(chatId: number, userId: string) {
     return;
   }
 
-  await sendMessage(
-    chatId,
-    `<b>Vencimentos de hoje</b>\n\n${clients.length} cliente(s) vencendo hoje.`,
-  );
+  await sendMessage(chatId, `<b>Hoje: ${clients.length}</b>`);
 
   for (const client of clients) {
     const firstName = (client.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
@@ -170,7 +167,7 @@ async function sendTodayClients(chatId: number, userId: string) {
 
     await sendMessage(
       chatId,
-      `👤 <b>${client.nome}</b>\n📅 Vencimento: ${brDate}`,
+      `👤 <b>${client.nome}</b>\n📅 ${brDate}`,
       { inline_keyboard: buttons },
     );
   }
@@ -190,7 +187,7 @@ async function showRenewalDate(
   await editMessage(
     chatId,
     messageId,
-    `<b>Renovar ${clientName}</b>\n\nData sugerida: <b>${brDate}</b>`,
+    `<b>${clientName}</b>`,
     {
       inline_keyboard: [
         [
@@ -198,7 +195,7 @@ async function showRenewalDate(
           { text: brDate, callback_data: 'renew_noop' },
           { text: '+', callback_data: `renew_date:${clientId}:${nextDate}` },
         ],
-        [{ text: 'Confirmar renovação', callback_data: `renew_confirm:${clientId}:${dateIso}` }],
+        [{ text: 'Renovar', callback_data: `renew_confirm:${clientId}:${dateIso}` }],
         [{ text: 'Cancelar', callback_data: 'vencendo_hoje' }],
       ],
     },
