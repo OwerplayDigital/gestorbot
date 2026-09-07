@@ -286,18 +286,17 @@ async function confirmRenewal(
   if (phone) {
     buttons.push([
       {
-        text: 'Enviar mensagem de renovação',
+        text: 'Enviar mensagem',
         url: `https://wa.me/${phone}?text=${encodeURIComponent(renewalMessage)}`,
       },
     ]);
   }
-  buttons.push([{ text: 'Voltar para vencimentos de hoje', callback_data: 'vencendo_hoje' }]);
-  buttons.push([{ text: 'Abrir Gestor', url: GESTOR_URL }]);
+  buttons.push([{ text: 'Vence Hoje', callback_data: 'vencendo_hoje' }]);
 
   await editMessage(
     chatId,
     messageId,
-    `<b>Assinatura renovada</b>\n\n${existing.nome}\nPróximo vencimento: <b>${brDate}</b>`,
+    `<b>Renovado — ${existing.nome}</b>\n${brDate}`,
     { inline_keyboard: buttons },
   );
 }
