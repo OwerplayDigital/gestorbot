@@ -286,6 +286,7 @@ export type Database = {
           painel_login: string | null
           painel_senha: string | null
           preco_venda_por_credito: number | null
+          public_token: string
           saldo_creditos: number | null
           servidor: string | null
           servidor_principal_id: string | null
@@ -303,6 +304,7 @@ export type Database = {
           painel_login?: string | null
           painel_senha?: string | null
           preco_venda_por_credito?: number | null
+          public_token?: string
           saldo_creditos?: number | null
           servidor?: string | null
           servidor_principal_id?: string | null
@@ -320,6 +322,7 @@ export type Database = {
           painel_login?: string | null
           painel_senha?: string | null
           preco_venda_por_credito?: number | null
+          public_token?: string
           saldo_creditos?: number | null
           servidor?: string | null
           servidor_principal_id?: string | null
@@ -510,6 +513,7 @@ export type Database = {
           vencimento: string
         }[]
       }
+      get_reseller_statement: { Args: { p_token: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
