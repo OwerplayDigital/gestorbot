@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { BOT_TEMPLATES } from '@/lib/templates';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -35,6 +36,7 @@ function ClientesPage() {
   const [isMessageOpen, setIsMessageOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isRenewOpen, setIsRenewOpen] = useState(false);
+  const [isRenewSuccessOpen, setIsRenewSuccessOpen] = useState(false);
   const [renewDate, setRenewDate] = useState('');
   const [isRenewing, setIsRenewing] = useState(false);
   const [isServerPickerOpen, setIsServerPickerOpen] = useState(false);
@@ -84,6 +86,17 @@ function ClientesPage() {
     const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank'); setIsMessageOpen(false);
   };
+
+  function sendRenewalMessage() {
+    if (!selectedClient?.whatsapp || !selectedClient?.vencimento) { toast.error('Cliente sem WhatsApp cadastrado.'); return; }
+    const firstName = (selectedClient.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
+    const brDate = format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy');
+    const message = BOT_TEMPLATES.CONFIRMACAO(firstName, brDate);
+    const phoneRaw = selectedClient.whatsapp.replace(/\D/g, '');
+    const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+    setIsRenewSuccessOpen(false);
+  }
 
   function openRenew(client: Client) {
     const current = String(client.vencimento || '').slice(0, 10);
@@ -146,6 +159,7 @@ function ClientesPage() {
       const updatedClient = { ...selectedClient, vencimento: renewDate };
       setSelectedClient(updatedClient);
       setIsRenewOpen(false);
+      setIsRenewSuccessOpen(true);
       toast.success(`${selectedClient.nome} renovado.`);
       await refetch();
     } catch (error) {
@@ -194,6 +208,8 @@ function ClientesPage() {
       </>}
 
       <Dialog open={isRenewOpen} onOpenChange={setIsRenewOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">{selectedClient?.nome}</DialogTitle><DialogDescription>Ajuste a nova data e confirme.</DialogDescription></DialogHeader><div className="grid grid-cols-[52px_1fr_52px] gap-2 py-4"><Button variant="outline" onClick={() => setRenewDate(d => addDaysISO(d, -1))} className="h-12 rounded-xl"><Minus size={18} /></Button><div className="flex h-12 items-center justify-center rounded-xl border bg-muted/30 font-mono font-bold">{renewDate ? format(parseISO(renewDate), 'dd/MM/yyyy') : ''}</div><Button variant="outline" onClick={() => setRenewDate(d => addDaysISO(d, 1))} className="h-12 rounded-xl"><Plus size={18} /></Button></div><div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={isRenewing} onClick={() => setIsRenewOpen(false)}>Cancelar</Button><Button disabled={isRenewing} onClick={confirmRenew}>{isRenewing ? 'Renovando...' : 'Renovar'}</Button></div></DialogContent></Dialog>
+
+      <Dialog open={isRenewSuccessOpen} onOpenChange={setIsRenewSuccessOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">Renovado — {selectedClient?.nome}</DialogTitle><DialogDescription>{selectedClient?.vencimento ? format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy') : ''}</DialogDescription></DialogHeader><div className="grid gap-2 pt-2">{selectedClient?.whatsapp && <Button onClick={sendRenewalMessage} className="h-11 rounded-xl gap-2"><MessageCircle size={16} />Enviar mensagem</Button>}<Button variant="outline" onClick={() => setIsRenewSuccessOpen(false)} className="h-11 rounded-xl">Fechar</Button></div></DialogContent></Dialog>
 
       <Dialog open={isMessageOpen} onOpenChange={setIsMessageOpen}><DialogContent className="max-w-md rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">Selecionar Mensagem</DialogTitle><DialogDescription>Escolha um template para enviar para {selectedClient?.nome}</DialogDescription></DialogHeader><div className="grid gap-3 py-4">{selectedClient?.templates?.length ? selectedClient.templates.map((template: any) => <Button key={template.id} variant="outline" onClick={() => handleSendMessage(template)} className="justify-between h-14 px-4 rounded-xl"><span className="font-bold uppercase text-sm tracking-wide">{template.nome}</span><Send size={16} /></Button>) : <p className="text-center py-4 text-muted-foreground text-sm">Nenhum template cadastrado em 'Mensagens'.</p>}</div></DialogContent></Dialog>
 
