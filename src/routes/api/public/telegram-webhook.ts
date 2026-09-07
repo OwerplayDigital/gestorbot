@@ -98,11 +98,7 @@ async function clearChat(chatId: number) {
 }
 
 async function sendMainMenu(chatId: number) {
-  await sendMessage(
-    chatId,
-    '<b>Owerplay Gestor</b>\n\nAcompanhe os vencimentos de hoje e use o Gestor para as demais operações.',
-    mainMenu,
-  );
+  await sendMessage(chatId, '<b>Owerplay Gestor</b>', mainMenu);
 }
 
 async function getTodayClients(userId: string) {
@@ -182,7 +178,6 @@ async function prepareRenewal(chatId: number, messageId: number, clientId: strin
     .single();
 
   if (error || !client) {
-    await answerCallbackQuery('');
     await sendMessage(chatId, 'Cliente não encontrado.');
     return;
   }
