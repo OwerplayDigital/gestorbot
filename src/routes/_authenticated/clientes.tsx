@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
-import { Users, Search, ChevronLeft, ChevronRight, MessageCircle, Send, Pencil, ChevronDown, CalendarDays, RefreshCw, Minus, Plus, Smartphone, Copy } from 'lucide-react';
+import { Users, Search, ChevronLeft, ChevronRight, MessageCircle, Send, Pencil, ChevronDown, CalendarDays, RefreshCw, Minus, Plus, Smartphone, Copy, PlusCircle } from 'lucide-react';
 import { ServerBadge } from '@/components/ServerBadge';
 import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 export const Route = createFileRoute('/_authenticated/clientes')({ component: ClientesPage });
 type Client = any;
 type Option = { id: string; name: string; price?: number; valor?: number };
+type AppMode = 'view' | 'edit' | 'new';
 
 function addDaysISO(iso: string, days: number) {
   const [y, m, d] = iso.split('-').map(Number) as [number, number, number];
@@ -37,6 +38,7 @@ function ClientesPage() {
   const [isRenewOpen, setIsRenewOpen] = useState(false);
   const [isRenewSuccessOpen, setIsRenewSuccessOpen] = useState(false);
   const [isAppOpen, setIsAppOpen] = useState(false);
+  const [appMode, setAppMode] = useState<AppMode>('view');
   const [renewDate, setRenewDate] = useState('');
   const [isRenewing, setIsRenewing] = useState(false);
   const [isAppSaving, setIsAppSaving] = useState(false);
@@ -76,9 +78,9 @@ function ClientesPage() {
       if (clientIds.length) {
         const { data: deviceRows, error: deviceError } = await supabase
           .from('dispositivos')
-          .select('id, cliente_id, app_nome, mac_address, app_key')
+          .select('id, cliente_id, app_nome, mac_address, app_key, created_at')
           .in('cliente_id', clientIds)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: true });
         if (deviceError) throw deviceError;
         devices = deviceRows || [];
       }
@@ -87,7 +89,7 @@ function ClientesPage() {
         ...client,
         serverName: (client.servidores_ids || []).map((id: string) => serversData?.find((server) => server.id === id)?.name).filter(Boolean).join(', ') || 'N/A',
         templates: templates || [],
-        device: devices.find((device) => device.cliente_id === client.id) || null,
+        devices: devices.filter((device) => device.cliente_id === client.id),
       }));
 
       return { clients: processedClients, totalCount: count || 0, filterPlans: filterPlans || [], filterServers: serversData || [] };
@@ -111,13 +113,29 @@ function ClientesPage() {
 
   const openApp = (client: Client) => {
     setSelectedClient(client);
-    setAppForm({
-      id: client.device?.id || '',
-      app_nome: client.device?.app_nome || '',
-      mac_address: client.device?.mac_address || '',
-      app_key: client.device?.app_key || '',
-    });
+    if (client.devices?.length) {
+      setAppMode('view');
+      setAppForm({ id: '', app_nome: '', mac_address: '', app_key: '' });
+    } else {
+      setAppMode('new');
+      setAppForm({ id: '', app_nome: '', mac_address: '', app_key: '' });
+    }
     setIsAppOpen(true);
+  };
+
+  const startNewApp = () => {
+    setAppMode('new');
+    setAppForm({ id: '', app_nome: '', mac_address: '', app_key: '' });
+  };
+
+  const startEditApp = (device: any) => {
+    setAppMode('edit');
+    setAppForm({
+      id: device.id,
+      app_nome: device.app_nome || '',
+      mac_address: device.mac_address || '',
+      app_key: device.app_key || '',
+    });
   };
 
   const copyValue = async (value: string, label: string) => {
@@ -150,9 +168,9 @@ function ClientesPage() {
         if (error) throw error;
       }
 
-      toast.success('Dados do aplicativo salvos.');
-      setIsAppOpen(false);
+      toast.success(appForm.id ? 'Dados do aplicativo atualizados.' : 'Aplicativo adicionado.');
       await refetch();
+      setAppMode('view');
     } catch (error) {
       console.error(error);
       toast.error('Não foi possível salvar os dados do aplicativo.');
@@ -254,10 +272,12 @@ function ClientesPage() {
     <div className="flex items-center justify-end gap-2">
       <Button size="icon" variant="outline" title="Editar" aria-label={`Editar ${client.nome}`} onClick={() => openEdit(client)} className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl`}><Pencil size={mobile ? 18 : 16} /></Button>
       <Button size="icon" variant="outline" title="Renovar" aria-label={`Renovar ${client.nome}`} onClick={() => openRenew(client)} className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl`}><RefreshCw size={mobile ? 18 : 16} /></Button>
-      <Button size="icon" variant="outline" title="Dados do aplicativo" aria-label={`Dados do aplicativo de ${client.nome}`} onClick={() => openApp(client)} className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl ${client.device ? 'text-primary border-primary/30 bg-primary/5' : ''}`}><Smartphone size={mobile ? 18 : 16} /></Button>
+      <Button size="icon" variant="outline" title="Dados do aplicativo" aria-label={`Dados do aplicativo de ${client.nome}`} onClick={() => openApp(client)} className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl ${client.devices?.length ? 'text-primary border-primary/30 bg-primary/5' : ''}`}><Smartphone size={mobile ? 18 : 16} /></Button>
       <Button size="icon" title="Mensagem" aria-label={`Enviar mensagem para ${client.nome}`} onClick={() => openMessageModal(client)} className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl bg-emerald-500 text-white hover:bg-emerald-600`}><MessageCircle size={mobile ? 19 : 17} /></Button>
     </div>
   );
+
+  const selectedDevices = data?.clients?.find((client: Client) => client.id === selectedClient?.id)?.devices || [];
 
   return (
     <div className="p-4 md:p-8 max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-500">
@@ -277,17 +297,35 @@ function ClientesPage() {
       </>}
 
       <Dialog open={isAppOpen} onOpenChange={setIsAppOpen}>
-        <DialogContent className="max-w-sm rounded-2xl">
+        <DialogContent onOpenAutoFocus={(event) => event.preventDefault()} className="max-w-sm rounded-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter"><Smartphone className="text-primary" size={20} />Dados do aplicativo</DialogTitle>
             <DialogDescription>{selectedClient?.nome}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <label className="block text-sm font-medium">Aplicativo<Input className="mt-1" placeholder="Ex.: IBO Pro" value={appForm.app_nome} onChange={(e) => setAppForm((form) => ({ ...form, app_nome: e.target.value }))} /></label>
-            <div><span className="text-sm font-medium">MAC</span><div className="mt-1 flex gap-2"><Input className="font-mono" placeholder="00:00:00:00:00:00" value={appForm.mac_address} onChange={(e) => setAppForm((form) => ({ ...form, mac_address: e.target.value }))} /><Button type="button" size="icon" variant="outline" disabled={!appForm.mac_address} title="Copiar MAC" aria-label="Copiar MAC" onClick={() => copyValue(appForm.mac_address, 'MAC')} className="shrink-0 rounded-xl"><Copy size={17} /></Button></div></div>
-            <div><span className="text-sm font-medium">Key</span><div className="mt-1 flex gap-2"><Input className="font-mono" placeholder="Chave do aplicativo" value={appForm.app_key} onChange={(e) => setAppForm((form) => ({ ...form, app_key: e.target.value }))} /><Button type="button" size="icon" variant="outline" disabled={!appForm.app_key} title="Copiar Key" aria-label="Copiar Key" onClick={() => copyValue(appForm.app_key, 'Key')} className="shrink-0 rounded-xl"><Copy size={17} /></Button></div></div>
-          </div>
-          <div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={isAppSaving} onClick={() => setIsAppOpen(false)}>Cancelar</Button><Button disabled={isAppSaving} onClick={saveAppData}>{isAppSaving ? 'Salvando...' : 'Salvar'}</Button></div>
+
+          {appMode === 'view' && selectedDevices.length > 0 ? (
+            <div className="space-y-3 py-2">
+              {selectedDevices.map((device: any) => (
+                <div key={device.id} className="rounded-2xl border bg-muted/20 p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0"><span className="text-xs text-muted-foreground">Aplicativo</span><p className="font-black break-words">{device.app_nome}</p></div>
+                    <Button size="icon" variant="outline" title="Editar aplicativo" aria-label={`Editar ${device.app_nome}`} onClick={() => startEditApp(device)} className="h-9 w-9 shrink-0 rounded-xl"><Pencil size={16} /></Button>
+                  </div>
+                  {device.mac_address && <div className="flex items-center justify-between gap-3"><div className="min-w-0"><span className="text-xs text-muted-foreground">MAC</span><p className="font-mono font-bold break-all">{device.mac_address}</p></div><Button size="icon" variant="outline" title="Copiar MAC" aria-label="Copiar MAC" onClick={() => copyValue(device.mac_address, 'MAC')} className="h-9 w-9 shrink-0 rounded-xl"><Copy size={16} /></Button></div>}
+                  {device.app_key && <div className="flex items-center justify-between gap-3"><div className="min-w-0"><span className="text-xs text-muted-foreground">Key</span><p className="font-mono font-bold break-all">{device.app_key}</p></div><Button size="icon" variant="outline" title="Copiar Key" aria-label="Copiar Key" onClick={() => copyValue(device.app_key, 'Key')} className="h-9 w-9 shrink-0 rounded-xl"><Copy size={16} /></Button></div>}
+                </div>
+              ))}
+              <Button variant="outline" onClick={startNewApp} className="w-full h-11 rounded-xl gap-2"><PlusCircle size={17} />Adicionar aplicativo</Button>
+              <Button onClick={() => setIsAppOpen(false)} className="w-full h-11 rounded-xl">Fechar</Button>
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              <label className="block text-sm font-medium">Aplicativo<Input autoFocus={false} className="mt-1" placeholder="Ex.: IBO Pro" value={appForm.app_nome} onChange={(e) => setAppForm((form) => ({ ...form, app_nome: e.target.value }))} /></label>
+              <div><span className="text-sm font-medium">MAC</span><div className="mt-1 flex gap-2"><Input autoFocus={false} className="font-mono" placeholder="00:00:00:00:00:00" value={appForm.mac_address} onChange={(e) => setAppForm((form) => ({ ...form, mac_address: e.target.value }))} /><Button type="button" size="icon" variant="outline" disabled={!appForm.mac_address} title="Copiar MAC" aria-label="Copiar MAC" onClick={() => copyValue(appForm.mac_address, 'MAC')} className="shrink-0 rounded-xl"><Copy size={17} /></Button></div></div>
+              <div><span className="text-sm font-medium">Key</span><div className="mt-1 flex gap-2"><Input autoFocus={false} className="font-mono" placeholder="Chave do aplicativo" value={appForm.app_key} onChange={(e) => setAppForm((form) => ({ ...form, app_key: e.target.value }))} /><Button type="button" size="icon" variant="outline" disabled={!appForm.app_key} title="Copiar Key" aria-label="Copiar Key" onClick={() => copyValue(appForm.app_key, 'Key')} className="shrink-0 rounded-xl"><Copy size={17} /></Button></div></div>
+              <div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={isAppSaving} onClick={() => selectedDevices.length ? setAppMode('view') : setIsAppOpen(false)}>Cancelar</Button><Button disabled={isAppSaving} onClick={saveAppData}>{isAppSaving ? 'Salvando...' : appMode === 'edit' ? 'Salvar' : 'Adicionar'}</Button></div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
