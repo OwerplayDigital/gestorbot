@@ -14,7 +14,6 @@ import { toast } from 'sonner';
 import { ServerBadge } from '@/components/ServerBadge';
 
 export const Route = createFileRoute('/_authenticated/vencidos')({ component: VencidosPage });
-
 type Client = any;
 
 function addDaysISO(iso: string, days: number) {
@@ -84,10 +83,7 @@ function VencidosPage() {
     setSelectedClient(client); setRenewDate(addDaysISO(current, 30)); setIsRenewOpen(true);
   }
 
-  function openDelete(client: Client) {
-    setSelectedClient(client);
-    setIsDeleteOpen(true);
-  }
+  function openDelete(client: Client) { setSelectedClient(client); setIsDeleteOpen(true); }
 
   async function confirmDelete() {
     if (!selectedClient || isDeleting) return;
@@ -96,15 +92,9 @@ function VencidosPage() {
       const { error } = await supabase.from('clientes').delete().eq('id', selectedClient.id);
       if (error) throw error;
       toast.success(`${selectedClient.nome} excluído.`);
-      setIsDeleteOpen(false);
-      setSelectedClient(null);
-      await refetch();
-    } catch (error) {
-      console.error(error);
-      toast.error('Não foi possível excluir o cliente.');
-    } finally {
-      setIsDeleting(false);
-    }
+      setIsDeleteOpen(false); setSelectedClient(null); await refetch();
+    } catch (error) { console.error(error); toast.error('Não foi possível excluir o cliente.'); }
+    finally { setIsDeleting(false); }
   }
 
   async function confirmRenew() {
@@ -130,9 +120,7 @@ function VencidosPage() {
       const { error: updateError } = await supabase.from('clientes').update({ vencimento: renewDate, status: 'ativo' }).eq('id', selectedClient.id);
       if (updateError) throw updateError;
       setSelectedClient({ ...selectedClient, vencimento: renewDate });
-      setIsRenewOpen(false); setIsRenewSuccessOpen(true);
-      toast.success(`${selectedClient.nome} renovado.`);
-      await refetch();
+      setIsRenewOpen(false); setIsRenewSuccessOpen(true); toast.success(`${selectedClient.nome} renovado.`); await refetch();
     } catch (error) { console.error(error); toast.error('Não foi possível renovar o cliente.'); }
     finally { setIsRenewing(false); }
   }
@@ -148,19 +136,25 @@ function VencidosPage() {
     setIsRenewSuccessOpen(false);
   }
 
-  const ClientMenu = ({ client }: { client: Client }) => (
+  const ClientMenu = ({ client, mobile = false }: { client: Client; mobile?: boolean }) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground" aria-label={`Mais opções para ${client.nome}`}>
-          <MoreVertical size={18} />
+        <Button variant="outline" size="icon" className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl text-muted-foreground`} aria-label={`Mais opções para ${client.nome}`} title="Mais opções">
+          <MoreVertical size={mobile ? 18 : 16} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="rounded-xl">
-        <DropdownMenuItem onClick={() => openDelete(client)} className="cursor-pointer gap-2 text-rose-500 focus:text-rose-500">
-          <Trash2 size={15} />Excluir cliente
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => openDelete(client)} className="cursor-pointer gap-2 text-rose-500 focus:text-rose-500"><Trash2 size={15} />Excluir cliente</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+
+  const Actions = ({ client, mobile = false }: { client: Client; mobile?: boolean }) => (
+    <div className="flex items-center justify-end gap-2">
+      <Button size="icon" variant="outline" title="Renovar" aria-label={`Renovar ${client.nome}`} onClick={() => openRenew(client)} className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl`}><RefreshCw size={mobile ? 18 : 16} /></Button>
+      <Button size="icon" title="Mensagem" aria-label={`Enviar mensagem para ${client.nome}`} onClick={() => openMessage(client)} className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white`}><MessageCircle size={mobile ? 18 : 16} /></Button>
+      <ClientMenu client={client} mobile={mobile} />
+    </div>
   );
 
   return (
@@ -169,18 +163,15 @@ function VencidosPage() {
       {isLoading ? <div className="bg-card border border-border rounded-2xl p-8 text-center text-muted-foreground">Carregando lista de vencidos...</div> : !clients || clients.length === 0 ? <div className="bg-card border border-border rounded-2xl p-8 text-center text-muted-foreground">Nenhum cliente vencido.</div> : <>
         <div className="hidden md:block bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
           <Table><TableHeader><TableRow className="hover:bg-transparent border-muted/10"><TableHead className="font-bold">Cliente</TableHead><TableHead className="font-bold">Servidor/App</TableHead><TableHead className="font-bold">Vencimento</TableHead><TableHead className="font-bold">Atraso</TableHead><TableHead className="text-right font-bold">Ação</TableHead></TableRow></TableHeader>
-            <TableBody>{clients.map(client => <TableRow key={client.id} className="hover:bg-muted/50 border-muted/10 transition-colors"><TableCell className="font-bold">{client.nome}</TableCell><TableCell><ServerBadge name={client.serverName} /></TableCell><TableCell><span className="text-rose-500 font-bold font-mono">{client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento}</span></TableCell><TableCell><span className="bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full text-[10px] font-black uppercase">{client.daysOverdue} dias</span></TableCell><TableCell className="text-right"><div className="flex justify-end items-center gap-2"><Button size="sm" variant="outline" onClick={() => openRenew(client)} className="rounded-xl gap-2"><RefreshCw size={14} />Renovar</Button><Button size="sm" onClick={() => openMessage(client)} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl h-8 px-3 gap-2"><MessageCircle size={14} />Mensagem</Button><ClientMenu client={client} /></div></TableCell></TableRow>)}</TableBody>
+            <TableBody>{clients.map(client => <TableRow key={client.id} className="hover:bg-muted/50 border-muted/10 transition-colors"><TableCell className="font-bold">{client.nome}</TableCell><TableCell><ServerBadge name={client.serverName} /></TableCell><TableCell><span className="text-rose-500 font-bold font-mono">{client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento}</span></TableCell><TableCell><span className="bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full text-[10px] font-black uppercase">{client.daysOverdue} dias</span></TableCell><TableCell className="text-right"><Actions client={client} /></TableCell></TableRow>)}</TableBody>
           </Table>
         </div>
-        <div className="md:hidden space-y-4">{clients.map(client => <div key={client.id} className="relative bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3"><div className="absolute right-3 top-3"><ClientMenu client={client} /></div><div className="flex justify-between items-start pr-10"><div><h3 className="font-black text-lg uppercase leading-tight break-words">{client.nome}</h3><p className="break-words"><ServerBadge name={client.serverName} /></p></div><span className="bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full text-[10px] font-black uppercase whitespace-nowrap">{client.daysOverdue} dias</span></div><div className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Vencimento:</span><span className="text-rose-500 font-bold font-mono">{client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento}</span></div><div className="grid grid-cols-2 gap-2"><Button variant="outline" onClick={() => openRenew(client)} className="w-full rounded-xl h-11 gap-1 px-2"><RefreshCw size={16} />Renovar</Button><Button onClick={() => openMessage(client)} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl h-11 gap-1 px-2"><MessageCircle size={16} />Mensagem</Button></div></div>)}</div>
+        <div className="md:hidden space-y-4">{clients.map(client => <div key={client.id} className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3"><div className="flex justify-between items-start gap-3"><div className="min-w-0"><h3 className="font-black text-lg uppercase leading-tight break-words">{client.nome}</h3><p className="break-words"><ServerBadge name={client.serverName} /></p></div><span className="bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full text-[10px] font-black uppercase whitespace-nowrap">{client.daysOverdue} dias</span></div><div className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Vencimento:</span><span className="text-rose-500 font-bold font-mono">{client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento}</span></div><Actions client={client} mobile /></div>)}</div>
       </>}
 
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black tracking-tighter">Excluir cliente?</DialogTitle><DialogDescription>Excluir <strong>{selectedClient?.nome}</strong> definitivamente? Esta ação não pode ser desfeita.</DialogDescription></DialogHeader><div className="grid grid-cols-2 gap-2 pt-3"><Button variant="outline" disabled={isDeleting} onClick={() => setIsDeleteOpen(false)}>Cancelar</Button><Button variant="destructive" disabled={isDeleting} onClick={confirmDelete}>{isDeleting ? 'Excluindo...' : 'Excluir'}</Button></div></DialogContent></Dialog>
-
       <Dialog open={isRenewOpen} onOpenChange={setIsRenewOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">{selectedClient?.nome}</DialogTitle><DialogDescription>Ajuste a nova data e confirme.</DialogDescription></DialogHeader><div className="grid grid-cols-[52px_1fr_52px] gap-2 py-4"><Button variant="outline" onClick={() => setRenewDate(d => addDaysISO(d, -1))} className="h-12 rounded-xl"><Minus size={18} /></Button><div className="flex h-12 items-center justify-center rounded-xl border bg-muted/30 font-mono font-bold">{renewDate ? format(parseISO(renewDate), 'dd/MM/yyyy') : ''}</div><Button variant="outline" onClick={() => setRenewDate(d => addDaysISO(d, 1))} className="h-12 rounded-xl"><Plus size={18} /></Button></div><div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={isRenewing} onClick={() => setIsRenewOpen(false)}>Cancelar</Button><Button disabled={isRenewing} onClick={confirmRenew}>{isRenewing ? 'Renovando...' : 'Renovar'}</Button></div></DialogContent></Dialog>
-
       <Dialog open={isRenewSuccessOpen} onOpenChange={setIsRenewSuccessOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">Renovado — {selectedClient?.nome}</DialogTitle><DialogDescription>{selectedClient?.vencimento ? format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy') : ''}</DialogDescription></DialogHeader><div className="grid gap-2 pt-2">{selectedClient?.whatsapp && <Button onClick={sendRenewalMessage} className="h-11 rounded-xl gap-2"><MessageCircle size={16} />Enviar mensagem</Button>}<Button variant="outline" onClick={() => setIsRenewSuccessOpen(false)} className="h-11 rounded-xl">Fechar</Button></div></DialogContent></Dialog>
-
       <Dialog open={isMessageOpen} onOpenChange={setIsMessageOpen}><DialogContent className="max-w-md rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">Selecionar Mensagem</DialogTitle><DialogDescription>Escolha um template para enviar para {selectedClient?.nome}</DialogDescription></DialogHeader><div className="grid gap-3 py-4">{selectedClient?.templates?.length > 0 ? selectedClient.templates.map((template: any) => <Button key={template.id} variant="outline" onClick={() => handleSendMessage(template)} className="justify-between h-14 px-4 rounded-xl"><span className="font-bold uppercase text-sm tracking-wide">{template.nome}</span><Send size={16} /></Button>) : <p className="text-center py-4 text-muted-foreground text-sm">Nenhum template cadastrado em 'Mensagens'.</p>}</div></DialogContent></Dialog>
     </div>
   );
