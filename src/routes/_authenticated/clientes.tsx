@@ -113,49 +113,21 @@ function ClientesPage() {
       const { data: authData } = await supabase.auth.getUser();
       const userId = authData.user?.id;
       if (!userId) throw new Error('Usuário não autenticado.');
-
       const [{ data: plan, error: planError }, { data: serverRows, error: serverError }] = await Promise.all([
         supabase.from('plans').select('price').eq('id', selectedClient.plano_id).single(),
-        selectedClient.servidores_ids?.length
-          ? supabase.from('servidores_iptv').select('valor').in('id', selectedClient.servidores_ids)
-          : Promise.resolve({ data: [], error: null } as any),
+        selectedClient.servidores_ids?.length ? supabase.from('servidores_iptv').select('valor').in('id', selectedClient.servidores_ids) : Promise.resolve({ data: [], error: null } as any),
       ]);
-
       if (planError || !plan) throw planError || new Error('Plano não encontrado.');
       if (serverError) throw serverError;
-
       const valorEntrada = Math.max(0, Number(plan.price || 0) - Number(selectedClient.desconto || 0));
       const totalCusto = (serverRows || []).reduce((sum: number, s: any) => sum + Number(s.valor || 0), 0);
       const todayBr = format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd');
-
-      const { error: renewalError } = await supabase.from('renovacoes').insert({
-        user_id: userId,
-        cliente_id: selectedClient.id,
-        plano_id: selectedClient.plano_id,
-        valor: valorEntrada,
-        desconto: Number(selectedClient.desconto || 0),
-        vencimento_anterior: selectedClient.vencimento,
-        novo_vencimento: renewDate,
-        data_renovacao: new Date().toISOString(),
-      });
+      const { error: renewalError } = await supabase.from('renovacoes').insert({ user_id: userId, cliente_id: selectedClient.id, plano_id: selectedClient.plano_id, valor: valorEntrada, desconto: Number(selectedClient.desconto || 0), vencimento_anterior: selectedClient.vencimento, novo_vencimento: renewDate, data_renovacao: new Date().toISOString() });
       if (renewalError) throw renewalError;
-
-      const { error: transactionError } = await supabase.from('transacoes').insert({
-        user_id: userId,
-        cliente_id: selectedClient.id,
-        tipo: 'entrada',
-        entrada: valorEntrada,
-        custo: totalCusto,
-        valor: valorEntrada,
-        data: todayBr,
-        descricao: `Renovação cliente ${selectedClient.id}`,
-        serv_id: selectedClient.servidores_ids?.[0] || null,
-      });
+      const { error: transactionError } = await supabase.from('transacoes').insert({ user_id: userId, cliente_id: selectedClient.id, tipo: 'entrada', entrada: valorEntrada, custo: totalCusto, valor: valorEntrada, data: todayBr, descricao: `Renovação cliente ${selectedClient.id}`, serv_id: selectedClient.servidores_ids?.[0] || null });
       if (transactionError) throw transactionError;
-
       const { error: updateError } = await supabase.from('clientes').update({ vencimento: renewDate, status: 'ativo' }).eq('id', selectedClient.id);
       if (updateError) throw updateError;
-
       const updatedClient = { ...selectedClient, vencimento: renewDate };
       setSelectedClient(updatedClient);
       setIsRenewOpen(false);
@@ -202,8 +174,8 @@ function ClientesPage() {
         </div>
       </div>
       {isLoading ? <div className="bg-card border border-border rounded-2xl p-8 text-center text-muted-foreground">Carregando clientes...</div> : !data?.clients?.length ? <div className="bg-card border border-border rounded-2xl p-8 text-center text-muted-foreground">Nenhum cliente ativo encontrado.</div> : <>
-        <div className="hidden md:block bg-card border border-border rounded-2xl overflow-hidden shadow-sm"><Table><TableHeader><TableRow><TableHead className="font-bold">Cliente</TableHead><TableHead className="font-bold">Servidor/App</TableHead><TableHead className="font-bold">Vencimento</TableHead><TableHead className="text-right font-bold">Ação</TableHead></TableRow></TableHeader><TableBody>{data.clients.map((client: Client) => <TableRow key={client.id}><TableCell className="font-bold">{client.nome}</TableCell><TableCell><ServerBadge name={client.serverName} /></TableCell><TableCell><span className="text-primary font-bold font-mono">{client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento}</span></TableCell><TableCell className="text-right"><div className="flex justify-end gap-2"><Button size="sm" variant="outline" onClick={() => openEdit(client)} className="rounded-xl gap-2"><Pencil size={14} />Editar</Button><Button size="sm" variant="outline" onClick={() => openRenew(client)} className="rounded-xl gap-2"><RefreshCw size={14} />Renovar</Button><Button size="sm" onClick={() => openMessageModal(client)} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl h-8 px-3 gap-2"><MessageCircle size={14} />Mensagem</Button></div></TableCell></TableRow>)}</TableBody></Table></div>
-        <div className="md:hidden space-y-4">{data.clients.map((client: Client) => <div key={client.id} className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3"><div><h3 className="font-black text-lg uppercase leading-tight break-words">{client.nome}</h3><p className="break-words"><ServerBadge name={client.serverName} /></p></div><div className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Vencimento:</span><span className="text-primary font-bold font-mono">{client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento}</span></div><div className="grid grid-cols-3 gap-2"><Button variant="outline" onClick={() => openEdit(client)} className="w-full rounded-xl h-11 gap-1 px-2"><Pencil size={15} />Editar</Button><Button variant="outline" onClick={() => openRenew(client)} className="w-full rounded-xl h-11 gap-1 px-2"><RefreshCw size={15} />Renovar</Button><Button onClick={() => openMessageModal(client)} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl h-11 gap-1 px-2"><MessageCircle size={16} />Mensagem</Button></div></div>)}</div>
+        <div className="hidden md:block bg-card border border-border rounded-2xl overflow-hidden shadow-sm"><Table><TableHeader><TableRow><TableHead className="font-bold">Cliente</TableHead><TableHead className="font-bold">Servidor/App</TableHead><TableHead className="font-bold">Vencimento</TableHead><TableHead className="text-right font-bold">Ação</TableHead></TableRow></TableHeader><TableBody>{data.clients.map((client: Client) => <TableRow key={client.id}><TableCell className="font-bold">{client.nome}</TableCell><TableCell><ServerBadge name={client.serverName} /></TableCell><TableCell><span className="text-primary font-bold font-mono">{client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento}</span></TableCell><TableCell className="text-right"><div className="flex justify-end gap-2"><Button size="icon" variant="outline" title="Editar" aria-label={`Editar ${client.nome}`} onClick={() => openEdit(client)} className="h-9 w-9 rounded-xl"><Pencil size={16} /></Button><Button size="icon" variant="outline" title="Renovar" aria-label={`Renovar ${client.nome}`} onClick={() => openRenew(client)} className="h-9 w-9 rounded-xl"><RefreshCw size={16} /></Button><Button size="icon" title="Mensagem" aria-label={`Enviar mensagem para ${client.nome}`} onClick={() => openMessageModal(client)} className="h-9 w-9 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600"><MessageCircle size={17} /></Button></div></TableCell></TableRow>)}</TableBody></Table></div>
+        <div className="md:hidden space-y-4">{data.clients.map((client: Client) => <div key={client.id} className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3"><div><h3 className="font-black text-lg uppercase leading-tight break-words">{client.nome}</h3><p className="break-words"><ServerBadge name={client.serverName} /></p></div><div className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Vencimento:</span><span className="text-primary font-bold font-mono">{client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento}</span></div><div className="flex items-center justify-end gap-2"><Button size="icon" variant="outline" title="Editar" aria-label={`Editar ${client.nome}`} onClick={() => openEdit(client)} className="h-11 w-11 rounded-xl"><Pencil size={18} /></Button><Button size="icon" variant="outline" title="Renovar" aria-label={`Renovar ${client.nome}`} onClick={() => openRenew(client)} className="h-11 w-11 rounded-xl"><RefreshCw size={18} /></Button><Button size="icon" title="Mensagem" aria-label={`Enviar mensagem para ${client.nome}`} onClick={() => openMessageModal(client)} className="h-11 w-11 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600"><MessageCircle size={19} /></Button></div></div>)}</div>
         {totalPages > 1 && <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border"><span className="text-sm text-muted-foreground font-medium">Página <span className="text-foreground font-bold">{currentPage}</span> de <span className="text-foreground font-bold">{totalPages}</span></span><div className="flex items-center gap-2"><Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="rounded-xl"><ChevronLeft className="h-4 w-4 mr-1" />Anterior</Button><Button variant="outline" size="sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="rounded-xl">Próximo<ChevronRight className="h-4 w-4 ml-1" /></Button></div></div>}
       </>}
 
