@@ -3,6 +3,11 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
 const THEME_KEY = "owerplay-gestor-theme";
+const THEME_COLORS = {
+  light: "#F7F9FC",
+  dark: "#090D16",
+} as const;
+
 type AppTheme = "light" | "dark";
 
 function applyTheme(theme: AppTheme) {
@@ -10,13 +15,11 @@ function applyTheme(theme: AppTheme) {
   root.classList.toggle("dark", theme === "dark");
   root.classList.toggle("light", theme === "light");
 
-  const lightMeta = window.document.querySelector<HTMLMetaElement>('meta[data-app-theme="light"]');
-  const darkMeta = window.document.querySelector<HTMLMetaElement>('meta[data-app-theme="dark"]');
-
-  if (lightMeta && darkMeta) {
-    lightMeta.media = theme === "light" ? "all" : "not all";
-    darkMeta.media = theme === "dark" ? "all" : "not all";
-  }
+  window.document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => meta.remove());
+  const themeColor = window.document.createElement("meta");
+  themeColor.name = "theme-color";
+  themeColor.content = THEME_COLORS[theme];
+  window.document.head.appendChild(themeColor);
 }
 
 export function ThemeToggle() {
