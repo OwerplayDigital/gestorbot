@@ -171,7 +171,6 @@ function Mensagens() {
                   </code>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Use estas tags no corpo da mensagem para substituição manual pelos dados do cliente.</p>
             </div>
           </div>
         </CardContent>
