@@ -12,7 +12,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 
 const gestorLogo = "/gestor-logo.png";
-const themeBootScript = `(function(){try{var t=localStorage.getItem('owerplay-gestor-theme')==='dark'?'dark':'light';var r=document.documentElement;r.classList.remove('light','dark');r.classList.add(t);r.dataset.theme=t;r.style.colorScheme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='dark'?'#090D16':'#F7F9FC');var c=document.querySelector('meta[name="color-scheme"]');if(c)c.setAttribute('content',t);}catch(e){}})();`;
+const themeBootScript = `(function(){try{var t=localStorage.getItem('owerplay-gestor-theme')==='dark'?'dark':'light';var r=document.documentElement;r.classList.remove('light','dark');r.classList.add(t);r.dataset.theme=t;r.style.colorScheme=t;var bg=t==='dark'?'#090D16':'#F7F9FC';r.style.backgroundColor=bg;var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',bg);var c=document.querySelector('meta[name="color-scheme"]');if(c)c.setAttribute('content',t);document.addEventListener('DOMContentLoaded',function(){document.body.style.colorScheme=t;document.body.style.backgroundColor=bg;});}catch(e){}})();`;
 
 function NotFoundComponent() {
   return <div className="flex min-h-screen items-center justify-center bg-background px-4"><div className="max-w-md text-center"><h1 className="text-7xl font-bold text-foreground">404</h1><h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2><p className="mt-2 text-sm text-muted-foreground">A página que você procura não existe ou foi movida.</p><div className="mt-6"><Link to="/" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Voltar ao Início</Link></div></div></div>;
@@ -39,9 +39,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "color-scheme", content: "light" },
       { name: "theme-color", content: "#F7F9FC" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.svg" },
     ],
