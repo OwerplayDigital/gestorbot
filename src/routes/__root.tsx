@@ -12,7 +12,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 
 const gestorLogo = "/gestor-logo.png";
-const themeBootScript = `(function(){try{var t=localStorage.getItem('owerplay-gestor-theme')==='dark'?'dark':'light';var r=document.documentElement;r.classList.remove('light','dark');r.classList.add(t);r.dataset.theme=t;r.style.colorScheme=t;var bg=t==='dark'?'#090D16':'#F7F9FC';r.style.backgroundColor=bg;var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',bg);var c=document.querySelector('meta[name="color-scheme"]');if(c)c.setAttribute('content',t);document.addEventListener('DOMContentLoaded',function(){document.body.style.colorScheme=t;document.body.style.backgroundColor=bg;});}catch(e){}})();`;
 
 function NotFoundComponent() {
   return <div className="flex min-h-screen items-center justify-center bg-background px-4"><div className="max-w-md text-center"><h1 className="text-7xl font-bold text-foreground">404</h1><h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2><p className="mt-2 text-sm text-muted-foreground">A página que você procura não existe ou foi movida.</p><div className="mt-6"><Link to="/" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Voltar ao Início</Link></div></div></div>;
@@ -37,15 +36,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:image", content: "/og-preview.svg" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "color-scheme", content: "light" },
-      { name: "theme-color", content: "#F7F9FC" },
-      { name: "mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.svg" },
     ],
@@ -61,14 +54,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return <div className="flex flex-col h-full py-6"><div className="px-6 mb-8 flex items-center gap-2"><img src={gestorLogo} alt="Owerplay Gestor" className="h-8 w-auto rounded-xl object-contain" /><span className="text-lg font-semibold tracking-tight text-foreground">Owerplay Gestor</span></div><nav className="flex-1 px-3 space-y-1"><NavLink to="/dashboard" icon={LayoutDashboard} onClick={onNavigate}>Dashboard</NavLink><NavLink to="/financeiro" icon={DollarSign} badge="12" onClick={onNavigate}>Financeiro</NavLink><NavLink to="/clientes" icon={Users} onClick={onNavigate}>Clientes</NavLink><NavLink to="/revendedores" icon={Handshake} onClick={onNavigate}>Revendedores</NavLink><NavLink to="/vencidos" icon={Clock} onClick={onNavigate}>Vencidos</NavLink><NavLink to="/mensagens" icon={MessageSquare} onClick={onNavigate}>Mensagens</NavLink><NavLink to="/infraestrutura" icon={Server} onClick={onNavigate}>Infraestrutura</NavLink><NavLink to="/analises" icon={BarChart3} onClick={onNavigate}>Análises</NavLink></nav><div className="px-3 pt-6 border-t border-border mt-auto space-y-4"><div className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-emerald-500 bg-emerald-500/10 rounded-xl"><div className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></div>Bot Conectado</div><Link to="/" onClick={onNavigate} className="flex items-center gap-3 px-3 py-2 text-sm font-semibold text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors"><LogOut size={18} />Sair</Link></div></div>;
 }
 
-function ThemeHeadScript() {
-  return <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />;
-}
-
 function RootShell({ children }: { children: ReactNode }) {
   const router = useRouter(); const [isSheetOpen, setIsSheetOpen] = useState(false); const isCheckoutPage = router.state.location.pathname.startsWith('/pagar/'); const isStatementPage = router.state.location.pathname.startsWith('/extrato/'); const isMaintenancePage = router.state.location.pathname === '/';
-  if (isCheckoutPage || isStatementPage || isMaintenancePage) return <html lang="pt-BR" suppressHydrationWarning><head><HeadContent /><ThemeHeadScript /></head><body className="antialiased bg-background"><main className="flex-1">{children}</main><Scripts /></body></html>;
-  return <html lang="pt-BR" suppressHydrationWarning><head><HeadContent /><ThemeHeadScript /></head><body className="antialiased bg-background"><div className="flex min-h-screen bg-background"><aside className="hidden lg:flex flex-col w-64 border-r border-border bg-sidebar shrink-0"><SidebarContent /></aside><div className="flex flex-col flex-1 min-w-0 overflow-hidden"><header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"><div className="flex h-16 items-center justify-between px-4 lg:px-8"><div className="flex items-center gap-4"><Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}><SheetTrigger asChild><Button variant="ghost" size="icon" className="lg:hidden"><Menu className="h-5 w-5" /></Button></SheetTrigger><SheetContent side="left" className="p-0 w-72 bg-sidebar border-r border-border"><SidebarContent onNavigate={() => setIsSheetOpen(false)} /></SheetContent></Sheet><div className="lg:hidden flex items-center gap-2"><img src={gestorLogo} alt="Owerplay Gestor" className="h-7 w-auto rounded-lg object-contain" /><span className="text-sm font-semibold tracking-tight text-foreground">Owerplay Gestor</span></div></div><div className="flex items-center gap-3"><ThemeToggle /></div></div></header><main className="flex-1 overflow-y-auto">{children}</main></div></div><Scripts /></body></html>;
+  if (isCheckoutPage || isStatementPage || isMaintenancePage) return <html lang="pt-BR"><head><HeadContent /></head><body className="antialiased bg-background"><main className="flex-1">{children}</main><Scripts /></body></html>;
+  return <html lang="pt-BR"><head><HeadContent /></head><body className="antialiased bg-background"><div className="flex min-h-screen bg-background"><aside className="hidden lg:flex flex-col w-64 border-r border-border bg-sidebar shrink-0"><SidebarContent /></aside><div className="flex flex-col flex-1 min-w-0 overflow-hidden"><header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"><div className="flex h-16 items-center justify-between px-4 lg:px-8"><div className="flex items-center gap-4"><Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}><SheetTrigger asChild><Button variant="ghost" size="icon" className="lg:hidden"><Menu className="h-5 w-5" /></Button></SheetTrigger><SheetContent side="left" className="p-0 w-72 bg-sidebar border-r border-border"><SidebarContent onNavigate={() => setIsSheetOpen(false)} /></SheetContent></Sheet><div className="lg:hidden flex items-center gap-2"><img src={gestorLogo} alt="Owerplay Gestor" className="h-7 w-auto rounded-lg object-contain" /><span className="text-sm font-semibold tracking-tight text-foreground">Owerplay Gestor</span></div></div><div className="flex items-center gap-3"><ThemeToggle /></div></div></header><main className="flex-1 overflow-y-auto">{children}</main></div></div><Scripts /></body></html>;
 }
 
 function RootComponent() { const { queryClient } = Route.useRouteContext(); return <ErrorBoundary><QueryClientProvider client={queryClient}><Outlet /><Toaster position="top-center" richColors /></QueryClientProvider></ErrorBoundary>; }
