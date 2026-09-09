@@ -1,9 +1,12 @@
 {
+  "id": "/dashboard",
   "name": "Owerplay Gestor",
   "short_name": "Gestor",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
   "background_color": "#F7F9FC",
   "theme_color": "#F7F9FC",
   "icons": [
