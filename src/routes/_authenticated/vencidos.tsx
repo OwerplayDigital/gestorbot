@@ -78,9 +78,8 @@ function VencidosPage() {
   }
 
   function openRenew(client: Client) {
-    const current = String(client.vencimento || '').slice(0, 10);
-    if (!current) { toast.error('Cliente sem vencimento válido.'); return; }
-    setSelectedClient(client); setRenewDate(addDaysISO(current, 30)); setIsRenewOpen(true);
+    const todayBr = format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd');
+    setSelectedClient(client); setRenewDate(addDaysISO(todayBr, 30)); setIsRenewOpen(true);
   }
 
   function openDelete(client: Client) { setSelectedClient(client); setIsDeleteOpen(true); }
