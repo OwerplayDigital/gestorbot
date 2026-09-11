@@ -2,7 +2,6 @@ import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
-const MANUAL_THEME_KEY = "owerplay-gestor-theme-manual";
 const THEME_COLORS = {
   light: "#F7F9FC",
   dark: "#090D16",
@@ -27,25 +26,12 @@ function applyTheme(theme: AppTheme) {
   window.document.head.appendChild(themeColor);
 }
 
-function getSavedManualTheme(): AppTheme | null {
-  if (typeof window === "undefined") return null;
-  const saved = window.localStorage.getItem(MANUAL_THEME_KEY);
-  return saved === "light" || saved === "dark" ? saved : null;
-}
-
 export function ThemeToggle() {
-  const [manualTheme, setManualTheme] = useState<AppTheme | null>(() => getSavedManualTheme());
-  const [theme, setTheme] = useState<AppTheme>(() => getSavedManualTheme() ?? getSystemTheme());
+  const [theme, setTheme] = useState<AppTheme>(() => getSystemTheme());
 
   useEffect(() => {
-    if (manualTheme) {
-      setTheme(manualTheme);
-      applyTheme(manualTheme);
-      window.localStorage.setItem(MANUAL_THEME_KEY, manualTheme);
-      return;
-    }
-
     window.localStorage.removeItem("owerplay-gestor-theme");
+    window.localStorage.removeItem("owerplay-gestor-theme-manual");
 
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const syncWithSystem = (matches: boolean) => {
@@ -59,12 +45,12 @@ export function ThemeToggle() {
     const handleChange = (event: MediaQueryListEvent) => syncWithSystem(event.matches);
     media.addEventListener("change", handleChange);
     return () => media.removeEventListener("change", handleChange);
-  }, [manualTheme]);
+  }, []);
 
   function toggleTheme() {
     const nextTheme: AppTheme = theme === "light" ? "dark" : "light";
-    setManualTheme(nextTheme);
     setTheme(nextTheme);
+    applyTheme(nextTheme);
   }
 
   return (
