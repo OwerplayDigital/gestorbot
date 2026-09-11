@@ -13,6 +13,43 @@ type ClientResult = {
   vencimento: string | null;
 };
 
+function normalizeDate(value: string | null) {
+  if (!value) return "";
+  return value.includes("/") ? value.split("/").reverse().join("-") : value.slice(0, 10);
+}
+
+function isExpired(client: ClientResult) {
+  const vencimento = normalizeDate(client.vencimento);
+  if (!vencimento) return false;
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  return vencimento < today;
+}
+
+function filterExpiredClientInView(name: string) {
+  const normalizedName = name.trim().toLowerCase();
+  let attempts = 0;
+
+  const applyFilter = () => {
+    attempts += 1;
+    const rows = Array.from(document.querySelectorAll("tbody tr")) as HTMLElement[];
+    const mobileCards = Array.from(document.querySelectorAll(".md\\:hidden.space-y-4 > div")) as HTMLElement[];
+    const items = [...rows, ...mobileCards];
+
+    if (!items.length && attempts < 12) {
+      window.setTimeout(applyFilter, 100);
+      return;
+    }
+
+    items.forEach((item) => {
+      const text = (item.textContent || "").toLowerCase();
+      item.style.display = text.includes(normalizedName) ? "" : "none";
+    });
+  };
+
+  window.setTimeout(applyFilter, 100);
+}
+
 export function GlobalClientSearch() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -54,6 +91,13 @@ export function GlobalClientSearch() {
     const activeElement = document.activeElement as HTMLElement | null;
     activeElement?.blur();
     setOpen(false);
+
+    if (isExpired(client)) {
+      await navigate({ to: "/vencidos" });
+      filterExpiredClientInView(client.nome);
+      return;
+    }
+
     await navigate({ to: "/clientes" });
 
     window.setTimeout(() => {
@@ -89,6 +133,7 @@ export function GlobalClientSearch() {
                   <div className="truncate text-sm font-semibold text-foreground">{client.nome}</div>
                   {client.whatsapp && <div className="truncate text-xs text-muted-foreground">{client.whatsapp}</div>}
                 </div>
+                {isExpired(client) && <span className="shrink-0 text-[10px] font-semibold uppercase text-rose-500">Vencido</span>}
               </button>
             ))}
           </div>
