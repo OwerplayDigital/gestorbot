@@ -82,3 +82,6 @@
  .dashboard-mini-card{height:92px!important;min-height:92px!important;padding:.85rem!important}
  .dashboard-mini-card .text-xl{margin-top:.35rem!important}
 }
+
+/* A busca de clientes agora é global no cabeçalho. Mantém o campo legado apenas como ponte interna para o filtro. */
+.relative:has(> input[placeholder="Buscar por nome..."]){display:none!important}
