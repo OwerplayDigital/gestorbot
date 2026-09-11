@@ -50,9 +50,18 @@ export function GlobalClientSearch() {
     return () => window.clearTimeout(timer);
   }, [term, open]);
 
-  function selectClient(client: ClientResult) {
+  async function selectClient(client: ClientResult) {
     setOpen(false);
-    navigate({ to: "/clientes", search: { busca: client.nome } as any });
+    await navigate({ to: "/clientes" });
+
+    window.setTimeout(() => {
+      const input = document.querySelector('input[placeholder="Buscar por nome..."]') as HTMLInputElement | null;
+      if (!input) return;
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+      setter?.call(input, client.nome);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.focus();
+    }, 100);
   }
 
   return (
@@ -72,7 +81,7 @@ export function GlobalClientSearch() {
             {loading && <div className="py-6 text-center text-sm text-muted-foreground">Buscando...</div>}
             {!loading && term.trim().length >= 2 && results.length === 0 && <div className="py-6 text-center text-sm text-muted-foreground">Nenhum cliente encontrado.</div>}
             {!loading && results.map((client) => (
-              <button key={client.id} type="button" onClick={() => selectClient(client)} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted">
+              <button key={client.id} type="button" onClick={() => void selectClient(client)} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><UserRound className="h-4 w-4" /></div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold text-foreground">{client.nome}</div>
