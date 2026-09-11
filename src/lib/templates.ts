@@ -8,8 +8,8 @@ export const BOT_TEMPLATES = {
 
   VENCIDO: (nome: string, data: string, url: string = ""): string =>
     `Olá ${nome}, tudo bem?\n` +
-    `Seu plano de TV venceu em *${data}*.\n\n` +
-    `🔗 *Renove pelo link abaixo:*\n\n` +
+    `Seu plano de TV venceu em *${data}*.\n` +
+    `Para reativar o serviço, faça a renovação pelo link abaixo:\n\n` +
     `${url}`,
 
   RENOVACAO_LINK: (nome: string, url: string = ""): string =>
