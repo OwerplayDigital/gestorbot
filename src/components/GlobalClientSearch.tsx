@@ -51,6 +51,8 @@ export function GlobalClientSearch() {
   }, [term, open]);
 
   async function selectClient(client: ClientResult) {
+    const activeElement = document.activeElement as HTMLElement | null;
+    activeElement?.blur();
     setOpen(false);
     await navigate({ to: "/clientes" });
 
@@ -60,7 +62,7 @@ export function GlobalClientSearch() {
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
       setter?.call(input, client.nome);
       input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.focus();
+      input.blur();
     }, 100);
   }
 
