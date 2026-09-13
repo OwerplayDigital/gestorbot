@@ -5,10 +5,9 @@ import { BOT_TEMPLATES } from '@/lib/templates';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
-import { Users, Search, ChevronLeft, ChevronRight, MessageCircle, Send, Pencil, ChevronDown, CalendarDays, RefreshCw, Minus, Plus, Smartphone, Copy, PlusCircle, Gift, MoreVertical, Trash2 } from 'lucide-react';
+import { Users, Search, ChevronLeft, ChevronRight, MessageCircle, Send, Pencil, ChevronDown, CalendarDays, RefreshCw, Minus, Plus, Smartphone, Copy, PlusCircle, Gift, Trash2 } from 'lucide-react';
 import { ServerBadge } from '@/components/ServerBadge';
 import { NewClientDialog } from '@/components/NewClientDialog';
 import { useState, useEffect } from 'react';
@@ -211,19 +210,12 @@ function ClientesPage() {
     if (error) { toast.error('Não foi possível salvar o cliente.'); return; } toast.success('Cliente atualizado.'); setIsEditOpen(false); await refetch();
   }
 
-  const ClientMenu = ({ client, mobile = false }: { client: Client; mobile?: boolean }) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild><Button variant="outline" size="icon" className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl text-muted-foreground`} aria-label={`Mais opções para ${client.nome}`} title="Mais opções"><MoreVertical size={mobile ? 18 : 16} /></Button></DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="rounded-xl"><DropdownMenuItem onClick={() => openDelete(client)} className="cursor-pointer gap-2 text-rose-500 focus:text-rose-500"><Trash2 size={15} />Excluir cliente</DropdownMenuItem></DropdownMenuContent>
-    </DropdownMenu>
-  );
-
   const Actions = ({ client, mobile = false }: { client: Client; mobile?: boolean }) => <div className="flex items-center justify-end gap-2">
     <Button size="icon" variant="outline" title="Editar" aria-label={`Editar ${client.nome}`} onClick={() => openEdit(client)} className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl`}><Pencil size={mobile ? 18 : 16} /></Button>
     <Button size="icon" variant="outline" title="Renovar" aria-label={`Renovar ${client.nome}`} onClick={() => openRenew(client)} className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl`}><RefreshCw size={mobile ? 18 : 16} /></Button>
     <Button size="icon" variant="outline" title="Dados do aplicativo" aria-label={`Dados do aplicativo de ${client.nome}`} onClick={() => openApp(client)} className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl ${client.devices?.length ? 'text-primary border-primary/30 bg-primary/5' : ''}`}><Smartphone size={mobile ? 18 : 16} /></Button>
     <Button size="icon" title="Mensagem" aria-label={`Enviar mensagem para ${client.nome}`} onClick={() => openMessageModal(client)} className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl bg-emerald-500 text-white hover:bg-emerald-600`}><MessageCircle size={mobile ? 19 : 17} /></Button>
-    <ClientMenu client={client} mobile={mobile} />
+    <Button size="icon" variant="outline" title="Excluir cliente" aria-label={`Excluir ${client.nome}`} onClick={() => openDelete(client)} className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl text-rose-500 border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-500`}><Trash2 size={mobile ? 18 : 16} /></Button>
   </div>;
 
   const selectedDevices = data?.clients?.find((client: Client) => client.id === selectedClient?.id)?.devices || [];
