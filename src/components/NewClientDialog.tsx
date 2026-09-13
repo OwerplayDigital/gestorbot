@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Plus, UserPlus } from 'lucide-react';
+import { Check, Plus, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -81,11 +81,13 @@ export function NewClientDialog() {
       setOpen(false);
     } catch (error) {
       console.error(error);
-      if (createdClientId) {
-        await supabase.from('clientes').delete().eq('id', createdClientId);
-      }
+      if (createdClientId) await supabase.from('clientes').delete().eq('id', createdClientId);
       toast.error('Não foi possível cadastrar o cliente.');
     } finally { setSaving(false); }
+  }
+
+  function toggleServer(id: string) {
+    setForm((f) => ({ ...f, servidores_ids: f.servidores_ids.includes(id) ? f.servidores_ids.filter((serverId) => serverId !== id) : [...f.servidores_ids, id] }));
   }
 
   return <>
@@ -96,7 +98,7 @@ export function NewClientDialog() {
       <label className="block text-sm font-medium">Vencimento<Input className="mt-1" type="date" value={form.vencimento} onChange={(e) => setForm((f) => ({ ...f, vencimento: e.target.value }))} /></label>
       <label className="block text-sm font-medium">Plano<select className="mt-1 w-full h-10 rounded-md border bg-background px-3 text-sm" value={form.plano_id} onChange={(e) => setForm((f) => ({ ...f, plano_id: e.target.value }))}><option value="">Selecione</option>{plans.map((plan) => <option key={plan.id} value={plan.id}>{plan.name} — R$ {Number(plan.price || 0).toFixed(2).replace('.', ',')}</option>)}</select></label>
       <label className="block text-sm font-medium">Desconto (R$)<Input className="mt-1" inputMode="decimal" value={form.desconto} onChange={(e) => setForm((f) => ({ ...f, desconto: e.target.value }))} /></label>
-      <div><p className="text-sm font-medium mb-2">Servidor</p><div className="space-y-2">{servers.map((server) => <label key={server.id} className="flex items-center gap-3 rounded-xl border p-3 text-sm cursor-pointer"><input type="checkbox" className="h-4 w-4" checked={form.servidores_ids.includes(server.id)} onChange={(e) => setForm((f) => ({ ...f, servidores_ids: e.target.checked ? [...f.servidores_ids, server.id] : f.servidores_ids.filter((id) => id !== server.id) }))} /><span className="font-medium">{server.name}</span></label>)}</div></div>
+      <div><p className="text-sm font-medium mb-2">Servidor <span className="font-normal text-muted-foreground">(selecione um ou mais)</span></p><div className="grid grid-cols-3 gap-2">{servers.map((server) => { const selected = form.servidores_ids.includes(server.id); return <button key={server.id} type="button" onClick={() => toggleServer(server.id)} aria-pressed={selected} className={`relative flex min-w-0 items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-semibold transition-colors ${selected ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-foreground hover:bg-muted/50'}`}><span className="truncate">{server.name}</span>{selected && <Check size={14} className="shrink-0" />}</button>; })}</div></div>
     </div><div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={saving} onClick={() => setOpen(false)}>Cancelar</Button><Button disabled={saving} onClick={save}>{saving ? 'Salvando...' : 'Cadastrar'}</Button></div></DialogContent></Dialog>
   </>;
 }
