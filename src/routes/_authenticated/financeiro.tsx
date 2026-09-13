@@ -88,10 +88,12 @@ function FinanceiroPage() {
       <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-blue-400/15 blur-2xl"/><div className="relative"><div className="mb-8 flex items-center justify-between"><span className="text-xs font-bold uppercase tracking-[.18em] text-blue-200">Resultado do período</span><span className="rounded-xl bg-white/10 p-2.5"><WalletCards size={19}/></span></div><div className="text-4xl font-black tracking-[-.04em] md:text-5xl">{brl(stats.lucro)}</div><div className="mt-5 flex flex-wrap gap-5 text-sm"><span className="flex items-center gap-2 text-emerald-300"><ArrowUpRight size={16}/><b>{brl(stats.entradas)}</b> entradas</span><span className="flex items-center gap-2 text-rose-300"><ArrowDownRight size={16}/><b>{brl(stats.custos)}</b> custos</span></div></div>
     </section>
 
-    <section className="mt-4 grid grid-cols-3 gap-2.5">
-      <MetricCard label="Multi-servidor" value={String(analytics?.multiServerClients || 0)} icon={Server}/>
-      <MetricCard label="Servidor líder" value={topServer?.name || "—"} detail={topServer ? `${topServer.count} clientes` : undefined} icon={Server}/>
-      <MetricCard label="Plano líder" value={topPlan?.name || "—"} detail={topPlan ? `${topPlan.count} clientes` : undefined} icon={Layers3}/>
+    <section className="mt-4 space-y-3">
+      <MetricCardHorizontal label="Multi-servidor" value={String(analytics?.multiServerClients || 0)} icon={Server}/>
+      <div className="grid grid-cols-2 gap-3">
+        <MetricCard label="Servidor líder" value={topServer?.name || "—"} detail={topServer ? `${topServer.count} clientes` : undefined} icon={Server}/>
+        <MetricCard label="Plano líder" value={topPlan?.name || "—"} detail={topPlan ? `${topPlan.count} clientes` : undefined} icon={Layers3}/>
+      </div>
     </section>
 
     <section className="mt-4 grid gap-4 lg:grid-cols-2">
@@ -101,6 +103,8 @@ function FinanceiroPage() {
   </div>;
 }
 
-function MetricCard({label,value,detail,icon:Icon}:{label:string;value:string;detail?:string;icon:any}) { return <div className="min-w-0 rounded-2xl border bg-card p-3 shadow-sm md:p-4"><div className="flex items-center justify-between gap-1"><p className="truncate text-[9px] font-bold uppercase tracking-wide text-muted-foreground">{label}</p><span className="rounded-lg bg-primary/10 p-1 text-primary"><Icon size={13}/></span></div><p className="mt-2 truncate text-lg font-black tracking-tight md:text-xl" title={value}>{value}</p>{detail&&<p className="mt-0.5 truncate text-[10px] text-muted-foreground md:text-xs">{detail}</p>}</div>; }
+function MetricCardHorizontal({label,value,icon:Icon}:{label:string;value:string;icon:any}) { return <div className="flex items-center justify-between rounded-2xl border bg-card px-4 py-3 shadow-sm"><div><p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-black tracking-tight">{value}</p></div><span className="rounded-xl bg-primary/10 p-2 text-primary"><Icon size={18}/></span></div>; }
+
+function MetricCard({label,value,detail,icon:Icon}:{label:string;value:string;detail?:string;icon:any}) { return <div className="min-w-0 rounded-2xl border bg-card p-4 shadow-sm"><div className="flex items-center justify-between gap-2"><p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{label}</p><span className="rounded-lg bg-primary/10 p-1.5 text-primary"><Icon size={15}/></span></div><p className="mt-3 truncate text-xl font-black tracking-tight" title={value}>{value}</p>{detail&&<p className="mt-1 truncate text-xs text-muted-foreground">{detail}</p>}</div>; }
 
 function Ranking({title,items,server=false}:{title:string;items:RankingItem[];server?:boolean}) { return <div className="overflow-hidden rounded-[24px] border bg-card shadow-sm"><div className="border-b px-5 py-4"><h2 className="font-black tracking-tight">{title}</h2></div><div className="space-y-4 p-5">{items.length?items.map((item,index)=>{const accent=server?serverAccent(item.name):{bar:"bg-primary",text:"text-primary"};return <div key={item.id}><div className="mb-2 flex items-center justify-between gap-3"><div className="flex min-w-0 items-center gap-2"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-black text-muted-foreground">{index+1}</span>{server?<ServerBadge name={item.name}/>:<p className="truncate text-sm font-bold">{item.name}</p>}</div><div className="shrink-0 text-right"><p className={`text-sm font-black ${accent.text}`}>{item.count}</p><p className="text-[10px] text-muted-foreground">{item.percentage.toFixed(1).replace('.',',')}%</p></div></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className={`h-full rounded-full ${accent.bar}`} style={{width:`${Math.max(4,item.percentage)}%`}}/></div></div>}):<p className="py-8 text-center text-sm text-muted-foreground">Nenhum dado disponível.</p>}</div></div>; }
