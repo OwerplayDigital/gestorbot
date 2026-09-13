@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
-type Option = { id: string; name: string; price?: number };
+type Option = { id: string; name: string; price?: number; valor?: number };
 const emptyForm = { nome: '', whatsapp: '', vencimento: '', plano_id: '', desconto: '', servidores_ids: [] as string[] };
 
 export function NewClientDialog() {
@@ -21,7 +21,7 @@ export function NewClientDialog() {
   async function openDialog() {
     const [{ data: planData }, { data: serverData }] = await Promise.all([
       supabase.from('plans').select('id, name, price').eq('active', true).order('name'),
-      supabase.from('servidores_iptv').select('id, name').eq('active', true).order('name'),
+      supabase.from('servidores_iptv').select('id, name, valor').eq('active', true).order('name'),
     ]);
     setPlans(planData || []); setServers(serverData || []); setForm(emptyForm); setOpen(true);
   }
@@ -32,18 +32,60 @@ export function NewClientDialog() {
     const desconto = Number(form.desconto.replace(',', '.') || 0);
     if (!Number.isFinite(desconto) || desconto < 0) { toast.error('Desconto inválido.'); return; }
     setSaving(true);
+    let createdClientId: string | null = null;
     try {
       const { data: authData } = await supabase.auth.getUser();
       const userId = authData.user?.id;
       if (!userId) throw new Error('Usuário não autenticado.');
+
       const plan = plans.find((item) => item.id === form.plano_id);
       const valor = Math.max(0, Number(plan?.price || 0) - desconto);
-      const { error } = await supabase.from('clientes').insert({ user_id: userId, nome: form.nome.trim(), whatsapp: form.whatsapp.trim(), vencimento: form.vencimento, plano_id: form.plano_id, servidores_ids: form.servidores_ids, desconto, valor, status: 'ativo' });
-      if (error) throw error;
-      await queryClient.invalidateQueries({ queryKey: ['clients-active'] });
-      toast.success('Cliente cadastrado.'); setOpen(false);
-    } catch (error) { console.error(error); toast.error('Não foi possível cadastrar o cliente.'); }
-    finally { setSaving(false); }
+      const custo = form.servidores_ids.reduce((total, id) => total + Number(servers.find((server) => server.id === id)?.valor || 0), 0);
+
+      const { data: client, error: clientError } = await supabase.from('clientes').insert({
+        user_id: userId,
+        nome: form.nome.trim(),
+        whatsapp: form.whatsapp.trim(),
+        vencimento: form.vencimento,
+        plano_id: form.plano_id,
+        servidores_ids: form.servidores_ids,
+        desconto,
+        valor,
+        status: 'ativo',
+      }).select('id').single();
+      if (clientError || !client) throw clientError || new Error('Cliente não criado.');
+      createdClientId = client.id;
+
+      const todayBr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+      }).format(new Date());
+
+      const { error: transactionError } = await supabase.from('transacoes').insert({
+        user_id: userId,
+        cliente_id: client.id,
+        tipo: 'entrada',
+        entrada: valor,
+        custo,
+        valor,
+        data: todayBr,
+        descricao: `Cadastro cliente ${client.id}`,
+        serv_id: form.servidores_ids[0] || null,
+      });
+      if (transactionError) throw transactionError;
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['clients-active'] }),
+        queryClient.invalidateQueries({ queryKey: ['financeiro-history'] }),
+      ]);
+      toast.success('Cliente cadastrado e lançado no financeiro.');
+      setOpen(false);
+    } catch (error) {
+      console.error(error);
+      if (createdClientId) {
+        await supabase.from('clientes').delete().eq('id', createdClientId);
+      }
+      toast.error('Não foi possível cadastrar o cliente.');
+    } finally { setSaving(false); }
   }
 
   return <>
