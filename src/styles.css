@@ -85,3 +85,8 @@
 
 /* A busca de clientes agora é global no cabeçalho. Mantém o campo legado apenas como ponte interna para o filtro. */
 .relative:has(> input[placeholder="Buscar por nome..."]){display:none!important}
+
+/* Dashboard: gráfico foi movido para Financeiro. Mantém apenas vencimentos e extrato. */
+.dashboard-page>section:nth-of-type(2){grid-template-columns:1fr!important}
+.dashboard-page>section:nth-of-type(2)>div:first-child{display:none!important}
+.dashboard-page>section:nth-of-type(2)>div:last-child{width:100%!important}
