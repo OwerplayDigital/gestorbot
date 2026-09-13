@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Plus, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -7,10 +8,10 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
 type Option = { id: string; name: string; price?: number };
-
 const emptyForm = { nome: '', whatsapp: '', vencimento: '', plano_id: '', desconto: '', servidores_ids: [] as string[] };
 
 export function NewClientDialog() {
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [plans, setPlans] = useState<Option[]>([]);
@@ -22,18 +23,12 @@ export function NewClientDialog() {
       supabase.from('plans').select('id, name, price').eq('active', true).order('name'),
       supabase.from('servidores_iptv').select('id, name').eq('active', true).order('name'),
     ]);
-    setPlans(planData || []);
-    setServers(serverData || []);
-    setForm(emptyForm);
-    setOpen(true);
+    setPlans(planData || []); setServers(serverData || []); setForm(emptyForm); setOpen(true);
   }
 
   async function save() {
     if (saving) return;
-    if (!form.nome.trim() || !form.whatsapp.trim() || !form.vencimento || !form.plano_id || form.servidores_ids.length === 0) {
-      toast.error('Preencha nome, WhatsApp, vencimento, plano e servidor.');
-      return;
-    }
+    if (!form.nome.trim() || !form.whatsapp.trim() || !form.vencimento || !form.plano_id || form.servidores_ids.length === 0) { toast.error('Preencha nome, WhatsApp, vencimento, plano e servidor.'); return; }
     const desconto = Number(form.desconto.replace(',', '.') || 0);
     if (!Number.isFinite(desconto) || desconto < 0) { toast.error('Desconto inválido.'); return; }
     setSaving(true);
@@ -43,25 +38,12 @@ export function NewClientDialog() {
       if (!userId) throw new Error('Usuário não autenticado.');
       const plan = plans.find((item) => item.id === form.plano_id);
       const valor = Math.max(0, Number(plan?.price || 0) - desconto);
-      const { error } = await supabase.from('clientes').insert({
-        user_id: userId,
-        nome: form.nome.trim(),
-        whatsapp: form.whatsapp.trim(),
-        vencimento: form.vencimento,
-        plano_id: form.plano_id,
-        servidores_ids: form.servidores_ids,
-        desconto,
-        valor,
-        status: 'ativo',
-      });
+      const { error } = await supabase.from('clientes').insert({ user_id: userId, nome: form.nome.trim(), whatsapp: form.whatsapp.trim(), vencimento: form.vencimento, plano_id: form.plano_id, servidores_ids: form.servidores_ids, desconto, valor, status: 'ativo' });
       if (error) throw error;
-      toast.success('Cliente cadastrado.');
-      setOpen(false);
-      window.dispatchEvent(new CustomEvent('client-created'));
-    } catch (error) {
-      console.error(error);
-      toast.error('Não foi possível cadastrar o cliente.');
-    } finally { setSaving(false); }
+      await queryClient.invalidateQueries({ queryKey: ['clients-active'] });
+      toast.success('Cliente cadastrado.'); setOpen(false);
+    } catch (error) { console.error(error); toast.error('Não foi possível cadastrar o cliente.'); }
+    finally { setSaving(false); }
   }
 
   return <>
