@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/financeiro")({ component: 
 
 type SelectedMonth = { label: string; value: string; date: Date };
 type RankingItem = { id: string; name: string; count: number; percentage: number };
-type AnalyticsData = { activeClients: number; multiServerClients: number; serverRanking: RankingItem[]; planRanking: RankingItem[] };
+type AnalyticsData = { activeClients: number; serverRanking: RankingItem[]; planRanking: RankingItem[] };
 
 function serverAccent(name: string) {
   if (/uniplay/i.test(name)) return { bar: "bg-sky-500", text: "text-sky-500" };
@@ -57,10 +57,8 @@ function FinanceiroPage() {
       if (plansRes.error) throw plansRes.error;
       const clients = (clientsRes.data || []).filter((client: any) => client.status === "ativo");
       const serverCounts = new Map<string, number>(), planCounts = new Map<string, number>();
-      let multiServerClients = 0;
       clients.forEach((client: any) => {
         const ids = Array.isArray(client.servidores_ids) ? client.servidores_ids : [];
-        if (ids.length > 1) multiServerClients++;
         ids.forEach((id: string) => serverCounts.set(id, (serverCounts.get(id) || 0) + 1));
         if (client.plano_id) planCounts.set(client.plano_id, (planCounts.get(client.plano_id) || 0) + 1);
       });
@@ -68,7 +66,7 @@ function FinanceiroPage() {
       const pct = (count: number) => activeClients ? count / activeClients * 100 : 0;
       const serverRanking = (serversRes.data || []).map((s: any) => ({ id: s.id, name: s.name, count: serverCounts.get(s.id) || 0, percentage: pct(serverCounts.get(s.id) || 0) })).filter(x => x.count > 0).sort((a,b) => b.count-a.count || a.name.localeCompare(b.name));
       const planRanking = (plansRes.data || []).map((p: any) => ({ id: p.id, name: p.name, count: planCounts.get(p.id) || 0, percentage: pct(planCounts.get(p.id) || 0) })).filter(x => x.count > 0).sort((a,b) => b.count-a.count || a.name.localeCompare(b.name));
-      return { activeClients, multiServerClients, serverRanking, planRanking };
+      return { activeClients, serverRanking, planRanking };
     },
   });
 
@@ -88,12 +86,9 @@ function FinanceiroPage() {
       <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-blue-400/15 blur-2xl"/><div className="relative"><div className="mb-8 flex items-center justify-between"><span className="text-xs font-bold uppercase tracking-[.18em] text-blue-200">Resultado do período</span><span className="rounded-xl bg-white/10 p-2.5"><WalletCards size={19}/></span></div><div className="text-4xl font-black tracking-[-.04em] md:text-5xl">{brl(stats.lucro)}</div><div className="mt-5 flex flex-wrap gap-5 text-sm"><span className="flex items-center gap-2 text-emerald-300"><ArrowUpRight size={16}/><b>{brl(stats.entradas)}</b> entradas</span><span className="flex items-center gap-2 text-rose-300"><ArrowDownRight size={16}/><b>{brl(stats.custos)}</b> custos</span></div></div>
     </section>
 
-    <section className="mt-4 space-y-3">
-      <MetricCardHorizontal label="Multi-servidor" value={String(analytics?.multiServerClients || 0)} icon={Server}/>
-      <div className="grid grid-cols-2 gap-3">
-        <MetricCard label="Servidor líder" value={topServer?.name || "—"} detail={topServer ? `${topServer.count} clientes` : undefined} icon={Server}/>
-        <MetricCard label="Plano líder" value={topPlan?.name || "—"} detail={topPlan ? `${topPlan.count} clientes` : undefined} icon={Layers3}/>
-      </div>
+    <section className="mt-4 grid grid-cols-2 gap-3">
+      <MetricCard label="Servidor líder" value={topServer?.name || "—"} detail={topServer ? `${topServer.count} clientes` : undefined} icon={Server}/>
+      <MetricCard label="Plano líder" value={topPlan?.name || "—"} detail={topPlan ? `${topPlan.count} clientes` : undefined} icon={Layers3}/>
     </section>
 
     <section className="mt-4 grid gap-4 lg:grid-cols-2">
@@ -102,8 +97,6 @@ function FinanceiroPage() {
     </section>
   </div>;
 }
-
-function MetricCardHorizontal({label,value,icon:Icon}:{label:string;value:string;icon:any}) { return <div className="flex items-center justify-between rounded-2xl border bg-card px-4 py-3 shadow-sm"><div><p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-black tracking-tight">{value}</p></div><span className="rounded-xl bg-primary/10 p-2 text-primary"><Icon size={18}/></span></div>; }
 
 function MetricCard({label,value,detail,icon:Icon}:{label:string;value:string;detail?:string;icon:any}) { return <div className="min-w-0 rounded-2xl border bg-card p-4 shadow-sm"><div className="flex items-center justify-between gap-2"><p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{label}</p><span className="rounded-lg bg-primary/10 p-1.5 text-primary"><Icon size={15}/></span></div><p className="mt-3 truncate text-xl font-black tracking-tight" title={value}>{value}</p>{detail&&<p className="mt-1 truncate text-xs text-muted-foreground">{detail}</p>}</div>; }
 
