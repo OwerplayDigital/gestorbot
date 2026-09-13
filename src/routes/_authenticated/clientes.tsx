@@ -145,7 +145,8 @@ function ClientesPage() {
     if (!selectedClient) return;
     const firstName = selectedClient.nome.split(' ')[0];
     const valor = selectedClient.plans ? (Number(selectedClient.plans.price) - Number(selectedClient.desconto || 0)).toFixed(2) : '0.00';
-    const message = template.mensagem.replace(/{nome}/g, selectedClient.nome).replace(/{primeiro_nome}/g, firstName).replace(/{vencimento}/g, selectedClient.vencimento).replace(/{valor}/g, `R$ ${valor}`);
+    const vencimentoBr = selectedClient.vencimento?.includes('-') ? format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy') : selectedClient.vencimento;
+    const message = template.mensagem.replace(/{nome}/g, selectedClient.nome).replace(/{primeiro_nome}/g, firstName).replace(/{vencimento}/g, vencimentoBr || '').replace(/{valor}/g, `R$ ${valor}`);
     const phoneRaw = selectedClient.whatsapp.replace(/\D/g, ''); const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank'); setIsMessageOpen(false);
   };
