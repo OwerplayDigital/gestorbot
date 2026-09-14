@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
-import gestorLogo from "@/assets/gestor-logo.png.asset.json";
  
 export const Route = createFileRoute("/")({
   component: Index,
@@ -22,14 +21,12 @@ function Index() {
   const [password, setPassword] = useState("");
   const [signingIn, setSigningIn] = useState(false);
 
-  // Acesso liberado apenas via porta secreta (?admin=true) no parâmetro raw
   const [isSecretDoorOpen, setIsSecretDoorOpen] = useState(false);
 
   useEffect(() => {
-    // Checagem manual via URL para evitar conflitos de tipagem do TanStack Router
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('admin') === 'true') {
+      if (params.get("admin") === "true") {
         setIsSecretDoorOpen(true);
       }
     }
@@ -60,12 +57,9 @@ function Index() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
-    
+
     setSigningIn(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       toast.error("Erro ao entrar: " + error.message);
@@ -78,7 +72,7 @@ function Index() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="animate-spin h-12 w-12 rounded-full border-b-2 border-primary" />
       </div>
     );
   }
@@ -88,26 +82,26 @@ function Index() {
     return null;
   }
 
-  // Tela de Manutenção / Mockup (Padrão)
   if (!isSecretDoorOpen) {
     return (
-      <div className="flex flex-col min-h-screen items-center justify-center bg-[#F8FAFC] dark:bg-[#090D16] p-4 text-center">
-        <img src={gestorLogo.url} alt="Logo" className="h-20 w-auto object-contain rounded-2xl mb-6 shadow-2xl border border-border dark:border-slate-800" />
-        <h1 className="text-2xl font-black tracking-tighter mb-2 text-foreground dark:text-white uppercase">GESTOR PRO</h1>
-        <p className="text-muted-foreground text-sm font-medium max-w-[250px]">
-          Estamos realizando atualizações importantes. Voltaremos em breve.
-        </p>
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] dark:bg-[#090D16]">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcSet="/og-logo.svg" />
+          <img src="/og-logo-light.svg" alt="Owerplay Gestor" className="h-28 w-28 object-contain" />
+        </picture>
       </div>
     );
   }
 
-  // Tela de Login (Porta Secreta)
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center bg-background p-4">
-      <Card className="max-w-md w-full bg-card dark:bg-[#131B2E] border-border dark:border-slate-800 rounded-2xl shadow-2xl">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md rounded-2xl border-border bg-card shadow-2xl dark:border-slate-800 dark:bg-[#131B2E]">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <img src={gestorLogo.url} alt="Logo" className="h-12 w-auto object-contain rounded-lg" />
+          <div className="mb-4 flex justify-center">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcSet="/og-logo.svg" />
+              <img src="/og-logo-light.svg" alt="Owerplay Gestor" className="h-12 w-12 object-contain" />
+            </picture>
           </div>
           <CardTitle className="text-2xl font-bold">Acesso Restrito</CardTitle>
           <CardDescription>Identifique-se para continuar</CardDescription>
@@ -116,28 +110,28 @@ function Index() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="seu-email@exemplo.com" 
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu-email@exemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-card dark:bg-[#131B2E] border-border dark:border-slate-800 rounded-xl"
+                className="rounded-xl border-border bg-card dark:border-slate-800 dark:bg-[#131B2E]"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
-              <Input 
-                id="password" 
-                type="password" 
+              <Input
+                id="password"
+                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-card dark:bg-[#131B2E] border-border dark:border-slate-800 rounded-xl"
+                className="rounded-xl border-border bg-card dark:border-slate-800 dark:bg-[#131B2E]"
               />
             </div>
-            <Button type="submit" className="w-full font-bold rounded-xl" disabled={signingIn}>
+            <Button type="submit" className="w-full rounded-xl font-bold" disabled={signingIn}>
               {signingIn ? "Validando..." : "Entrar"}
             </Button>
           </form>
