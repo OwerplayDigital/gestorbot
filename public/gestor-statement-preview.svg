@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F8FAFC"/><stop offset="1" stop-color="#EAF1FF"/></linearGradient><linearGradient id="bar" x1="0" y1="0" x2=".72" y2="1"><stop stop-color="#25DDEA"/><stop offset=".3" stop-color="#0FADEB"/><stop offset=".62" stop-color="#0878F5"/><stop offset="1" stop-color="#123ED6"/></linearGradient><linearGradient id="card" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0F4DA2"/><stop offset="1" stop-color="#2354A3"/></linearGradient></defs>
+<rect width="1200" height="630" rx="0" fill="url(#bg)"/>
+<g transform="translate(105 120) scale(.8)"><rect x="0" y="190" width="82" height="130" rx="36" fill="url(#bar)"/><rect x="110" y="110" width="82" height="210" rx="36" fill="url(#bar)"/><rect x="220" y="25" width="82" height="295" rx="36" fill="url(#bar)"/></g>
+<text x="390" y="255" fill="#0F172A" font-family="Arial,Helvetica,sans-serif" font-size="68" font-weight="700">Owerplay Gestor</text>
+<text x="395" y="325" fill="#64748B" font-family="Arial,Helvetica,sans-serif" font-size="30">Extrato de créditos do revendedor</text>
+<rect x="390" y="370" width="600" height="6" rx="3" fill="url(#card)"/>
+<text x="395" y="435" fill="#1D4ED8" font-family="Arial,Helvetica,sans-serif" font-size="25" font-weight="700">Créditos • Compras • Histórico</text>
+</svg>
