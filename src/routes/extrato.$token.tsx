@@ -6,8 +6,18 @@ import { supabase } from '@/integrations/supabase/client'
 export const Route = createFileRoute('/extrato/$token')({
   head: () => ({
     meta: [
-      { title: 'Extrato de créditos | Owerplay' },
-      { name: 'description', content: 'Histórico de créditos e pagamentos.' },
+      { title: 'Extrato de créditos | Owerplay Gestor' },
+      { name: 'description', content: 'Acompanhe seu histórico de créditos e pagamentos no Owerplay Gestor.' },
+      { property: 'og:site_name', content: 'Owerplay Gestor' },
+      { property: 'og:title', content: 'Extrato de créditos | Owerplay Gestor' },
+      { property: 'og:description', content: 'Acompanhe seu histórico de créditos e pagamentos.' },
+      { property: 'og:image', content: '/gestor-statement-preview.svg' },
+      { property: 'og:image:type', content: 'image/svg+xml' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: 'Extrato de créditos | Owerplay Gestor' },
+      { name: 'twitter:description', content: 'Acompanhe seu histórico de créditos e pagamentos.' },
+      { name: 'twitter:image', content: '/gestor-statement-preview.svg' },
       { name: 'robots', content: 'noindex, nofollow' },
     ],
   }),
@@ -89,7 +99,12 @@ function StatementPage() {
   return (
     <main className="min-h-screen bg-[#f5f7fb] text-slate-950">
       <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
-        <header className="mb-6 flex items-start justify-between gap-4">
+        <div className="mb-6 flex items-center gap-2.5">
+          <img src="/og-logo-light.svg" alt="" className="h-10 w-10 object-contain" />
+          <span className="text-lg font-bold tracking-[-0.03em] text-slate-950">Owerplay Gestor</span>
+        </div>
+
+        <header className="mb-6 flex items-end justify-between gap-4">
           <div>
             <p className="text-xs font-medium text-slate-500">Extrato do revendedor</p>
             <h1 className="mt-1 text-[28px] font-bold tracking-[-0.04em]">Olá, {firstName}</h1>
@@ -172,8 +187,9 @@ function StatementPage() {
           )}
         </section>
 
-        <footer className="mt-7 text-center">
-          <p className="text-[11px] font-medium text-slate-400">Owerplay TV</p>
+        <footer className="mt-8 flex items-center justify-center gap-2 border-t border-slate-200/80 pt-6">
+          <img src="/og-logo-light.svg" alt="" className="h-6 w-6 object-contain" />
+          <p className="text-[11px] font-semibold text-slate-400">Owerplay Gestor</p>
         </footer>
       </div>
     </main>
