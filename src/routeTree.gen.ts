@@ -18,6 +18,8 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
 import { Route as AuthenticatedInfraestruturaRouteImport } from './routes/_authenticated/infraestrutura'
 import { Route as AuthenticatedMensagensRouteImport } from './routes/_authenticated/mensagens'
+import { Route as AuthenticatedMovimentacoesRouteImport } from './routes/_authenticated/movimentacoes'
+import { Route as AuthenticatedPendenciasRouteImport } from './routes/_authenticated/pendencias'
 import { Route as AuthenticatedRevendedoresRouteImport } from './routes/_authenticated/revendedores'
 import { Route as AuthenticatedVencidosRouteImport } from './routes/_authenticated/vencidos'
 import { Route as ExtratoTokenRouteImport } from './routes/extrato.$token'
@@ -70,6 +72,17 @@ const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({
   path: '/mensagens',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMovimentacoesRoute =
+  AuthenticatedMovimentacoesRouteImport.update({
+    id: '/movimentacoes',
+    path: '/movimentacoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPendenciasRoute = AuthenticatedPendenciasRouteImport.update({
+  id: '/pendencias',
+  path: '/pendencias',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRevendedoresRoute =
   AuthenticatedRevendedoresRouteImport.update({
     id: '/revendedores',
@@ -113,6 +126,8 @@ export interface FileRoutesByFullPath {
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/infraestrutura': typeof AuthenticatedInfraestruturaRoute
   '/mensagens': typeof AuthenticatedMensagensRoute
+  '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
+  '/pendencias': typeof AuthenticatedPendenciasRoute
   '/revendedores': typeof AuthenticatedRevendedoresRoute
   '/vencidos': typeof AuthenticatedVencidosRoute
   '/extrato/$token': typeof ExtratoTokenRoute
@@ -129,6 +144,8 @@ export interface FileRoutesByTo {
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/infraestrutura': typeof AuthenticatedInfraestruturaRoute
   '/mensagens': typeof AuthenticatedMensagensRoute
+  '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
+  '/pendencias': typeof AuthenticatedPendenciasRoute
   '/revendedores': typeof AuthenticatedRevendedoresRoute
   '/vencidos': typeof AuthenticatedVencidosRoute
   '/extrato/$token': typeof ExtratoTokenRoute
@@ -147,6 +164,8 @@ export interface FileRoutesById {
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
   '/_authenticated/infraestrutura': typeof AuthenticatedInfraestruturaRoute
   '/_authenticated/mensagens': typeof AuthenticatedMensagensRoute
+  '/_authenticated/movimentacoes': typeof AuthenticatedMovimentacoesRoute
+  '/_authenticated/pendencias': typeof AuthenticatedPendenciasRoute
   '/_authenticated/revendedores': typeof AuthenticatedRevendedoresRoute
   '/_authenticated/vencidos': typeof AuthenticatedVencidosRoute
   '/extrato/$token': typeof ExtratoTokenRoute
@@ -165,6 +184,8 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/infraestrutura'
     | '/mensagens'
+    | '/movimentacoes'
+    | '/pendencias'
     | '/revendedores'
     | '/vencidos'
     | '/extrato/$token'
@@ -181,6 +202,8 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/infraestrutura'
     | '/mensagens'
+    | '/movimentacoes'
+    | '/pendencias'
     | '/revendedores'
     | '/vencidos'
     | '/extrato/$token'
@@ -198,6 +221,8 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro'
     | '/_authenticated/infraestrutura'
     | '/_authenticated/mensagens'
+    | '/_authenticated/movimentacoes'
+    | '/_authenticated/pendencias'
     | '/_authenticated/revendedores'
     | '/_authenticated/vencidos'
     | '/extrato/$token'
@@ -281,6 +306,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMensagensRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/movimentacoes': {
+      id: '/_authenticated/movimentacoes'
+      path: '/movimentacoes'
+      fullPath: '/movimentacoes'
+      preLoaderRoute: typeof AuthenticatedMovimentacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pendencias': {
+      id: '/_authenticated/pendencias'
+      path: '/pendencias'
+      fullPath: '/pendencias'
+      preLoaderRoute: typeof AuthenticatedPendenciasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/revendedores': {
       id: '/_authenticated/revendedores'
       path: '/revendedores'
@@ -333,6 +372,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
   AuthenticatedInfraestruturaRoute: typeof AuthenticatedInfraestruturaRoute
   AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRoute
+  AuthenticatedMovimentacoesRoute: typeof AuthenticatedMovimentacoesRoute
+  AuthenticatedPendenciasRoute: typeof AuthenticatedPendenciasRoute
   AuthenticatedRevendedoresRoute: typeof AuthenticatedRevendedoresRoute
   AuthenticatedVencidosRoute: typeof AuthenticatedVencidosRoute
 }
@@ -344,6 +385,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
   AuthenticatedInfraestruturaRoute: AuthenticatedInfraestruturaRoute,
   AuthenticatedMensagensRoute: AuthenticatedMensagensRoute,
+  AuthenticatedMovimentacoesRoute: AuthenticatedMovimentacoesRoute,
+  AuthenticatedPendenciasRoute: AuthenticatedPendenciasRoute,
   AuthenticatedRevendedoresRoute: AuthenticatedRevendedoresRoute,
   AuthenticatedVencidosRoute: AuthenticatedVencidosRoute,
 }
