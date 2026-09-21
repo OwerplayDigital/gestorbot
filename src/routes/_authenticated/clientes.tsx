@@ -66,7 +66,40 @@ function ClientesPage() {
   const [servers, setServers] = useState<Option[]>([]);
   const [editForm, setEditForm] = useState({ nome: '', whatsapp: '', vencimento: '', plano_id: '', desconto: '', servidores_ids: [] as string[] });
   const [appForm, setAppForm] = useState({ id: '', app_nome: '', mac_address: '', app_key: '' });
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const itemsPerPage = 10;
+
+  async function exportClients(filter: 'todos' | 'uniplay' | 'goat') {
+    setIsExporting(true);
+    try {
+      const [{ data: clientsData, error }, { data: serversData }] = await Promise.all([
+        supabase.from('clientes').select('nome, vencimento, servidores_ids').order('nome'),
+        supabase.from('servidores_iptv').select('id, name'),
+      ]);
+      if (error) throw error;
+      const nameById = new Map((serversData || []).map((s: any) => [s.id, s.name as string]));
+      const rows = (clientsData || [])
+        .map((c: any) => ({
+          Nome: c.nome || '',
+          Servidor: (c.servidores_ids || []).map((id: string) => nameById.get(id)).filter(Boolean).join(', '),
+          Vencimento: c.vencimento?.includes('-') ? format(parseISO(c.vencimento), 'dd/MM/yyyy') : (c.vencimento || ''),
+        }))
+        .filter((r) => filter === 'todos' || r.Servidor.toLowerCase().includes(filter));
+      if (!rows.length) { toast.error('Nenhum cliente encontrado para essa seleção.'); return; }
+      const XLSX = await import('xlsx');
+      const sheet = XLSX.utils.json_to_sheet(rows, { header: ['Nome', 'Servidor', 'Vencimento'] });
+      const book = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(book, sheet, 'Clientes');
+      XLSX.writeFile(book, `clientes-${filter}.xlsx`);
+      setIsExportOpen(false);
+    } catch (e) {
+      console.error(e);
+      toast.error('Não foi possível exportar os clientes.');
+    } finally {
+      setIsExporting(false);
+    }
+  }
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['clients-active', searchTerm, planFilter, serverFilter, currentPage], placeholderData: (prev) => prev,
