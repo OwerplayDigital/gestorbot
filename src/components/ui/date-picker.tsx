@@ -40,7 +40,7 @@ export function DatePicker({ value, onChange, placeholder = "DD/MM/AAAA", classN
         <Calendar
           mode="single"
           selected={selected}
-          defaultMonth={selected}
+          {...(selected ? { defaultMonth: selected } : {})}
           locale={ptBR}
           showOutsideDays={false}
           className="rounded-2xl p-3 [--cell-size:2.35rem]"
