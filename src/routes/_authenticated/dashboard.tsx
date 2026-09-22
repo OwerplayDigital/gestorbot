@@ -38,7 +38,7 @@ function Dashboard(){
  const {data:stats,isLoading,refetch}=useQuery<DashboardStats>({queryKey:["dashboard-stats-modern",activeTab],staleTime:300000,queryFn:async()=>{
   const now=toZonedTime(new Date(),"America/Sao_Paulo"),todayStr=formatTz(now,"yyyy-MM-dd"),currentMonth=formatTz(now,"MM"),currentYear=formatTz(now,"yyyy");
   const [clientsRes,transactionsRes,serversRes]=await Promise.all([
-   supabase.from("clientes").select("id, nome, whatsapp, vencimento, valor, status, servidores_ids, plano_id, desconto"),
+   supabase.from("clientes").select("id, nome, whatsapp, vencimento, valor, status, servidores_ids, plano_id, desconto, plans(name, price)"),
    supabase.from("transacoes").select("*, clientes(nome, servidores_ids), servidores_iptv(name)").order("created_at",{ascending:false}),
    supabase.from("servidores_iptv").select("id, name, valor")
   ]);
@@ -76,7 +76,7 @@ function Dashboard(){
   if(!current){toast.error("Cliente sem vencimento válido.");return}
   setSelectedClient(client);
   setRenewDate(addDaysISO(current,30));
-  const payable=Math.max(0,Number(client.valor??0))>0;
+  const payable=Math.max(0,Number(client.plans?.price||0)-Number(client.desconto||0))>0;
   setRenewAddsFund(payable);
   setIsRenewOpen(true);
  }
