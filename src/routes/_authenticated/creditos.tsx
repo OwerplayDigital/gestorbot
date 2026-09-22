@@ -9,6 +9,7 @@ type Controle = { uniplay: number; goat: number; caixinha: number; meta_caixinha
 
 function brl(v: number) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }
 
+// Fusion layout sync 2026-09-22
 function CreditosPage() {
   const [data, setData] = useState<Controle | null>(null)
   const [loading, setLoading] = useState(true)
