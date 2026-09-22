@@ -32,6 +32,7 @@ function Dashboard(){
  const [isRenewSuccessOpen,setIsRenewSuccessOpen]=useState(false);
  const [renewDate,setRenewDate]=useState("");
  const [isRenewing,setIsRenewing]=useState(false);
+ const [renewAddsFund,setRenewAddsFund]=useState(true);
  const nowBr=toZonedTime(new Date(),"America/Sao_Paulo");
  const currentMonthLabel=formatTz(nowBr,"MMMM/yy",{locale:ptBR}).replace(/^\w/,c=>c.toUpperCase());
  const {data:stats,isLoading,refetch}=useQuery<DashboardStats>({queryKey:["dashboard-stats-modern",activeTab],staleTime:300000,queryFn:async()=>{
@@ -75,6 +76,8 @@ function Dashboard(){
   if(!current){toast.error("Cliente sem vencimento válido.");return}
   setSelectedClient(client);
   setRenewDate(addDaysISO(current,30));
+  const payable=Math.max(0,Number(client.valor??0))>0;
+  setRenewAddsFund(payable);
   setIsRenewOpen(true);
  }
 
@@ -87,17 +90,27 @@ function Dashboard(){
    if(!userId)throw new Error("Usuário não autenticado.");
    const [{data:plan,error:planError},{data:serverRows,error:serverError}]=await Promise.all([
     supabase.from("plans").select("price").eq("id",selectedClient.plano_id).single(),
-    selectedClient.servidores_ids?.length?supabase.from("servidores_iptv").select("valor").in("id",selectedClient.servidores_ids):Promise.resolve({data:[],error:null} as any),
+    selectedClient.servidores_ids?.length?supabase.from("servidores_iptv").select("id, name, valor").in("id",selectedClient.servidores_ids):Promise.resolve({data:[],error:null} as any),
    ]);
    if(planError||!plan)throw planError||new Error("Plano não encontrado.");
    if(serverError)throw serverError;
    const valorEntrada=Math.max(0,Number(plan.price||0)-Number(selectedClient.desconto||0));
    const totalCusto=(serverRows||[]).reduce((sum:number,s:any)=>sum+Number(s.valor||0),0);
    const todayBr=formatTz(toZonedTime(new Date(),"America/Sao_Paulo"),"yyyy-MM-dd");
-   const {error:renewalError}=await supabase.from("renovacoes").insert({user_id:userId,cliente_id:selectedClient.id,plano_id:selectedClient.plano_id,valor:valorEntrada,desconto:Number(selectedClient.desconto||0),vencimento_anterior:selectedClient.vencimento,novo_vencimento:renewDate,data_renovacao:new Date().toISOString()});
-   if(renewalError)throw renewalError;
+   const {data:renewal,error:renewalError}=await supabase.from("renovacoes").insert({user_id:userId,cliente_id:selectedClient.id,plano_id:selectedClient.plano_id,valor:valorEntrada,desconto:Number(selectedClient.desconto||0),vencimento_anterior:selectedClient.vencimento,novo_vencimento:renewDate,data_renovacao:new Date().toISOString()}).select("id").single();
+   if(renewalError||!renewal)throw renewalError||new Error("Renovação não registrada.");
    const {error:transactionError}=await supabase.from("transacoes").insert({user_id:userId,cliente_id:selectedClient.id,tipo:"entrada",entrada:valorEntrada,custo:totalCusto,valor:valorEntrada,data:todayBr,descricao:`Renovação cliente ${selectedClient.id}`,serv_id:selectedClient.servidores_ids?.[0]||null});
    if(transactionError)throw transactionError;
+   const trackedServers=(serverRows||[]).filter((server:any)=>/uniplay|goat/i.test(server.name));
+   const pointCount=(serverRows||[]).reduce((sum:number,server:any)=>sum+(/\b2p\b/i.test(server.name)?2:1),0);
+   const fundAmount=renewAddsFund?pointCount*10:0;
+   for(let index=0;index<trackedServers.length;index++){
+    const server=trackedServers[index] as any;
+    const credits=/\b2p\b/i.test(server.name)?2:1;
+    const baseServer=/uniplay/i.test(server.name)?"Uniplay":"Goat";
+    const {error:creditError}=await (supabase as any).rpc("registrar_consumo_credito",{p_renovacao_id:index===0?renewal.id:crypto.randomUUID(),p_cliente_id:selectedClient.id,p_servidor:baseServer,p_creditos:credits,p_caixinha:index===0?fundAmount:0});
+    if(creditError)throw creditError;
+   }
    const {error:updateError}=await supabase.from("clientes").update({vencimento:renewDate,status:"ativo"}).eq("id",selectedClient.id);
    if(updateError)throw updateError;
    setSelectedClient({...selectedClient,vencimento:renewDate});
@@ -135,7 +148,7 @@ function Dashboard(){
   </section>
   <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm"><div className="px-5 py-4 flex items-center justify-between border-b border-border"><div><p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Últimas movimentações</p><h2 className="text-lg font-bold tracking-tight">Extrato recente</h2></div><Link to="/financeiro"><Button variant="ghost" size="sm" className="text-xs font-semibold text-primary">Ver histórico</Button></Link></div><div className="hidden md:block overflow-x-auto"><table className="w-full text-left"><thead><tr className="bg-muted/30"><th className="px-5 py-3 text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">Cliente / Servidor</th><th className="px-5 py-3 text-[9px] font-semibold text-muted-foreground uppercase tracking-wider text-right">Plano</th><th className="px-5 py-3 text-[9px] font-semibold text-muted-foreground uppercase tracking-wider text-right">Custo</th><th className="px-5 py-3 text-[9px] font-semibold text-muted-foreground uppercase tracking-wider text-right">Lucro</th><th className="w-10"/></tr></thead><tbody className="divide-y divide-border/60">{stats?.recentTransactions?.slice(0,5).map((t:any)=><tr key={t.id} className="hover:bg-muted/20"><td className="px-5 py-3"><p className="text-sm font-semibold truncate">{t.clientes?.nome||"Cliente"}</p><p className="text-[10px]"><ServerBadge name={t.resolvedServerName} /></p></td><td className="px-5 py-3 text-right text-sm font-semibold">{formatBRL(t.entrada)}</td><td className="px-5 py-3 text-right text-sm font-semibold text-rose-500">{formatBRL(t.custo)}</td><td className="px-5 py-3 text-right text-sm font-semibold text-emerald-600">{formatBRL(t.lucro_liquido)}</td><td className="px-2 py-3 text-center"><DeleteTransaction id={t.id}/></td></tr>)}</tbody></table></div><div className="md:hidden divide-y divide-border/60">{stats?.recentTransactions?.slice(0,5).map((t:any)=><div key={t.id} className="p-3"><div className="flex items-center justify-between gap-2"><div className="min-w-0"><p className="text-sm font-semibold truncate">{t.clientes?.nome||"Cliente"}</p><p className="text-[10px] truncate"><ServerBadge name={t.resolvedServerName} /></p></div><span className="text-[9px] text-muted-foreground">{t.data?format(parseISO(t.data),"dd/MM/yyyy"):"-"}</span></div><div className="flex items-center justify-between gap-2 mt-2 bg-muted/30 rounded-xl p-2.5"><div className="grid grid-cols-3 gap-2 flex-1 min-w-0"><div><p className="text-[8px] uppercase font-semibold text-muted-foreground">Plano</p><p className="text-xs font-bold">{formatBRL(t.entrada)}</p></div><div><p className="text-[8px] uppercase font-semibold text-muted-foreground">Custo</p><p className="text-xs font-bold text-rose-500">{formatBRL(t.custo)}</p></div><div><p className="text-[8px] uppercase font-semibold text-muted-foreground">Lucro</p><p className="text-xs font-bold text-emerald-600">{formatBRL(t.lucro_liquido)}</p></div></div><div className="shrink-0"><DeleteTransaction id={t.id}/></div></div></div>)}</div>{(!stats?.recentTransactions||stats.recentTransactions.length===0)&&<div className="px-5 py-10 text-center text-sm text-muted-foreground">Nenhuma renovação registrada recentemente.</div>}</section>
 
-  <Dialog open={isRenewOpen} onOpenChange={setIsRenewOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">{selectedClient?.nome}</DialogTitle><DialogDescription>Ajuste a nova data e confirme.</DialogDescription></DialogHeader><div className="grid grid-cols-[52px_1fr_52px] gap-2 py-4"><Button variant="outline" onClick={()=>setRenewDate(d=>addDaysISO(d,-1))} className="h-12 rounded-xl"><Minus size={18}/></Button><div className="flex h-12 items-center justify-center rounded-xl border bg-muted/30 font-mono font-bold">{renewDate?format(parseISO(renewDate),"dd/MM/yyyy"):""}</div><Button variant="outline" onClick={()=>setRenewDate(d=>addDaysISO(d,1))} className="h-12 rounded-xl"><Plus size={18}/></Button></div><div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={isRenewing} onClick={()=>setIsRenewOpen(false)}>Cancelar</Button><Button disabled={isRenewing} onClick={confirmRenew}>{isRenewing?"Renovando...":"Renovar"}</Button></div></DialogContent></Dialog>
+  <Dialog open={isRenewOpen} onOpenChange={setIsRenewOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">{selectedClient?.nome}</DialogTitle><DialogDescription>Ajuste a nova data e confirme.</DialogDescription></DialogHeader><div className="grid grid-cols-[52px_1fr_52px] gap-2 py-4"><Button variant="outline" onClick={()=>setRenewDate(d=>addDaysISO(d,-1))} className="h-12 rounded-xl"><Minus size={18}/></Button><div className="flex h-12 items-center justify-center rounded-xl border bg-muted/30 font-mono font-bold">{renewDate?format(parseISO(renewDate),"dd/MM/yyyy"):""}</div><Button variant="outline" onClick={()=>setRenewDate(d=>addDaysISO(d,1))} className="h-12 rounded-xl"><Plus size={18}/></Button></div><div className="space-y-2 pb-2"><label className="flex items-center gap-3 rounded-xl border p-3 text-sm font-semibold"><input type="checkbox" checked={renewAddsFund} onChange={(e)=>setRenewAddsFund(e.target.checked)} className="h-4 w-4"/>Adicionar à caixinha (R$ 10 por ponto)</label></div><div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={isRenewing} onClick={()=>setIsRenewOpen(false)}>Cancelar</Button><Button disabled={isRenewing} onClick={confirmRenew}>{isRenewing?"Renovando...":"Renovar"}</Button></div></DialogContent></Dialog>
 
   <Dialog open={isRenewSuccessOpen} onOpenChange={setIsRenewSuccessOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">Renovado — {selectedClient?.nome}</DialogTitle><DialogDescription>{selectedClient?.vencimento?format(parseISO(selectedClient.vencimento),"dd/MM/yyyy"):""}</DialogDescription></DialogHeader><div className="grid gap-2 pt-2">{selectedClient?.whatsapp&&<Button onClick={sendRenewalMessage} className="h-11 rounded-xl gap-2"><MessageCircle size={16}/>Enviar mensagem</Button>}<Button variant="outline" onClick={()=>setIsRenewSuccessOpen(false)} className="h-11 rounded-xl">Fechar</Button></div></DialogContent></Dialog>
  </div>
