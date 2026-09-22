@@ -70,6 +70,33 @@ export type Database = {
           },
         ]
       }
+      controle_creditos: {
+        Row: {
+          caixinha: number
+          goat: number
+          meta_caixinha: number
+          uniplay: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          caixinha?: number
+          goat?: number
+          meta_caixinha?: number
+          uniplay?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          caixinha?: number
+          goat?: number
+          meta_caixinha?: number
+          uniplay?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       dispositivos: {
         Row: {
           app_key: string | null
@@ -137,6 +164,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      movimentacoes_creditos: {
+        Row: {
+          caixinha: number
+          cliente_id: string | null
+          created_at: string
+          creditos: number
+          id: string
+          renovacao_id: string | null
+          servidor: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          caixinha?: number
+          cliente_id?: string | null
+          created_at?: string
+          creditos?: number
+          id?: string
+          renovacao_id?: string | null
+          servidor: string
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          caixinha?: number
+          cliente_id?: string | null
+          created_at?: string
+          creditos?: number
+          id?: string
+          renovacao_id?: string | null
+          servidor?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_creditos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plans: {
         Row: {
@@ -514,6 +585,16 @@ export type Database = {
         }[]
       }
       get_reseller_statement: { Args: { p_token: string }; Returns: Json }
+      registrar_consumo_credito: {
+        Args: {
+          p_caixinha?: number
+          p_cliente_id: string
+          p_creditos?: number
+          p_renovacao_id: string
+          p_servidor: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
