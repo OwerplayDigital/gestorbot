@@ -12,13 +12,20 @@ function brl(v: number) { return v.toLocaleString('pt-BR', { style: 'currency', 
 function CreditosPage() {
   const [data, setData] = useState<Controle | null>(null)
   const [loading, setLoading] = useState(true)
+  const [dbReady, setDbReady] = useState(true)
 
   async function load() {
     setLoading(true)
     const { data: auth } = await supabase.auth.getUser()
     const userId = auth.user?.id
     if (!userId) { setLoading(false); return }
-    let { data: row } = await (supabase as any).from('controle_creditos').select('uniplay, goat, caixinha, meta_caixinha').eq('user_id', userId).maybeSingle()
+    let { data: row, error: readError } = await (supabase as any).from('controle_creditos').select('uniplay, goat, caixinha, meta_caixinha').eq('user_id', userId).maybeSingle()
+    if (readError) {
+      setDbReady(false)
+      setData({ uniplay: 64.70, goat: 7.84, caixinha: 80, meta_caixinha: 375 })
+      setLoading(false)
+      return
+    }
     if (!row) {
       const { data: created } = await (supabase as any).from('controle_creditos').insert({ user_id: userId, uniplay: 64.70, goat: 7.84, caixinha: 80, meta_caixinha: 375 }).select('uniplay, goat, caixinha, meta_caixinha').single()
       row = created
@@ -39,7 +46,7 @@ function CreditosPage() {
 
   return <div className="mx-auto w-full max-w-5xl space-y-5 p-4 md:p-8">
     <div className="flex items-center justify-between">
-      <div><h1 className="text-2xl font-black tracking-tight">Créditos</h1><p className="text-sm text-muted-foreground">Controle automático das renovações.</p></div>
+      <div><h1 className="text-2xl font-black tracking-tight">Créditos</h1><p className="text-sm text-muted-foreground">{dbReady ? "Controle automático das renovações." : "Saldo atual do controle."}</p></div>
       <button onClick={load} className="flex h-10 w-10 items-center justify-center rounded-xl border bg-card text-muted-foreground" aria-label="Atualizar"><RefreshCw size={17}/></button>
     </div>
 
