@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as ExtratoDemoRouteImport } from './routes/extrato-demo'
 import { Route as AuthenticatedAnalisesRouteImport } from './routes/_authenticated/analises'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
+import { Route as AuthenticatedCreditosRouteImport } from './routes/_authenticated/creditos'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
 import { Route as AuthenticatedInfraestruturaRouteImport } from './routes/_authenticated/infraestrutura'
@@ -49,6 +50,11 @@ const AuthenticatedAnalisesRoute = AuthenticatedAnalisesRouteImport.update({
 const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
   id: '/clientes',
   path: '/clientes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCreditosRoute = AuthenticatedCreditosRouteImport.update({
+  id: '/creditos',
+  path: '/creditos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/extrato-demo': typeof ExtratoDemoRoute
   '/analises': typeof AuthenticatedAnalisesRoute
   '/clientes': typeof AuthenticatedClientesRoute
+  '/creditos': typeof AuthenticatedCreditosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/infraestrutura': typeof AuthenticatedInfraestruturaRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/extrato-demo': typeof ExtratoDemoRoute
   '/analises': typeof AuthenticatedAnalisesRoute
   '/clientes': typeof AuthenticatedClientesRoute
+  '/creditos': typeof AuthenticatedCreditosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/infraestrutura': typeof AuthenticatedInfraestruturaRoute
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/extrato-demo': typeof ExtratoDemoRoute
   '/_authenticated/analises': typeof AuthenticatedAnalisesRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
+  '/_authenticated/creditos': typeof AuthenticatedCreditosRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
   '/_authenticated/infraestrutura': typeof AuthenticatedInfraestruturaRoute
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/extrato-demo'
     | '/analises'
     | '/clientes'
+    | '/creditos'
     | '/dashboard'
     | '/financeiro'
     | '/infraestrutura'
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/extrato-demo'
     | '/analises'
     | '/clientes'
+    | '/creditos'
     | '/dashboard'
     | '/financeiro'
     | '/infraestrutura'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/extrato-demo'
     | '/_authenticated/analises'
     | '/_authenticated/clientes'
+    | '/_authenticated/creditos'
     | '/_authenticated/dashboard'
     | '/_authenticated/financeiro'
     | '/_authenticated/infraestrutura'
@@ -276,6 +288,13 @@ declare module '@tanstack/react-router' {
       path: '/clientes'
       fullPath: '/clientes'
       preLoaderRoute: typeof AuthenticatedClientesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/creditos': {
+      id: '/_authenticated/creditos'
+      path: '/creditos'
+      fullPath: '/creditos'
+      preLoaderRoute: typeof AuthenticatedCreditosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -368,6 +387,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalisesRoute: typeof AuthenticatedAnalisesRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
+  AuthenticatedCreditosRoute: typeof AuthenticatedCreditosRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
   AuthenticatedInfraestruturaRoute: typeof AuthenticatedInfraestruturaRoute
@@ -381,6 +401,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalisesRoute: AuthenticatedAnalisesRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
+  AuthenticatedCreditosRoute: AuthenticatedCreditosRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
   AuthenticatedInfraestruturaRoute: AuthenticatedInfraestruturaRoute,
