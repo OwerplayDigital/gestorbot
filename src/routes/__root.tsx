@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Outlet, Link, createRootRouteWithContext, useRouter, HeadContent, Scripts } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { Menu, LayoutDashboard, BarChart3, Users, LogOut, MessageSquare, Clock, Server, Handshake, ClipboardList, WalletCards, ExternalLink } from "lucide-react";
+import { Menu, LayoutDashboard, BarChart3, Users, LogOut, MessageSquare, Clock, Server, Handshake, ClipboardList, WalletCards, ExternalLink, Coins } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import appCss from "../styles.css?url";
