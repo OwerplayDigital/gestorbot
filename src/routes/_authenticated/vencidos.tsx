@@ -31,7 +31,6 @@ function VencidosPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [renewDate, setRenewDate] = useState('');
   const [isRenewing, setIsRenewing] = useState(false);
-  const [renewConsumesCredit, setRenewConsumesCredit] = useState(true);
   const [renewAddsFund, setRenewAddsFund] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -87,7 +86,7 @@ function VencidosPage() {
 
   function openRenew(client: Client) {
     const todayBr = format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd');
-    setSelectedClient(client); setRenewDate(addDaysISO(todayBr, 30)); setRenewConsumesCredit(true); setRenewAddsFund(Number(client.plans?.price || 0) > 0); setIsRenewOpen(true);
+    setSelectedClient(client); setRenewDate(addDaysISO(todayBr, 30)); setRenewAddsFund(Number(client.plans?.price || 0) > 0); setIsRenewOpen(true);
   }
 
   function openDelete(client: Client) { setSelectedClient(client); setIsDeleteOpen(true); }
@@ -124,12 +123,15 @@ function VencidosPage() {
       if (renewalError || !renewal) throw renewalError || new Error('Renovação não registrada.');
       const { error: transactionError } = await supabase.from('transacoes').insert({ user_id: userId, cliente_id: selectedClient.id, tipo: 'entrada', entrada: valorEntrada, custo: totalCusto, valor: valorEntrada, data: todayBr, descricao: `Renovação cliente ${selectedClient.id}`, serv_id: selectedClient.servidores_ids?.[0] || null });
       if (transactionError) throw transactionError;
-      if (renewConsumesCredit) {
-        const serverName = (serverRows || []).map((server: any) => server.name).find((name: string) => /uniplay|goat/i.test(name));
-        if (serverName) {
-          const { error: creditError } = await (supabase as any).rpc('registrar_consumo_credito', { p_renovacao_id: renewal.id, p_cliente_id: selectedClient.id, p_servidor: serverName, p_creditos: 1, p_caixinha: renewAddsFund ? 10 : 0 });
-          if (creditError) throw creditError;
-        }
+      const trackedServers = (serverRows || []).filter((server: any) => /uniplay|goat/i.test(server.name));
+      const pointCount = (serverRows || []).reduce((sum: number, server: any) => sum + (/\b2p\b/i.test(server.name) ? 2 : 1), 0);
+      const fundAmount = renewAddsFund ? pointCount * 10 : 0;
+      for (let index = 0; index < trackedServers.length; index++) {
+        const server = trackedServers[index] as any;
+        const credits = /\b2p\b/i.test(server.name) ? 2 : 1;
+        const baseServer = /uniplay/i.test(server.name) ? 'Uniplay' : 'Goat';
+        const { error: creditError } = await (supabase as any).rpc('registrar_consumo_credito', { p_renovacao_id: index === 0 ? renewal.id : crypto.randomUUID(), p_cliente_id: selectedClient.id, p_servidor: baseServer, p_creditos: credits, p_caixinha: index === 0 ? fundAmount : 0 });
+        if (creditError) throw creditError;
       }
       const { error: updateError } = await supabase.from('clientes').update({ vencimento: renewDate, status: 'ativo' }).eq('id', selectedClient.id);
       if (updateError) throw updateError;
@@ -178,7 +180,7 @@ function VencidosPage() {
       </>}
 
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black tracking-tighter">Excluir cliente?</DialogTitle><DialogDescription>Excluir <strong>{selectedClient?.nome}</strong> definitivamente? Esta ação não pode ser desfeita.</DialogDescription></DialogHeader><div className="grid grid-cols-2 gap-2 pt-3"><Button variant="outline" disabled={isDeleting} onClick={() => setIsDeleteOpen(false)}>Cancelar</Button><Button variant="destructive" disabled={isDeleting} onClick={confirmDelete}>{isDeleting ? 'Excluindo...' : 'Excluir'}</Button></div></DialogContent></Dialog>
-      <Dialog open={isRenewOpen} onOpenChange={setIsRenewOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">{selectedClient?.nome}</DialogTitle><DialogDescription>Ajuste a nova data e confirme.</DialogDescription></DialogHeader><div className="grid grid-cols-[52px_1fr_52px] gap-2 py-4"><Button variant="outline" onClick={() => setRenewDate(d => addDaysISO(d, -1))} className="h-12 rounded-xl"><Minus size={18} /></Button><div className="flex h-12 items-center justify-center rounded-xl border bg-muted/30 font-mono font-bold">{renewDate ? format(parseISO(renewDate), 'dd/MM/yyyy') : ''}</div><Button variant="outline" onClick={() => setRenewDate(d => addDaysISO(d, 1))} className="h-12 rounded-xl"><Plus size={18} /></Button></div><div className="space-y-2 pb-4"><label className="flex items-center gap-3 rounded-xl border p-3 text-sm font-semibold"><input type="checkbox" checked={renewConsumesCredit} onChange={(e) => setRenewConsumesCredit(e.target.checked)} className="h-4 w-4" />Descontar 1 crédito</label><label className={`flex items-center gap-3 rounded-xl border p-3 text-sm font-semibold ${!renewConsumesCredit ? "opacity-50" : ""}`}><input type="checkbox" checked={renewAddsFund} disabled={!renewConsumesCredit} onChange={(e) => setRenewAddsFund(e.target.checked)} className="h-4 w-4" />Adicionar R$ 10 à caixinha</label></div><div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={isRenewing} onClick={() => setIsRenewOpen(false)}>Cancelar</Button><Button disabled={isRenewing} onClick={confirmRenew}>{isRenewing ? 'Renovando...' : 'Renovar'}</Button></div></DialogContent></Dialog>
+      <Dialog open={isRenewOpen} onOpenChange={setIsRenewOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">{selectedClient?.nome}</DialogTitle><DialogDescription>Ajuste a nova data e confirme.</DialogDescription></DialogHeader><div className="grid grid-cols-[52px_1fr_52px] gap-2 py-4"><Button variant="outline" onClick={() => setRenewDate(d => addDaysISO(d, -1))} className="h-12 rounded-xl"><Minus size={18} /></Button><div className="flex h-12 items-center justify-center rounded-xl border bg-muted/30 font-mono font-bold">{renewDate ? format(parseISO(renewDate), 'dd/MM/yyyy') : ''}</div><Button variant="outline" onClick={() => setRenewDate(d => addDaysISO(d, 1))} className="h-12 rounded-xl"><Plus size={18} /></Button></div><div className="space-y-2 pb-4"><label className="flex items-center gap-3 rounded-xl border p-3 text-sm font-semibold"><input type="checkbox" checked={renewAddsFund} onChange={(e) => setRenewAddsFund(e.target.checked)} className="h-4 w-4" />Adicionar à caixinha (R$ 10 por ponto)</label></div><div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={isRenewing} onClick={() => setIsRenewOpen(false)}>Cancelar</Button><Button disabled={isRenewing} onClick={confirmRenew}>{isRenewing ? 'Renovando...' : 'Renovar'}</Button></div></DialogContent></Dialog>
       <Dialog open={isRenewSuccessOpen} onOpenChange={setIsRenewSuccessOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">Renovado — {selectedClient?.nome}</DialogTitle><DialogDescription>{selectedClient?.vencimento ? format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy') : ''}</DialogDescription></DialogHeader><div className="grid gap-2 pt-2">{selectedClient?.whatsapp && <Button onClick={sendRenewalMessage} className="h-11 rounded-xl gap-2"><MessageCircle size={16} />Enviar mensagem</Button>}<Button variant="outline" onClick={() => setIsRenewSuccessOpen(false)} className="h-11 rounded-xl">Fechar</Button></div></DialogContent></Dialog>
       <Dialog open={isMessageOpen} onOpenChange={setIsMessageOpen}><DialogContent className="max-w-md rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">Selecionar Mensagem</DialogTitle><DialogDescription>Escolha um template para enviar para {selectedClient?.nome}</DialogDescription></DialogHeader><div className="grid gap-3 py-4"><Button variant="outline" onClick={() => handleSendMessage({ system: 'cobranca' })} className="justify-between h-14 px-4 rounded-xl border-primary/30"><span className="font-bold uppercase text-sm tracking-wide">Cobrança</span><Send size={16} /></Button><Button variant="outline" onClick={() => handleSendMessage({ system: 'vencido' })} className="justify-between h-14 px-4 rounded-xl border-rose-500/30"><span className="font-bold uppercase text-sm tracking-wide">Plano vencido</span><Send size={16} /></Button>{selectedClient?.templates?.map((template: any) => <Button key={template.id} variant="outline" onClick={() => handleSendMessage(template)} className="justify-between h-14 px-4 rounded-xl"><span className="font-bold uppercase text-sm tracking-wide">{template.nome}</span><Send size={16} /></Button>)}</div></DialogContent></Dialog>
     </div>
