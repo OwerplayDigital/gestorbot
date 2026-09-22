@@ -51,23 +51,23 @@ function CreditosPage() {
       <button onClick={load} className="flex h-10 w-10 items-center justify-center rounded-xl border bg-card text-muted-foreground" aria-label="Atualizar"><RefreshCw size={17}/></button>
     </div>
 
-    <div className="grid grid-cols-2 gap-4 px-5">
-      <article className="h-[205px] overflow-hidden rounded-[28px] border border-sky-400/70 bg-gradient-to-br from-blue-600 via-sky-500 to-cyan-400 p-5 text-white shadow-lg">
+    <div className="grid grid-cols-2 gap-4">
+      <article className="h-[185px] overflow-hidden rounded-[28px] border border-sky-400/70 bg-gradient-to-br from-blue-600 via-sky-500 to-cyan-400 p-5 text-white shadow-lg">
         <div className="flex items-center gap-2 text-white/90"><Coins size={18}/><span className="text-xs font-bold uppercase tracking-wider">Uniplay</span></div>
-        <div className="mt-8 text-6xl font-black leading-none tracking-tighter">{Math.floor(Number(data.uniplay))}</div>
-        <p className="mt-4 whitespace-nowrap text-[11px] font-semibold text-white/85">créditos disponíveis</p>
+        <div className="mt-7 text-5xl font-black leading-none tracking-tighter">{Math.floor(Number(data.uniplay))}</div>
+        <p className="mt-4 whitespace-nowrap text-[10px] font-semibold text-white/85">créditos disponíveis</p>
       </article>
-      <article className="h-[205px] overflow-hidden rounded-[28px] border border-orange-400/70 bg-gradient-to-br from-orange-600 via-orange-500 to-amber-400 p-5 text-white shadow-lg">
+      <article className="h-[185px] overflow-hidden rounded-[28px] border border-orange-400/70 bg-gradient-to-br from-orange-600 via-orange-500 to-amber-400 p-5 text-white shadow-lg">
         <div className="flex items-center gap-2 text-white/90"><Coins size={18}/><span className="text-xs font-bold uppercase tracking-wider">GOAT</span></div>
-        <div className="mt-8 text-6xl font-black leading-none tracking-tighter">{Math.floor(Number(data.goat))}</div>
-        <p className="mt-4 whitespace-nowrap text-[11px] font-semibold text-white/85">créditos disponíveis</p>
+        <div className="mt-7 text-5xl font-black leading-none tracking-tighter">{Math.floor(Number(data.goat))}</div>
+        <p className="mt-4 whitespace-nowrap text-[10px] font-semibold text-white/85">créditos disponíveis</p>
       </article>
     </div>
 
-    <article className="mx-5 min-h-[235px] rounded-[28px] border border-emerald-400/70 bg-gradient-to-br from-emerald-800 via-emerald-600 to-emerald-400 p-6 text-white shadow-lg">
-      <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2 text-white"><PiggyBank size={19}/><span className="font-bold">Caixinha de reposição</span></div><span className="rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white/90">Meta {brl(meta)}</span></div>
-      <div className="mt-8 text-5xl font-black tracking-tight">{brl(caixa)}</div>
-      <div className="mt-7 h-2.5 overflow-hidden rounded-full bg-black/25"><div className="h-full rounded-full bg-white/85 transition-all" style={{ width: `${pct}%` }}/></div>
+    <article className="min-h-[200px] rounded-[28px] border border-emerald-400/70 bg-gradient-to-br from-emerald-800 via-emerald-600 to-emerald-400 p-6 text-white shadow-lg">
+      <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2 text-white"><PiggyBank size={19}/><span className="whitespace-nowrap text-sm font-bold">Caixinha de reposição</span></div><span className="rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white/90">Meta {brl(meta)}</span></div>
+      <div className="mt-6 text-5xl font-black tracking-tight">{brl(caixa)}</div>
+      <div className="mt-5 h-2.5 overflow-hidden rounded-full bg-black/25"><div className="h-full rounded-full bg-white/85 transition-all" style={{ width: `${pct}%` }}/></div>
       <div className="mt-3 flex justify-between text-xs font-semibold text-white/80"><span>{pct.toFixed(1).replace('.', ',')}% da meta</span><span>Faltam {brl(falta)}</span></div>
     </article>
   </div>
