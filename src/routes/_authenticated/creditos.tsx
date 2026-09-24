@@ -97,6 +97,15 @@ function CreditosPage() {
           <div className="mt-2 whitespace-nowrap text-[10px] opacity-80">créditos disponíveis</div>
         </article>
       </div>
+      <section className="relative mt-[11px] overflow-hidden rounded-[22px] border border-[rgba(157,255,226,.29)] bg-[linear-gradient(140deg,#075d4a,#07946c_48%,#18c58e)] p-[21px] text-white shadow-[inset_0_1px_rgba(255,255,255,.22)]">
+        <div className="flex justify-between gap-2">
+          <div><strong className="text-[15px]">Caixinha de reposição</strong><span className="mt-1 block text-[8px] uppercase tracking-[.18em] opacity-70">Reserva operacional</span></div>
+          <span className="h-max rounded-full border border-white/25 bg-white/[.09] px-[9px] py-[7px] text-[8px] tracking-[.12em]">EM DIA</span>
+        </div>
+        <div className="mb-[17px] mt-[27px] text-[58px] font-black leading-none tracking-[-.05em]">{brl(caixa)}</div>
+        <div className="h-[7px] overflow-hidden rounded-full border border-white/10 bg-[rgba(0,45,36,.4)]"><div className="h-full bg-[linear-gradient(90deg,#a6ffe1,#fff)]" style={{ width: `${pct}%` }}/></div>
+        <div className="mt-[9px] flex justify-between text-[9px] opacity-80"><span>{pct.toFixed(1).replace('.', ',')}% da meta · faltam {brl(falta).replace(',00','')}</span><span>Meta {brl(meta).replace(',00','')}</span></div>
+      </section>
       <button onClick={() => { setErro(''); setRepondo(true) }} className="mt-[11px] flex w-full items-center justify-center gap-2 rounded-[18px] border border-white/15 bg-white/[.07] px-4 py-3 text-sm font-bold transition hover:bg-white/[.11]">
         <Plus className="h-4 w-4" /> Repor créditos
       </button>
@@ -117,15 +126,6 @@ function CreditosPage() {
           <button disabled={salvando} onClick={reporCreditos} className="rounded-xl bg-emerald-600 px-3 py-2.5 text-xs font-bold text-white disabled:opacity-60">{salvando ? 'Salvando...' : 'Confirmar'}</button>
         </div>
       </section>}
-      <section className="relative mt-[11px] overflow-hidden rounded-[22px] border border-[rgba(157,255,226,.29)] bg-[linear-gradient(140deg,#075d4a,#07946c_48%,#18c58e)] p-[21px] text-white shadow-[inset_0_1px_rgba(255,255,255,.22)]">
-        <div className="flex justify-between gap-2">
-          <div><strong className="text-[15px]">Caixinha de reposição</strong><span className="mt-1 block text-[8px] uppercase tracking-[.18em] opacity-70">Reserva operacional</span></div>
-          <span className="h-max rounded-full border border-white/25 bg-white/[.09] px-[9px] py-[7px] text-[8px] tracking-[.12em]">EM DIA</span>
-        </div>
-        <div className="mb-[17px] mt-[27px] text-[58px] font-black leading-none tracking-[-.05em]">{brl(caixa)}</div>
-        <div className="h-[7px] overflow-hidden rounded-full border border-white/10 bg-[rgba(0,45,36,.4)]"><div className="h-full bg-[linear-gradient(90deg,#a6ffe1,#fff)]" style={{ width: `${pct}%` }}/></div>
-        <div className="mt-[9px] flex justify-between text-[9px] opacity-80"><span>{pct.toFixed(1).replace('.', ',')}% da meta · faltam {brl(falta).replace(',00','')}</span><span>Meta {brl(meta).replace(',00','')}</span></div>
-      </section>
     </section>
   </div>
 }
