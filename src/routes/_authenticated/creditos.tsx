@@ -109,23 +109,25 @@ function CreditosPage() {
       <button onClick={() => { setErro(''); setRepondo(true) }} className="mt-[11px] flex w-full items-center justify-center gap-2 rounded-[18px] border border-white/15 bg-white/[.07] px-4 py-3 text-sm font-bold transition hover:bg-white/[.11]">
         <Plus className="h-4 w-4" /> Repor créditos
       </button>
-      {repondo && <section className="mt-[11px] rounded-[20px] border border-white/15 bg-white/[.055] p-4">
-        <div className="text-sm font-extrabold">Repor créditos</div>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <button onClick={() => setServidor('uniplay')} className={`rounded-xl px-3 py-2 text-xs font-bold ${servidor === 'uniplay' ? 'bg-cyan-600 text-white' : 'bg-white/[.07]'}`}>UNIPLAY</button>
-          <button onClick={() => setServidor('goat')} className={`rounded-xl px-3 py-2 text-xs font-bold ${servidor === 'goat' ? 'bg-orange-500 text-white' : 'bg-white/[.07]'}`}>GOAT</button>
-        </div>
-        <label className="mt-3 block text-[10px] uppercase tracking-[.12em] text-muted-foreground">Créditos comprados</label>
-        <input inputMode="decimal" value={quantidade} onChange={e => setQuantidade(e.target.value)} placeholder="Ex.: 50" className="mt-1 w-full rounded-xl border border-white/15 bg-black/10 px-3 py-2.5 text-sm outline-none" />
-        <label className="mt-3 block text-[10px] uppercase tracking-[.12em] text-muted-foreground">Valor usado da caixinha</label>
-        <input inputMode="decimal" value={valorCaixinha} onChange={e => setValorCaixinha(e.target.value)} placeholder="Ex.: 375" className="mt-1 w-full rounded-xl border border-white/15 bg-black/10 px-3 py-2.5 text-sm outline-none" />
-        <div className="mt-1 text-[10px] text-muted-foreground">Disponível: {brl(caixa)}</div>
-        {erro && <div className="mt-2 text-xs text-red-400">{erro}</div>}
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <button disabled={salvando} onClick={() => setRepondo(false)} className="rounded-xl bg-white/[.07] px-3 py-2.5 text-xs font-bold">Cancelar</button>
-          <button disabled={salvando} onClick={reporCreditos} className="rounded-xl bg-emerald-600 px-3 py-2.5 text-xs font-bold text-white disabled:opacity-60">{salvando ? 'Salvando...' : 'Confirmar'}</button>
-        </div>
-      </section>}
+      {repondo && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm" onClick={() => !salvando && setRepondo(false)}>
+        <section role="dialog" aria-modal="true" aria-label="Repor créditos" onClick={e => e.stopPropagation()} className="w-full max-w-[390px] rounded-[24px] border border-border bg-background p-5 text-foreground shadow-2xl">
+          <div className="text-lg font-extrabold">Repor créditos</div>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button onClick={() => setServidor('uniplay')} className={`rounded-xl px-3 py-2.5 text-xs font-bold ${servidor === 'uniplay' ? 'bg-cyan-600 text-white' : 'bg-muted'}`}>UNIPLAY</button>
+            <button onClick={() => setServidor('goat')} className={`rounded-xl px-3 py-2.5 text-xs font-bold ${servidor === 'goat' ? 'bg-orange-500 text-white' : 'bg-muted'}`}>GOAT</button>
+          </div>
+          <label className="mt-4 block text-[10px] uppercase tracking-[.12em] text-muted-foreground">Créditos comprados</label>
+          <input inputMode="decimal" value={quantidade} onChange={e => setQuantidade(e.target.value)} placeholder="Ex.: 50" className="mt-1 w-full rounded-xl border border-border bg-muted px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+          <label className="mt-4 block text-[10px] uppercase tracking-[.12em] text-muted-foreground">Valor usado da caixinha</label>
+          <input inputMode="decimal" value={valorCaixinha} onChange={e => setValorCaixinha(e.target.value)} placeholder="Ex.: 375" className="mt-1 w-full rounded-xl border border-border bg-muted px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/30" />
+          <div className="mt-1.5 text-[11px] text-muted-foreground">Disponível: {brl(caixa)}</div>
+          {erro && <div className="mt-2 text-xs text-red-500">{erro}</div>}
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            <button disabled={salvando} onClick={() => setRepondo(false)} className="rounded-xl bg-muted px-3 py-3 text-xs font-bold disabled:opacity-60">Cancelar</button>
+            <button disabled={salvando} onClick={reporCreditos} className="rounded-xl bg-emerald-600 px-3 py-3 text-xs font-bold text-white disabled:opacity-60">{salvando ? 'Salvando...' : 'Confirmar'}</button>
+          </div>
+        </section>
+      </div>}
     </section>
   </div>
 }
