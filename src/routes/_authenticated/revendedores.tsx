@@ -229,21 +229,26 @@ function RevendedoresPage() {
       if (!userId) { setSaving(false); toast.error('Sessão inválida. Entre novamente no sistema.'); return }
 
       const selectedServerName = movServidor ? serverName(movServidor) : serverName(selected.servidor_principal_id)
-      if (!/uniplay/i.test(selectedServerName)) {
+      const isUniplay = /uniplay/i.test(selectedServerName)
+      const isGoat = /goat/i.test(selectedServerName)
+      if (!isUniplay && !isGoat) {
         setSaving(false)
-        toast.error('Revendedores usam créditos Uniplay. Selecione o servidor Uniplay.')
+        toast.error('Selecione o servidor Uniplay ou GOAT.')
         return
       }
 
-      const { data: controle, error: controleError } = await (supabase as any).from('controle_creditos').select('uniplay').eq('user_id', userId).maybeSingle()
+      const creditField = isUniplay ? 'uniplay' : 'goat'
+      const baseServer = isUniplay ? 'Uniplay' : 'Goat'
+      const { data: controle, error: controleError } = await (supabase as any).from('controle_creditos').select('uniplay, goat').eq('user_id', userId).maybeSingle()
       if (controleError || !controle) {
         setSaving(false)
         toast.error('Não foi possível conferir o saldo de créditos.')
         return
       }
-      if (Number(controle.uniplay) < creditos) {
+      const saldoAtual = Number(controle[creditField])
+      if (saldoAtual < creditos) {
         setSaving(false)
-        toast.error('Saldo insuficiente: há ' + Math.floor(Number(controle.uniplay)) + ' créditos Uniplay. Reponha o estoque antes de registrar esta venda.')
+        toast.error('Saldo insuficiente: há ' + Math.floor(saldoAtual) + ' créditos ' + baseServer + '. Reponha o estoque antes de registrar esta venda.')
         return
       }
 
@@ -257,7 +262,7 @@ function RevendedoresPage() {
       const { error: creditError } = await (supabase as any).rpc('registrar_consumo_credito', {
         p_renovacao_id: created.id,
         p_cliente_id: null,
-        p_servidor: 'Uniplay',
+        p_servidor: baseServer,
         p_creditos: creditos,
         p_caixinha: valor,
       })
