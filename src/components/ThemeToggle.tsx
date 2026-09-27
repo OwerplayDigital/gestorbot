@@ -18,6 +18,9 @@ function applyTheme(theme: AppTheme) {
   const root = window.document.documentElement;
   root.classList.toggle("dark", theme === "dark");
   root.classList.toggle("light", theme === "light");
+  root.style.colorScheme = theme;
+  root.style.backgroundColor = THEME_COLORS[theme];
+  window.document.body.style.backgroundColor = THEME_COLORS[theme];
 
   window.document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => meta.remove());
   const themeColor = window.document.createElement("meta");
@@ -43,8 +46,22 @@ export function ThemeToggle() {
     syncWithSystem(media.matches);
 
     const handleChange = (event: MediaQueryListEvent) => syncWithSystem(event.matches);
+    const resyncFromSystem = () => syncWithSystem(media.matches);
+    const handleVisibility = () => {
+      if (window.document.visibilityState === "visible") resyncFromSystem();
+    };
+
     media.addEventListener("change", handleChange);
-    return () => media.removeEventListener("change", handleChange);
+    window.addEventListener("focus", resyncFromSystem);
+    window.document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("pageshow", resyncFromSystem);
+
+    return () => {
+      media.removeEventListener("change", handleChange);
+      window.removeEventListener("focus", resyncFromSystem);
+      window.document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("pageshow", resyncFromSystem);
+    };
   }, []);
 
   function toggleTheme() {
