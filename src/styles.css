@@ -90,3 +90,13 @@
 .dashboard-page>section:nth-of-type(2){grid-template-columns:1fr!important}
 .dashboard-page>section:nth-of-type(2)>div:first-child{display:none!important}
 .dashboard-page>section:nth-of-type(2)>div:last-child{width:100%!important}
+
+
+/* Mobile edge-to-edge: keep header controls below the Android status bar.
+   In regular browsers env(safe-area-inset-top) resolves to 0, preserving the web layout. */
+@media(max-width:1023px){
+ .gestor-mobile-safe-header{
+  padding-top:env(safe-area-inset-top,0px)!important;
+  height:calc(4rem + env(safe-area-inset-top,0px))!important;
+ }
+}
