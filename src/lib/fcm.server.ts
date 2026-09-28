@@ -57,7 +57,7 @@ export async function sendFcm(token: string, title: string, body: string) {
       message: {
         token,
         notification: { title, body },
-        android: { priority: "HIGH", notification: { click_action: "FCM_PLUGIN_ACTIVITY" } },
+        android: { priority: "HIGH" },
       },
     }),
   });
