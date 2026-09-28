@@ -8,7 +8,7 @@ function b64url(data: ArrayBuffer | string) {
 }
 
 export function readServiceAccount(): ServiceAccount {
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  const raw = process.env['FIREBASE_SERVICE_ACCOUNT_JSON'];
   if (!raw) throw new Error("FIREBASE_SERVICE_ACCOUNT_JSON não configurado");
   const sa = JSON.parse(raw) as ServiceAccount;
   if (!sa.client_email || !sa.private_key || !sa.project_id) throw new Error("Credencial Firebase incompleta");
