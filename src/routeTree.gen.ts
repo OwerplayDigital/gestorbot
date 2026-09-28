@@ -26,6 +26,7 @@ import { Route as AuthenticatedVencidosRouteImport } from './routes/_authenticat
 import { Route as ExtratoTokenRouteImport } from './routes/extrato.$token'
 import { Route as PagarIdRouteImport } from './routes/pagar.$id'
 import { Route as ApiPublicCronNotificationsRouteImport } from './routes/api/public/cron-notifications'
+import { Route as ApiPublicPushTestRouteImport } from './routes/api/public/push-test'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram-webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -116,6 +117,11 @@ const ApiPublicCronNotificationsRoute =
     path: '/api/public/cron-notifications',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPushTestRoute = ApiPublicPushTestRouteImport.update({
+  id: '/api/public/push-test',
+  path: '/api/public/push-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTelegramWebhookRoute =
   ApiPublicTelegramWebhookRouteImport.update({
     id: '/api/public/telegram-webhook',
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/extrato/$token': typeof ExtratoTokenRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
+  '/api/public/push-test': typeof ApiPublicPushTestRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/extrato/$token': typeof ExtratoTokenRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
+  '/api/public/push-test': typeof ApiPublicPushTestRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
@@ -180,6 +188,7 @@ export interface FileRoutesById {
   '/extrato/$token': typeof ExtratoTokenRoute
   '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
+  '/api/public/push-test': typeof ApiPublicPushTestRoute
   '/api/public/telegram-webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/extrato/$token'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
+    | '/api/public/push-test'
     | '/api/public/telegram-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/extrato/$token'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
+    | '/api/public/push-test'
     | '/api/public/telegram-webhook'
   id:
     | '__root__'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/extrato/$token'
     | '/pagar/$id'
     | '/api/public/cron-notifications'
+    | '/api/public/push-test'
     | '/api/public/telegram-webhook'
   fileRoutesById: FileRoutesById
 }
@@ -250,6 +262,7 @@ export interface RootRouteChildren {
   ExtratoTokenRoute: typeof ExtratoTokenRoute
   PagarIdRoute: typeof PagarIdRoute
   ApiPublicCronNotificationsRoute: typeof ApiPublicCronNotificationsRoute
+  ApiPublicPushTestRoute: typeof ApiPublicPushTestRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
@@ -374,6 +387,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/push-test': {
+      id: '/api/public/push-test'
+      path: '/api/public/push-test'
+      fullPath: '/api/public/push-test'
+      preLoaderRoute: typeof ApiPublicPushTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/telegram-webhook': {
       id: '/api/public/telegram-webhook'
       path: '/api/public/telegram-webhook'
@@ -422,6 +442,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExtratoTokenRoute: ExtratoTokenRoute,
   PagarIdRoute: PagarIdRoute,
   ApiPublicCronNotificationsRoute: ApiPublicCronNotificationsRoute,
+  ApiPublicPushTestRoute: ApiPublicPushTestRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
