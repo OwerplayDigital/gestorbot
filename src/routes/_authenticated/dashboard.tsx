@@ -25,7 +25,7 @@ const parseDate=(d:any):Date|null=>{if(!d||typeof d!=="string")return null;const
 function addDaysISO(iso:string,days:number){const [y,m,d]=iso.split("-").map(Number) as [number,number,number];const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().slice(0,10)}
 
 function Dashboard(){
- const [showLucro,setShowLucro]=useState(true);
+ const [showLucro,setShowLucro]=useState(false);
  const [activeTab,setActiveTab]=useState("mes");
  const [selectedClient,setSelectedClient]=useState<any>(null);
  const [isRenewOpen,setIsRenewOpen]=useState(false);
