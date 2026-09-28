@@ -81,7 +81,11 @@ export function usePushToken() {
     if (typeof window === "undefined") return;
 
     const bridge = (window as unknown as { OwerAppsNotifications?: Bridge }).OwerAppsNotifications;
-    if (bridge?.getToken) showDiagnostic("ponte Android encontrada · iniciando teste");
+    if (bridge?.getToken) {
+      showDiagnostic("ponte Android encontrada · iniciando teste");
+    } else {
+      showDiagnostic("PONTE ANDROID NÃO ENCONTRADA");
+    }
 
     const onToken = (e: Event) => {
       showDiagnostic("evento FCM recebido · validando...");
