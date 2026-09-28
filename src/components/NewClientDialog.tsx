@@ -81,6 +81,7 @@ export function NewClientDialog() {
       const fundAmount = addFund && !isFreePlan ? pointCount * 10 : 0;
       for (let index = 0; index < trackedServers.length; index++) {
         const server = trackedServers[index];
+        if (!server) continue;
         const credits = /\b2p\b/i.test(server.name) ? 2 : 1;
         const baseServer = /uniplay/i.test(server.name) ? 'Uniplay' : 'Goat';
         const { error: creditError } = await (supabase as any).rpc('registrar_consumo_credito', { p_renovacao_id: crypto.randomUUID(), p_cliente_id: client.id, p_servidor: baseServer, p_creditos: credits, p_caixinha: index === 0 ? fundAmount : 0 });

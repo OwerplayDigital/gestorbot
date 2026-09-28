@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { usePushToken } from "@/hooks/use-push-token";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -22,5 +23,10 @@ export const Route = createFileRoute("/_authenticated")({
 
     }
   },
-  component: () => <Outlet />,
+  component: AuthenticatedLayout,
 });
+
+function AuthenticatedLayout() {
+  usePushToken();
+  return <Outlet />;
+}
