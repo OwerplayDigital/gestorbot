@@ -27,7 +27,7 @@ function FinanceiroPage() {
   const nowBr = toZonedTime(new Date(), "America/Sao_Paulo");
   const months = useMemo(() => {
     const items: SelectedMonth[] = [];
-    for (let i = 1; i <= 12; i++) {
+    for (let i = 0; i < 12; i++) {
       const date = subMonths(nowBr, i);
       items.push({ label: format(date, "MMMM / yyyy", { locale: ptBR }).replace(/^\w/, (c) => c.toUpperCase()), value: format(date, "yyyy-MM"), date });
     }
