@@ -38,10 +38,16 @@ export function usePushToken() {
     void readBridge();
     const t1 = window.setTimeout(readBridge, 3000);
     const t2 = window.setTimeout(readBridge, 10000);
+    const t3 = window.setTimeout(readBridge, 30000);
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "INITIAL_SESSION") void readBridge();
+    });
     return () => {
       window.removeEventListener("owerapps-fcm-token", onToken);
       window.clearTimeout(t1);
       window.clearTimeout(t2);
+      window.clearTimeout(t3);
+      sub.subscription.unsubscribe();
     };
   }, []);
 }
