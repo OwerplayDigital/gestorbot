@@ -60,6 +60,14 @@ function Dashboard(){
  const formatBRL=(v:any)=>Number(v??0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
  const pct=(cur:number,prev:number)=>prev?((cur-prev)/Math.abs(prev)*100):null;
 
+ function openWhatsApp(phone:string,message:string){
+  const encoded=encodeURIComponent(message);
+  const appUrl=`whatsapp://send?phone=${phone}&text=${encoded}`;
+  const webUrl=`https://wa.me/${phone}?text=${encoded}`;
+  window.location.href=appUrl;
+  window.setTimeout(()=>{if(document.visibilityState==="visible")window.location.href=webUrl;},900);
+ }
+
  function chargeClient(client:any){
   if(!client.whatsapp){toast.error("Cliente sem WhatsApp cadastrado.");return}
   const firstName=(client.nome||"Cliente").trim().split(" ")[0]||"Cliente";
@@ -68,7 +76,7 @@ function Dashboard(){
   const message=BOT_TEMPLATES.COBRANCA(firstName,brDate,paymentUrl);
   const raw=String(client.whatsapp).replace(/\D/g,"");
   const phone=raw.startsWith("55")?raw:`55${raw}`;
-  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`,"_blank");
+  openWhatsApp(phone,message);
  }
 
  function openRenew(client:any){
@@ -128,7 +136,7 @@ function Dashboard(){
   const message=BOT_TEMPLATES.CONFIRMACAO(firstName,brDate);
   const raw=String(selectedClient.whatsapp).replace(/\D/g,"");
   const phone=raw.startsWith("55")?raw:`55${raw}`;
-  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`,"_blank");
+  openWhatsApp(phone,message);
   setIsRenewSuccessOpen(false);
  }
 
