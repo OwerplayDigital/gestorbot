@@ -28,8 +28,7 @@ export const Route = createFileRoute('/api/public/cron-notifications')({
 
         const today = formatTz(brTime, 'yyyy-MM-dd');
 
-        // Push Android é independente do Telegram. Assim, os avisos continuam
-        // funcionando mesmo quando o bot do Telegram for removido no futuro.
+        // Envia os avisos de vencimento diretamente pelo push Android.
         let pushSent = 0;
         let pushFailed = 0;
         const { data: pushTokens, error: pushTokenError } = await (supabaseAdmin as any)
