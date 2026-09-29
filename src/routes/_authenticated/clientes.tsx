@@ -43,6 +43,18 @@ function getServerPanelClass(name: string) {
 }
 function addDaysISO(iso: string, days: number) { const [y, m, d] = iso.split('-').map(Number) as [number, number, number]; const dt = new Date(Date.UTC(y, m - 1, d)); dt.setUTCDate(dt.getUTCDate() + days); return dt.toISOString().slice(0, 10); }
 
+function openWhatsApp(phone: string, message: string) {
+  const encoded = encodeURIComponent(message);
+  const appUrl = `whatsapp://send?phone=${phone}&text=${encoded}`;
+  const webUrl = `https://wa.me/${phone}?text=${encoded}`;
+  const bridge = (window as any).OwerAppsExternal;
+  if (bridge?.openUrl) {
+    bridge.openUrl(appUrl, webUrl);
+    return;
+  }
+  window.location.href = webUrl;
+}
+
 function ClientesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [planFilter, setPlanFilter] = useState('');
@@ -136,8 +148,8 @@ function ClientesPage() {
     if (!selectedClient || isAppSaving) return; if (!appForm.app_nome.trim()) { toast.error('Informe o aplicativo.'); return; } setIsAppSaving(true);
     try { const payload = { cliente_id: selectedClient.id, app_nome: appForm.app_nome.trim(), mac_address: appForm.mac_address.trim(), app_key: appForm.app_key.trim() || null }; if (appForm.id) { const { error } = await supabase.from('dispositivos').update(payload).eq('id', appForm.id); if (error) throw error; } else { const { error } = await supabase.from('dispositivos').insert(payload); if (error) throw error; } toast.success(appForm.id ? 'Dados do aplicativo atualizados.' : 'Aplicativo adicionado.'); await refetch(); setAppMode('view'); } catch (error) { console.error(error); toast.error('Não foi possível salvar os dados do aplicativo.'); } finally { setIsAppSaving(false); }
   }
-  const handleSendMessage = (template: any) => { if (!selectedClient) return; const firstName = selectedClient.nome.split(' ')[0]; const valor = selectedClient.plans ? (Number(selectedClient.plans.price) - Number(selectedClient.desconto || 0)).toFixed(2) : '0.00'; const vencimentoBr = selectedClient.vencimento?.includes('-') ? format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy') : selectedClient.vencimento; const message = template.mensagem.replace(/{nome}/g, selectedClient.nome).replace(/{primeiro_nome}/g, firstName).replace(/{vencimento}/g, vencimentoBr || '').replace(/{valor}/g, `R$ ${valor}`); const phoneRaw = selectedClient.whatsapp.replace(/\D/g, ''); const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`; window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank'); setIsMessageOpen(false); };
-  function sendRenewalMessage() { if (!selectedClient?.whatsapp || !selectedClient?.vencimento) { toast.error('Cliente sem WhatsApp cadastrado.'); return; } const firstName = (selectedClient.nome || 'Cliente').trim().split(' ')[0] || 'Cliente'; const brDate = format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy'); const message = BOT_TEMPLATES.CONFIRMACAO(firstName, brDate); const phoneRaw = selectedClient.whatsapp.replace(/\D/g, ''); const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`; window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank'); setIsRenewSuccessOpen(false); }
+  const handleSendMessage = (template: any) => { if (!selectedClient) return; const firstName = selectedClient.nome.split(' ')[0]; const valor = selectedClient.plans ? (Number(selectedClient.plans.price) - Number(selectedClient.desconto || 0)).toFixed(2) : '0.00'; const vencimentoBr = selectedClient.vencimento?.includes('-') ? format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy') : selectedClient.vencimento; const message = template.mensagem.replace(/{nome}/g, selectedClient.nome).replace(/{primeiro_nome}/g, firstName).replace(/{vencimento}/g, vencimentoBr || '').replace(/{valor}/g, `R$ ${valor}`); const phoneRaw = selectedClient.whatsapp.replace(/\D/g, ''); const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`; openWhatsApp(phone, message); setIsMessageOpen(false); };
+  function sendRenewalMessage() { if (!selectedClient?.whatsapp || !selectedClient?.vencimento) { toast.error('Cliente sem WhatsApp cadastrado.'); return; } const firstName = (selectedClient.nome || 'Cliente').trim().split(' ')[0] || 'Cliente'; const brDate = format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy'); const message = BOT_TEMPLATES.CONFIRMACAO(firstName, brDate); const phoneRaw = selectedClient.whatsapp.replace(/\D/g, ''); const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`; openWhatsApp(phone, message); setIsRenewSuccessOpen(false); }
   function openRenew(client: Client) { const current = String(client.vencimento || '').slice(0, 10); if (!current) { toast.error('Cliente sem vencimento válido.'); return; } setSelectedClient(client); setRenewDate(addDaysISO(current, 30)); setRenewMode('normal'); const payable = Math.max(0, Number(client.plans?.price || 0) - Number(client.desconto || 0)) > 0; setRenewAddsFund(payable); setIsRenewOpen(true); }
   async function confirmRenew(mode: RenewMode = renewMode) {
     if (!selectedClient || !renewDate || isRenewing) return; setIsRenewing(true);
