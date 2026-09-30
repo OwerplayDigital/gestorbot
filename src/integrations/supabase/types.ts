@@ -473,18 +473,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          imagem_url: string | null
           mensagem: string
           nome: string
         }
         Insert: {
           created_at?: string
           id?: string
+          imagem_url?: string | null
           mensagem: string
           nome: string
         }
         Update: {
           created_at?: string
           id?: string
+          imagem_url?: string | null
           mensagem?: string
           nome?: string
         }
