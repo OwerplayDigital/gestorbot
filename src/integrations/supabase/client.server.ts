@@ -28,57 +28,6 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
-async function registerNewClientFinancialEntry(client: any, clientRow: any) {
-  if (!clientRow?.id || !clientRow?.user_id || !clientRow?.plano_id) return;
-
-  try {
-    const { data: plan } = await client
-      .from('plans')
-      .select('price')
-      .eq('id', clientRow.plano_id)
-      .maybeSingle();
-
-    const planPrice = Number(plan?.price || 0);
-    const discount = Number(clientRow.desconto || 0);
-    const entrada = Math.max(0, planPrice - discount);
-
-    let custo = 0;
-    const serverIds = Array.isArray(clientRow.servidores_ids) ? clientRow.servidores_ids : [];
-
-    if (serverIds.length > 0) {
-      const { data: servers } = await client
-        .from('servidores_iptv')
-        .select('valor')
-        .in('id', serverIds);
-
-      custo = (servers || []).reduce((sum: number, server: any) => sum + Number(server?.valor || 0), 0);
-    }
-
-    const { error } = await client
-      .from('transacoes')
-      .insert({
-        user_id: clientRow.user_id,
-        cliente_id: clientRow.id,
-        tipo: 'entrada',
-        entrada,
-        custo,
-        valor: entrada,
-        data: typeof clientRow.created_at === 'string'
-          ? clientRow.created_at.slice(0, 10)
-          : new Date().toISOString().slice(0, 10),
-        descricao: `Cadastro cliente ${clientRow.id}`,
-        serv_id: serverIds[0] || null,
-      });
-
-    if (error) {
-      console.error('[Financeiro] Erro ao registrar novo cliente:', error);
-    } else {
-      console.log(`[Financeiro] Entrada criada para novo cliente ${clientRow.id}`);
-    }
-  } catch (error) {
-    console.error('[Financeiro] Falha ao registrar entrada do novo cliente:', error);
-  }
-}
 
 function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env['SUPABASE_URL'];
@@ -104,52 +53,6 @@ function createSupabaseAdminClient() {
       autoRefreshToken: false,
     }
   });
-
-  const originalFrom = client.from.bind(client) as (table: string) => any;
-
-  // The Telegram new-client flow inserts into `clientes` and then calls
-  // `.select().single()`. Hook that exact server-side operation so the
-  // corresponding financial entry is created without changing the bot flow.
-  (client as any).from = (table: string) => {
-    const builder = originalFrom(table);
-    if (table !== 'clientes') return builder;
-
-    let payload: any = null;
-
-    const wrapBuilder = (target: any): any => new Proxy(target, {
-      get(currentTarget, prop, receiver) {
-        const original = Reflect.get(currentTarget, prop, receiver);
-
-        if (prop === 'insert' && typeof original === 'function') {
-          return (...args: any[]) => {
-            payload = Array.isArray(args[0]) ? args[0][0] : args[0];
-            return wrapBuilder(original.apply(currentTarget, args));
-          };
-        }
-
-        if (prop === 'single' && typeof original === 'function') {
-          return async (...args: any[]) => {
-            const result = await original.apply(currentTarget, args);
-            if (!result?.error && result?.data && payload?.status === 'ativo' && payload?.plano_id) {
-              await registerNewClientFinancialEntry(client, result.data);
-            }
-            return result;
-          };
-        }
-
-        if (typeof original === 'function') {
-          return (...args: any[]) => {
-            const result = original.apply(currentTarget, args);
-            return result && typeof result === 'object' ? wrapBuilder(result) : result;
-          };
-        }
-
-        return original;
-      }
-    });
-
-    return wrapBuilder(builder);
-  };
 
   return client;
 }

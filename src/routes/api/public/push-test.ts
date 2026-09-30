@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Envio de teste. Protegido pelo TELEGRAM_BOT_TOKEN no header x-admin-key.
+// Envio de teste. Protegido pelo PUSH_TEST_KEY no header x-admin-key.
 export const Route = createFileRoute("/api/public/push-test")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const key = request.headers.get("x-admin-key");
-        if (!key || key !== process.env['TELEGRAM_BOT_TOKEN']) return new Response("Unauthorized", { status: 401 });
+        const expected = process.env['PUSH_TEST_KEY'];
+        if (!key || !expected || key !== expected) return new Response("Unauthorized", { status: 401 });
         const { sendFcm } = await import("@/lib/fcm.server");
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data, error } = await (supabaseAdmin as any)
