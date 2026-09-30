@@ -1,0 +1,37 @@
+name: Patch template image send
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/patch-template-image-send.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch clientes.tsx
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('src/routes/_authenticated/clientes.tsx')
+          s = p.read_text()
+          old = "const handleSendMessage = (template: any) => { if (!selectedClient) return; const firstName = selectedClient.nome.split(' ')[0]; const valor = selectedClient.plans ? (Number(selectedClient.plans.price) - Number(selectedClient.desconto || 0)).toFixed(2) : '0.00'; const vencimentoBr = selectedClient.vencimento?.includes('-') ? format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy') : selectedClient.vencimento; const message = template.mensagem.replace(/{nome}/g, selectedClient.nome).replace(/{primeiro_nome}/g, firstName).replace(/{vencimento}/g, vencimentoBr || '').replace(/{valor}/g, `R$ ${valor}`); const phoneRaw = selectedClient.whatsapp.replace(/\\D/g, ''); const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`; openWhatsApp(phone, message); setIsMessageOpen(false); };"
+          new = "const handleSendMessage = (template: any) => { if (!selectedClient) return; const firstName = selectedClient.nome.split(' ')[0]; const valor = selectedClient.plans ? (Number(selectedClient.plans.price) - Number(selectedClient.desconto || 0)).toFixed(2) : '0.00'; const vencimentoBr = selectedClient.vencimento?.includes('-') ? format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy') : selectedClient.vencimento; const message = template.mensagem.replace(/{nome}/g, selectedClient.nome).replace(/{primeiro_nome}/g, firstName).replace(/{vencimento}/g, vencimentoBr || '').replace(/{valor}/g, `R$ ${valor}`); const phoneRaw = selectedClient.whatsapp.replace(/\\D/g, ''); const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`; const bridge = (window as any).OwerAppsExternal; if (template.imagem_url && bridge?.shareWhatsAppImage) { bridge.shareWhatsAppImage(phone, message, template.imagem_url); } else { openWhatsApp(phone, message); } setIsMessageOpen(false); };"
+          if old not in s:
+              raise SystemExit('handleSendMessage esperado não encontrado; nada alterado')
+          p.write_text(s.replace(old, new, 1))
+      - name: Validate
+        run: npm ci && npm run build
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/routes/_authenticated/clientes.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: enviar imagem do template pelo APK"
+          git push
