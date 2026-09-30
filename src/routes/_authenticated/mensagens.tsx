@@ -42,7 +42,9 @@ function Mensagens() {
     const path = `templates/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from("template-images").upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
     if (error) throw error;
-    return supabase.storage.from("template-images").getPublicUrl(path).data.publicUrl;
+    const { data, error: signError } = await supabase.storage.from("template-images").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+    if (signError || !data) throw signError ?? new Error("Falha ao gerar link da imagem");
+    return data.signedUrl;
   };
 
   const saveMutation = useMutation({
@@ -85,13 +87,13 @@ function Mensagens() {
   const handleEdit = (template: Template) => { clearPending(); setIsNew(false); setEditingTemplate({ ...template }); setIsModalOpen(true); };
   const handleNew = () => { clearPending(); setIsNew(true); setEditingTemplate({ nome: "", mensagem: "", imagem_url: null }); setIsModalOpen(true); };
   const handleSave = () => {
-    if (!editingTemplate?.nome?.trim() || !editingTemplate?.mensagem?.trim()) return toast.error("Preencha todos os campos");
+    if (!editingTemplate?.nome?.trim() || !editingTemplate?.mensagem?.trim()) { toast.error("Preencha todos os campos"); return; }
     saveMutation.mutate(editingTemplate);
   };
   const handleImage = (file?: File) => {
     if (!file) return;
-    if (!file.type.startsWith("image/")) return toast.error("Selecione uma imagem válida");
-    if (file.size > 5 * 1024 * 1024) return toast.error("A imagem deve ter no máximo 5 MB");
+    if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem válida"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("A imagem deve ter no máximo 5 MB"); return; }
     if (pendingPreview) URL.revokeObjectURL(pendingPreview);
     setPendingImage(file); setPendingPreview(URL.createObjectURL(file)); setRemoveImage(false);
   };
