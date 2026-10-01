@@ -14,24 +14,106 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch clientes.tsx
+      - name: Patch template image sending
         shell: python
         run: |
           from pathlib import Path
+
+          # Clientes: manter o envio de imagem dos templates pelo bridge nativo do APK.
           p = Path('src/routes/_authenticated/clientes.tsx')
           s = p.read_text()
           old = "const handleSendMessage = (template: any) => { if (!selectedClient) return; const firstName = selectedClient.nome.split(' ')[0]; const valor = selectedClient.plans ? (Number(selectedClient.plans.price) - Number(selectedClient.desconto || 0)).toFixed(2) : '0.00'; const vencimentoBr = selectedClient.vencimento?.includes('-') ? format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy') : selectedClient.vencimento; const message = template.mensagem.replace(/{nome}/g, selectedClient.nome).replace(/{primeiro_nome}/g, firstName).replace(/{vencimento}/g, vencimentoBr || '').replace(/{valor}/g, `R$ ${valor}`); const phoneRaw = selectedClient.whatsapp.replace(/\\D/g, ''); const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`; openWhatsApp(phone, message); setIsMessageOpen(false); };"
           new = "const handleSendMessage = (template: any) => { if (!selectedClient) return; const firstName = selectedClient.nome.split(' ')[0]; const valor = selectedClient.plans ? (Number(selectedClient.plans.price) - Number(selectedClient.desconto || 0)).toFixed(2) : '0.00'; const vencimentoBr = selectedClient.vencimento?.includes('-') ? format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy') : selectedClient.vencimento; const message = template.mensagem.replace(/{nome}/g, selectedClient.nome).replace(/{primeiro_nome}/g, firstName).replace(/{vencimento}/g, vencimentoBr || '').replace(/{valor}/g, `R$ ${valor}`); const phoneRaw = selectedClient.whatsapp.replace(/\\D/g, ''); const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`; const bridge = (window as any).OwerAppsExternal; if (template.imagem_url && bridge?.shareWhatsAppImage) { bridge.shareWhatsAppImage(phone, message, template.imagem_url); } else { openWhatsApp(phone, message); } setIsMessageOpen(false); };"
-          if old not in s:
-              raise SystemExit('handleSendMessage esperado não encontrado; nada alterado')
-          p.write_text(s.replace(old, new, 1))
+          if old in s:
+              p.write_text(s.replace(old, new, 1))
+          elif 'bridge?.shareWhatsAppImage' not in s:
+              raise SystemExit('clientes.tsx: handleSendMessage esperado não encontrado')
+
+          # Dashboard: cobrança e confirmação de renovação passam a buscar o template
+          # editável em templates_whatsapp e usam a imagem quando existir.
+          p = Path('src/routes/_authenticated/dashboard.tsx')
+          s = p.read_text()
+
+          old = ''' function chargeClient(client:any){
+            if(!client.whatsapp){toast.error("Cliente sem WhatsApp cadastrado.");return}
+            const firstName=(client.nome||"Cliente").trim().split(" ")[0]||"Cliente";
+            const brDate=client.vencimento?format(parseISO(client.vencimento),"dd/MM/yyyy"):"";
+            const paymentUrl=`https://gestorbot.lovable.app/pagar/${client.id}`;
+            const message=BOT_TEMPLATES.COBRANCA(firstName,brDate,paymentUrl);
+            const raw=String(client.whatsapp).replace(/\\D/g,"");
+            const phone=raw.startsWith("55")?raw:`55${raw}`;
+            openWhatsApp(phone,message);
+           }'''
+          new = ''' async function chargeClient(client:any){
+            if(!client.whatsapp){toast.error("Cliente sem WhatsApp cadastrado.");return}
+            const firstName=(client.nome||"Cliente").trim().split(" ")[0]||"Cliente";
+            const brDate=client.vencimento?format(parseISO(client.vencimento),"dd/MM/yyyy"):"";
+            const paymentUrl=`https://gestorbot.lovable.app/pagar/${client.id}`;
+            const raw=String(client.whatsapp).replace(/\\D/g,"");
+            const phone=raw.startsWith("55")?raw:`55${raw}`;
+            let message=BOT_TEMPLATES.COBRANCA(firstName,brDate,paymentUrl);
+            let imageUrl:string|null=null;
+            try{
+             const {data}=await supabase.from("templates_whatsapp" as any).select("nome,mensagem,imagem_url");
+             const list=(data??[]) as any[];
+             const tpl=list.find(t=>/cobran|vence hoje|vencimento/i.test(String(t.nome||"")));
+             if(tpl){
+              message=String(tpl.mensagem||message).replace(/{nome}/g,client.nome||firstName).replace(/{primeiro_nome}/g,firstName).replace(/{vencimento}/g,brDate).replace(/{valor}/g,formatBRL(client.valorFinal??client.valor??0)).replace(/{url}/g,paymentUrl).replace(/{link}/g,paymentUrl);
+              imageUrl=tpl.imagem_url||null;
+             }
+            }catch(error){console.warn("Falha ao carregar template de cobrança; usando texto padrão.",error)}
+            const bridge=(window as any).OwerAppsExternal;
+            if(imageUrl&&bridge?.shareWhatsAppImage) bridge.shareWhatsAppImage(phone,message,imageUrl); else openWhatsApp(phone,message);
+           }'''
+          if old in s:
+              s=s.replace(old,new,1)
+          elif 'async function chargeClient' not in s:
+              raise SystemExit('dashboard.tsx: chargeClient esperado não encontrado')
+
+          old = ''' function sendRenewalMessage(){
+            if(!selectedClient?.whatsapp||!selectedClient?.vencimento){toast.error("Cliente sem WhatsApp cadastrado.");return}
+            const firstName=(selectedClient.nome||"Cliente").trim().split(" ")[0]||"Cliente";
+            const brDate=format(parseISO(selectedClient.vencimento),"dd/MM/yyyy");
+            const message=BOT_TEMPLATES.CONFIRMACAO(firstName,brDate);
+            const raw=String(selectedClient.whatsapp).replace(/\\D/g,"");
+            const phone=raw.startsWith("55")?raw:`55${raw}`;
+            openWhatsApp(phone,message);
+            setIsRenewSuccessOpen(false);
+           }'''
+          new = ''' async function sendRenewalMessage(){
+            if(!selectedClient?.whatsapp||!selectedClient?.vencimento){toast.error("Cliente sem WhatsApp cadastrado.");return}
+            const firstName=(selectedClient.nome||"Cliente").trim().split(" ")[0]||"Cliente";
+            const brDate=format(parseISO(selectedClient.vencimento),"dd/MM/yyyy");
+            const raw=String(selectedClient.whatsapp).replace(/\\D/g,"");
+            const phone=raw.startsWith("55")?raw:`55${raw}`;
+            let message=BOT_TEMPLATES.CONFIRMACAO(firstName,brDate);
+            let imageUrl:string|null=null;
+            try{
+             const {data}=await supabase.from("templates_whatsapp" as any).select("nome,mensagem,imagem_url");
+             const list=(data??[]) as any[];
+             const tpl=list.find(t=>/renov|confirm|sucesso/i.test(String(t.nome||"")));
+             if(tpl){
+              message=String(tpl.mensagem||message).replace(/{nome}/g,selectedClient.nome||firstName).replace(/{primeiro_nome}/g,firstName).replace(/{vencimento}/g,brDate).replace(/{valor}/g,formatBRL(selectedClient.valorFinal??selectedClient.valor??0));
+              imageUrl=tpl.imagem_url||null;
+             }
+            }catch(error){console.warn("Falha ao carregar template de renovação; usando texto padrão.",error)}
+            const bridge=(window as any).OwerAppsExternal;
+            if(imageUrl&&bridge?.shareWhatsAppImage) bridge.shareWhatsAppImage(phone,message,imageUrl); else openWhatsApp(phone,message);
+            setIsRenewSuccessOpen(false);
+           }'''
+          if old in s:
+              s=s.replace(old,new,1)
+          elif 'async function sendRenewalMessage' not in s:
+              raise SystemExit('dashboard.tsx: sendRenewalMessage esperado não encontrado')
+
+          p.write_text(s)
       - name: Validate
         run: npm ci && npm run build
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/routes/_authenticated/clientes.tsx
+          git add src/routes/_authenticated/clientes.tsx src/routes/_authenticated/dashboard.tsx
           git diff --cached --quiet && exit 0
-          git commit -m "feat: enviar imagem do template pelo APK"
+          git commit -m "fix: usar imagens dos templates nas mensagens do dashboard"
           git push
