@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { BOT_TEMPLATES } from '@/lib/templates';
+import { BOT_TEMPLATES, renderClientTemplate } from '@/lib/templates';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -67,21 +67,59 @@ function VencidosPage() {
     setSelectedClient(client); setIsMessageOpen(true);
   }
 
-  function handleSendMessage(template: any) {
+  async function sendTemplateMessage(client: Client, template: any, fallback: string) {
+    const firstName = (client.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
+    const vencimento = client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento || '';
+    const paymentUrl = `https://gestorbot.lovable.app/pagar/${client.id}`;
+    const valor = Math.max(0, Number(client.plans?.price || 0) - Number(client.desconto || 0));
+    const message = renderClientTemplate(template?.mensagem || fallback, {
+      nome: client.nome || firstName, primeiro_nome: firstName, vencimento,
+      valor: `R$ ${valor.toFixed(2)}`, link_pagamento: paymentUrl, url: paymentUrl, link: paymentUrl,
+    });
+    const raw = String(client.whatsapp || '').replace(/\D/g, '');
+    if (!raw) { toast.error('Cliente sem WhatsApp cadastrado.'); return false; }
+    const phone = raw.startsWith('55') ? raw : `55${raw}`;
+    const bridge = (window as any).OwerAppsExternal;
+    try {
+      if (template?.imagem_url && bridge?.shareWhatsAppImage) {
+        await bridge.shareWhatsAppImage(phone, message, template.imagem_url);
+      } else {
+        const webUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+        if (bridge?.openUrl) bridge.openUrl(`whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`, webUrl);
+        else window.location.href = webUrl;
+      }
+      return true;
+    } catch (error) {
+      console.error(error);
+      toast.error('Não foi possível abrir o envio da mensagem.');
+      return false;
+    }
+  }
+
+  async function loadSystemTemplate(pattern: RegExp) {
+    const { data, error } = await supabase.from('templates_whatsapp').select('nome,mensagem,imagem_url').order('nome');
+    if (error) throw error;
+    return data?.find(template => pattern.test(template.nome));
+  }
+
+  async function handleSendMessage(template: any) {
     if (!selectedClient) return;
-    const firstName = selectedClient.nome.split(' ')[0];
-    const valor = selectedClient.plans ? (Number(selectedClient.plans.price) - Number(selectedClient.desconto || 0)).toFixed(2) : '0.00';
-    const paymentUrl = `https://gestorbot.lovable.app/pagar/${selectedClient.id}`;
-    const vencimento = selectedClient.vencimento?.includes('-') ? format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy') : selectedClient.vencimento;
-    const message = template.system === 'cobranca'
-      ? BOT_TEMPLATES.COBRANCA(firstName, vencimento, paymentUrl)
-      : template.system === 'vencido'
-        ? BOT_TEMPLATES.VENCIDO(firstName, vencimento, paymentUrl)
-        : template.mensagem.replace(/{nome}/g, selectedClient.nome).replace(/{primeiro_nome}/g, firstName).replace(/{vencimento}/g, selectedClient.vencimento).replace(/{valor}/g, `R$ ${valor}`).replace(/{link_pagamento}/g, paymentUrl);
-    const phoneRaw = selectedClient.whatsapp.replace(/\D/g, '');
-    const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`;
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
-    setIsMessageOpen(false);
+    const client = selectedClient;
+    const firstName = (client.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
+    const vencimento = client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento || '';
+    const paymentUrl = `https://gestorbot.lovable.app/pagar/${client.id}`;
+    let fallback = template.mensagem || '';
+    try {
+      if (template.system) {
+        const isCharge = template.system === 'cobranca';
+        fallback = isCharge ? BOT_TEMPLATES.COBRANCA(firstName, vencimento) : BOT_TEMPLATES.VENCIDO(firstName, vencimento, paymentUrl);
+        template = await loadSystemTemplate(isCharge ? /cobran|vence hoje|vencimento/i : /vencid|expir/i);
+      }
+      if (await sendTemplateMessage(client, template, fallback)) setIsMessageOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error('Não foi possível carregar o template. Tente novamente.');
+    }
   }
 
   function openRenew(client: Client) {
@@ -141,15 +179,18 @@ function VencidosPage() {
     finally { setIsRenewing(false); }
   }
 
-  function sendRenewalMessage() {
+  async function sendRenewalMessage() {
     if (!selectedClient?.whatsapp || !selectedClient?.vencimento) { toast.error('Cliente sem WhatsApp cadastrado.'); return; }
-    const firstName = (selectedClient.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
-    const brDate = format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy');
-    const message = BOT_TEMPLATES.CONFIRMACAO(firstName, brDate);
-    const phoneRaw = selectedClient.whatsapp.replace(/\D/g, '');
-    const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`;
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
-    setIsRenewSuccessOpen(false);
+    const client = selectedClient;
+    const firstName = (client.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
+    const brDate = format(parseISO(client.vencimento), 'dd/MM/yyyy');
+    try {
+      const template = await loadSystemTemplate(/renov|confirm|sucesso/i);
+      if (await sendTemplateMessage(client, template, BOT_TEMPLATES.CONFIRMACAO(firstName, brDate))) setIsRenewSuccessOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error('Não foi possível carregar o template. Tente novamente.');
+    }
   }
 
   const ClientMenu = ({ client, mobile = false }: { client: Client; mobile?: boolean }) => (
