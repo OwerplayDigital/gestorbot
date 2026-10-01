@@ -1,10 +1,11 @@
 export const BOT_TEMPLATES = {
-  COBRANCA: (nome: string, data: string, url: string = ""): string => 
+  COBRANCA: (nome: string, data: string): string => 
     `Olá ${nome}, bom dia!\n` +
     `Seu plano de TV vence hoje: *${data}*\n\n` +
     `⚠️ *Atenção:* na data do vencimento, o sistema poderá bloquear automaticamente a qualquer momento. Renove assim que possível.\n\n` +
-    `🔗 *Acesse o link seguro para copiar o PIX e renovar:*\n\n` +
-    `${url}`,
+    `💳 *PIX:*\n` +
+    `82iptv@gmail.com\n\n` +
+    `✅ *Favor enviar comprovante*`,
 
   VENCIDO: (nome: string, data: string, url: string = ""): string =>
     `Olá ${nome}, tudo bem?\n` +
