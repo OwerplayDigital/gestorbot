@@ -79,7 +79,7 @@ function Dashboard(){
   try{
    const {data}=await supabase.from("templates_whatsapp" as any).select("nome,mensagem,imagem_url");
    const list=(data??[]) as any[];
-   const tpl=list.find(t=>/cobran|vence hoje|vencimento/i.test(String(t.nome||"")));
+   const tpl=list.find(t=>String(t.nome||"").trim().toLocaleLowerCase("pt-BR")==="cobrança oficial");
    if(tpl){
     message=String(tpl.mensagem||message).replace(/{nome}/g,client.nome||firstName).replace(/{primeiro_nome}/g,firstName).replace(/{vencimento}/g,brDate).replace(/{valor}/g,formatBRL(client.valorFinal??client.valor??0)).replace(/{url}/g,paymentUrl).replace(/{link}/g,paymentUrl);
     imageUrl=tpl.imagem_url||null;
@@ -139,7 +139,7 @@ const {error:updateError}=await supabase.from("clientes").update({vencimento:ren
   try{
    const {data}=await supabase.from("templates_whatsapp" as any).select("nome,mensagem,imagem_url");
    const list=(data??[]) as any[];
-   const tpl=list.find(t=>/renov|confirm|sucesso/i.test(String(t.nome||"")));
+   const tpl=list.find(t=>String(t.nome||"").trim().toLocaleLowerCase("pt-BR")==="renovação");
    if(tpl){
     message=String(tpl.mensagem||message).replace(/{nome}/g,selectedClient.nome||firstName).replace(/{primeiro_nome}/g,firstName).replace(/{vencimento}/g,brDate).replace(/{valor}/g,formatBRL(selectedClient.valorFinal??selectedClient.valor??0));
     imageUrl=tpl.imagem_url||null;
