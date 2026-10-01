@@ -67,15 +67,26 @@ function Dashboard(){
   window.setTimeout(()=>{if(document.visibilityState==="visible")window.location.href=webUrl;},900);
  }
 
- function chargeClient(client:any){
+ async function chargeClient(client:any){
   if(!client.whatsapp){toast.error("Cliente sem WhatsApp cadastrado.");return}
   const firstName=(client.nome||"Cliente").trim().split(" ")[0]||"Cliente";
   const brDate=client.vencimento?format(parseISO(client.vencimento),"dd/MM/yyyy"):"";
   const paymentUrl=`https://gestorbot.lovable.app/pagar/${client.id}`;
-  const message=BOT_TEMPLATES.COBRANCA(firstName,brDate,paymentUrl);
   const raw=String(client.whatsapp).replace(/\D/g,"");
   const phone=raw.startsWith("55")?raw:`55${raw}`;
-  openWhatsApp(phone,message);
+  let message=BOT_TEMPLATES.COBRANCA(firstName,brDate,paymentUrl);
+  let imageUrl:string|null=null;
+  try{
+   const {data}=await supabase.from("templates_whatsapp" as any).select("nome,mensagem,imagem_url");
+   const list=(data??[]) as any[];
+   const tpl=list.find(t=>/cobran|vence hoje|vencimento/i.test(String(t.nome||"")));
+   if(tpl){
+    message=String(tpl.mensagem||message).replace(/{nome}/g,client.nome||firstName).replace(/{primeiro_nome}/g,firstName).replace(/{vencimento}/g,brDate).replace(/{valor}/g,formatBRL(client.valorFinal??client.valor??0)).replace(/{url}/g,paymentUrl).replace(/{link}/g,paymentUrl);
+    imageUrl=tpl.imagem_url||null;
+   }
+  }catch(error){console.warn("Falha ao carregar template de cobrança; usando texto padrão.",error)}
+  const bridge=(window as any).OwerAppsExternal;
+  if(imageUrl&&bridge?.shareWhatsAppImage) bridge.shareWhatsAppImage(phone,message,imageUrl); else openWhatsApp(phone,message);
  }
 
  function openRenew(client:any){
@@ -117,14 +128,25 @@ const {error:updateError}=await supabase.from("clientes").update({vencimento:ren
   }catch(error){console.error(error);toast.error("Não foi possível renovar o cliente.")}finally{setIsRenewing(false)}
  }
 
- function sendRenewalMessage(){
+ async function sendRenewalMessage(){
   if(!selectedClient?.whatsapp||!selectedClient?.vencimento){toast.error("Cliente sem WhatsApp cadastrado.");return}
   const firstName=(selectedClient.nome||"Cliente").trim().split(" ")[0]||"Cliente";
   const brDate=format(parseISO(selectedClient.vencimento),"dd/MM/yyyy");
-  const message=BOT_TEMPLATES.CONFIRMACAO(firstName,brDate);
   const raw=String(selectedClient.whatsapp).replace(/\D/g,"");
   const phone=raw.startsWith("55")?raw:`55${raw}`;
-  openWhatsApp(phone,message);
+  let message=BOT_TEMPLATES.CONFIRMACAO(firstName,brDate);
+  let imageUrl:string|null=null;
+  try{
+   const {data}=await supabase.from("templates_whatsapp" as any).select("nome,mensagem,imagem_url");
+   const list=(data??[]) as any[];
+   const tpl=list.find(t=>/renov|confirm|sucesso/i.test(String(t.nome||"")));
+   if(tpl){
+    message=String(tpl.mensagem||message).replace(/{nome}/g,selectedClient.nome||firstName).replace(/{primeiro_nome}/g,firstName).replace(/{vencimento}/g,brDate).replace(/{valor}/g,formatBRL(selectedClient.valorFinal??selectedClient.valor??0));
+    imageUrl=tpl.imagem_url||null;
+   }
+  }catch(error){console.warn("Falha ao carregar template de renovação; usando texto padrão.",error)}
+  const bridge=(window as any).OwerAppsExternal;
+  if(imageUrl&&bridge?.shareWhatsAppImage) bridge.shareWhatsAppImage(phone,message,imageUrl); else openWhatsApp(phone,message);
   setIsRenewSuccessOpen(false);
  }
 
