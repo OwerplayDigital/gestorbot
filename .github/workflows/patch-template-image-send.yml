@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
       - name: Patch template image sending
         shell: python
         run: |
@@ -108,7 +109,7 @@ jobs:
 
           p.write_text(s)
       - name: Validate
-        run: npm ci && npm run build
+        run: bun install --frozen-lockfile && bun run build
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
