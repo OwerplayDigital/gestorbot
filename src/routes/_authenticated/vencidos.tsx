@@ -96,10 +96,10 @@ function VencidosPage() {
     }
   }
 
-  async function loadSystemTemplate(pattern: RegExp) {
+  async function loadSystemTemplate(name: string | RegExp) {
     const { data, error } = await supabase.from('templates_whatsapp').select('nome,mensagem,imagem_url').order('nome');
     if (error) throw error;
-    return data?.find(template => pattern.test(template.nome));
+    return data?.find(template => typeof name === 'string' ? template.nome.trim().toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR') : name.test(template.nome));
   }
 
   async function handleSendMessage(template: any) {
@@ -113,7 +113,7 @@ function VencidosPage() {
       if (template.system) {
         const isCharge = template.system === 'cobranca';
         fallback = isCharge ? BOT_TEMPLATES.COBRANCA(firstName, vencimento) : BOT_TEMPLATES.VENCIDO(firstName, vencimento, paymentUrl);
-        template = await loadSystemTemplate(isCharge ? /cobran|vence hoje|vencimento/i : /vencid|expir/i);
+        template = await loadSystemTemplate(isCharge ? 'Cobrança Oficial' : /vencid|expir/i);
       }
       if (await sendTemplateMessage(client, template, fallback)) setIsMessageOpen(false);
     } catch (error) {
@@ -185,7 +185,7 @@ function VencidosPage() {
     const firstName = (client.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
     const brDate = format(parseISO(client.vencimento), 'dd/MM/yyyy');
     try {
-      const template = await loadSystemTemplate(/renov|confirm|sucesso/i);
+      const template = await loadSystemTemplate('Renovação');
       if (await sendTemplateMessage(client, template, BOT_TEMPLATES.CONFIRMACAO(firstName, brDate))) setIsRenewSuccessOpen(false);
     } catch (error) {
       console.error(error);
