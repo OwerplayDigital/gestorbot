@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2, Activity, Eye, EyeOff, ReceiptText, RotateCw, Gift, Minus, Plus, MessageCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,6 +25,7 @@ const parseDate=(d:any):Date|null=>{if(!d||typeof d!=="string")return null;const
 function addDaysISO(iso:string,days:number){const [y,m,d]=iso.split("-").map(Number) as [number,number,number];const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().slice(0,10)}
 
 function Dashboard(){
+  const queryClient = useQueryClient();
  const [showLucro,setShowLucro]=useState(false);
  const [activeTab,setActiveTab]=useState("mes");
  const [selectedClient,setSelectedClient]=useState<any>(null);
@@ -52,7 +53,8 @@ function Dashboard(){
   const chartData=lastFour.map(({mIdx,y,label})=>{const mt=transactions.filter(t=>{if(!t.data)return false;const d=parseISO(t.data);return d.getFullYear()===y&&d.getMonth()===mIdx});const ent=mt.reduce((a,b)=>a+Number(b.entrada??0),0),sai=mt.reduce((a,b)=>a+Number(b.custo??0),0);return{name:label,entradas:ent,saidas:sai,lucro:ent-sai}});
   const recentTransactions=filteredTransactions.map((t:any)=>({...t,resolvedServerName:(t.clientes?.servidores_ids||[]).map((id:string)=>servers.find(s=>s.id===id)?.name).filter(Boolean).join(", ")||t.servidores_iptv?.name||"Painel"}));
   const expiringWithServers=expiringToday.map((c:any)=>({...c,valorFinal:Number(c.valor??0),serverName:(c.servidores_ids||[]).map((id:string)=>servers.find(s=>s.id===id)?.name).filter(Boolean).join(", ")||"Painel"}));
-  const active=clients.filter((c:any)=>c.status==="ativo"),serverMap=new Map();active.forEach((c:any)=>{const id=c.servidores_ids?.[0],s=servers.find(x=>x.id===id);if(!s||s.name==="Painel")return;const cur=serverMap.get(s.name)||{name:s.name,count:0,faturamento:0,custo:0,lucro:0,clientIds:new Set()};cur.clientIds.add(c.id);cur.count=cur.clientIds.size;cur.faturamento+=Number(c.valor??0);cur.custo+=Number(s.valor??0);cur.lucro=cur.faturamento-cur.custo;serverMap.set(s.name,cur)});
+  const active=clients.filter((c:any)=>c.status==="ativo"),serverMap=new Map();active.forEach((c:any)=>{for(const id of c.servidores_ids||[]){const server=servers.find(x=>x.id===id);if(!server||server.name==="Painel")continue;const cur=serverMap.get(server.name)||{name:server.name,count:0,faturamento:0,custo:0,lucro:0,clientIds:new Set()};cur.clientIds.add(c.id);cur.count=cur.clientIds.size;serverMap.set(server.name,cur)}});
+  filteredTransactions.forEach((t:any)=>{const server=servers.find(x=>x.id===t.serv_id);if(!server||server.name==="Painel")return;const cur=serverMap.get(server.name)||{name:server.name,count:0,faturamento:0,custo:0,lucro:0,clientIds:new Set()};cur.faturamento+=Number(t.entrada??0);cur.custo+=Number(t.custo??0);cur.lucro=cur.faturamento-cur.custo;serverMap.set(server.name,cur)});
   return {totalClients:clients.length,activeClients:clients.filter((c:any)=>c.status==="ativo").length,totalVencidos:vencidos.length,expiringTodayCount:expiringToday.length,entradas,saidas,lucro,expiringToday:expiringWithServers,vencidos:vencidos.map(c=>({...c,valorFinal:Number(c.valor??0),serverName:(c.servidores_ids||[]).map((id:string)=>servers.find(s=>s.id===id)?.name).filter(Boolean).join(", ")||"Painel"})),chartData,recentTransactions,previousPeriodLucro,previousPeriodEntradas,transactionsCount:filteredTransactions.length,serverStats:Array.from(serverMap.values()).sort((a,b)=>b.faturamento-a.faturamento)};
  }});
 
@@ -116,7 +118,7 @@ function Dashboard(){
    const todayBr=formatTz(toZonedTime(new Date(),"America/Sao_Paulo"),"yyyy-MM-dd");
    const {data:renewal,error:renewalError}=await supabase.from("renovacoes").insert({user_id:userId,cliente_id:selectedClient.id,plano_id:selectedClient.plano_id,valor:valorEntrada,desconto:Number(selectedClient.desconto||0),vencimento_anterior:selectedClient.vencimento,novo_vencimento:renewDate,data_renovacao:new Date().toISOString()}).select("id").single();
    if(renewalError||!renewal)throw renewalError||new Error("Renovação não registrada.");
-   const {error:transactionError}=await supabase.from("transacoes").insert({user_id:userId,cliente_id:selectedClient.id,tipo:mode==="bonus"?"saida":"entrada",entrada:valorEntrada,custo:totalCusto,valor:valorEntrada,data:todayBr,descricao:mode==="bonus"?`Bônus por indicação — ${selectedClient.nome}`:`Renovação cliente ${selectedClient.id}`,serv_id:selectedClient.servidores_ids?.[0]||null});
+   const {error:transactionError}=await supabase.from("transacoes").insert({user_id:userId,cliente_id:selectedClient.id,tipo:mode==="bonus"?"saida":"entrada",entrada:valorEntrada,custo:totalCusto,valor:mode==="bonus"?totalCusto:valorEntrada,data:todayBr,descricao:mode==="bonus"?`Bônus por indicação — ${selectedClient.nome}`:`Renovação cliente ${selectedClient.id}`,serv_id:selectedClient.servidores_ids?.[0]||null});
    if(transactionError)throw transactionError;
 const {error:updateError}=await supabase.from("clientes").update({vencimento:renewDate,status:"ativo"}).eq("id",selectedClient.id);
    if(updateError)throw updateError;
@@ -124,6 +126,7 @@ const {error:updateError}=await supabase.from("clientes").update({vencimento:ren
    setIsRenewOpen(false);
    setIsRenewSuccessOpen(true);
    toast.success(mode==="bonus"?`Bônus aplicado a ${selectedClient.nome}.`:`${selectedClient.nome} renovado.`);
+   await Promise.all(['dashboard-stats-modern', 'financeiro-summary', 'movimentacoes', 'clients-active', 'clients-expired', 'financeiro-operational-analytics'].map(key => queryClient.invalidateQueries({ queryKey: [key] })));
    await refetch();
   }catch(error){console.error(error);toast.error("Não foi possível renovar o cliente.")}finally{setIsRenewing(false)}
  }
