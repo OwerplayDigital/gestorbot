@@ -228,30 +228,6 @@ function RevendedoresPage() {
       const userId = authData.user?.id
       if (!userId) { setSaving(false); toast.error('Sessão inválida. Entre novamente no sistema.'); return }
 
-      const selectedServerName = movServidor ? serverName(movServidor) : serverName(selected.servidor_principal_id)
-      const isUniplay = /uniplay/i.test(selectedServerName)
-      const isGoat = /goat/i.test(selectedServerName)
-      if (!isUniplay && !isGoat) {
-        setSaving(false)
-        toast.error('Selecione o servidor Uniplay ou GOAT.')
-        return
-      }
-
-      const creditField = isUniplay ? 'uniplay' : 'goat'
-      const baseServer = isUniplay ? 'Uniplay' : 'Goat'
-      const { data: controle, error: controleError } = await (supabase as any).from('controle_creditos').select('uniplay, goat').eq('user_id', userId).maybeSingle()
-      if (controleError || !controle) {
-        setSaving(false)
-        toast.error('Não foi possível conferir o saldo de créditos.')
-        return
-      }
-      const saldoAtual = Number(controle[creditField])
-      if (saldoAtual < creditos) {
-        setSaving(false)
-        toast.error('Saldo insuficiente: há ' + Math.floor(saldoAtual) + ' créditos ' + baseServer + '. Reponha o estoque antes de registrar esta venda.')
-        return
-      }
-
       const { data: created, error: insertError } = await supabase.from('reseller_credits').insert(payload as never).select('id').single()
       if (insertError || !created) {
         setSaving(false)
@@ -259,25 +235,12 @@ function RevendedoresPage() {
         return
       }
 
-      const { error: creditError } = await (supabase as any).rpc('registrar_consumo_credito', {
-        p_renovacao_id: created.id,
-        p_cliente_id: null,
-        p_servidor: baseServer,
-        p_creditos: creditos,
-        p_caixinha: valor,
-      })
-      if (creditError) {
-        await supabase.from('reseller_credits').delete().eq('id', created.id)
-        setSaving(false)
-        toast.error('A movimentação foi cancelada porque o controle de créditos não pôde ser atualizado.')
-        return
-      }
     } else {
       const { error: updateError } = await supabase.from('reseller_credits').update(payload as never).eq('id', editingMovement.id)
       if (updateError) { setSaving(false); toast.error(updateError.message); return }
     }
     setSaving(false)
-    toast.success(editingMovement ? 'Movimentação atualizada.' : creditos + ' créditos descontados e ' + money(valor) + ' enviados para a caixinha.')
+    toast.success(editingMovement ? 'Movimentação atualizada.' : 'Movimentação de ' + creditos + ' créditos registrada.')
     setMovModal(false)
     setEditingMovement(null)
     loadData()
