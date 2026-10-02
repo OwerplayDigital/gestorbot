@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { BOT_TEMPLATES, renderClientTemplate } from '@/lib/templates';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -24,6 +24,7 @@ function addDaysISO(iso: string, days: number) {
 }
 
 function VencidosPage() {
+  const queryClient = useQueryClient();
   const [selectedClient, setSelectedClient] = useState<Client>(null);
   const [isMessageOpen, setIsMessageOpen] = useState(false);
   const [isRenewOpen, setIsRenewOpen] = useState(false);
@@ -158,12 +159,12 @@ function VencidosPage() {
       const todayBr = format(toZonedTime(new Date(), 'America/Sao_Paulo'), 'yyyy-MM-dd');
       const { data: renewal, error: renewalError } = await supabase.from('renovacoes').insert({ user_id: userId, cliente_id: selectedClient.id, plano_id: selectedClient.plano_id, valor: valorEntrada, desconto: Number(selectedClient.desconto || 0), vencimento_anterior: selectedClient.vencimento, novo_vencimento: renewDate, data_renovacao: new Date().toISOString() }).select('id').single();
       if (renewalError || !renewal) throw renewalError || new Error('Renovação não registrada.');
-      const { error: transactionError } = await supabase.from('transacoes').insert({ user_id: userId, cliente_id: selectedClient.id, tipo: mode === 'bonus' ? 'saida' : 'entrada', entrada: valorEntrada, custo: totalCusto, valor: valorEntrada, data: todayBr, descricao: mode === 'bonus' ? `Bônus por indicação — ${selectedClient.nome}` : `Renovação cliente ${selectedClient.id}`, serv_id: selectedClient.servidores_ids?.[0] || null });
+      const { error: transactionError } = await supabase.from('transacoes').insert({ user_id: userId, cliente_id: selectedClient.id, tipo: mode === 'bonus' ? 'saida' : 'entrada', entrada: valorEntrada, custo: totalCusto, valor: mode === 'bonus' ? totalCusto : valorEntrada, data: todayBr, descricao: mode === 'bonus' ? `Bônus por indicação — ${selectedClient.nome}` : `Renovação cliente ${selectedClient.id}`, serv_id: selectedClient.servidores_ids?.[0] || null });
       if (transactionError) throw transactionError;
       const { error: updateError } = await supabase.from('clientes').update({ vencimento: renewDate, status: 'ativo' }).eq('id', selectedClient.id);
       if (updateError) throw updateError;
       setSelectedClient({ ...selectedClient, vencimento: renewDate });
-      setIsRenewOpen(false); setIsRenewSuccessOpen(true); toast.success(mode === 'bonus' ? `Bônus aplicado a ${selectedClient.nome}.` : `${selectedClient.nome} renovado.`); await refetch();
+      setIsRenewOpen(false); setIsRenewSuccessOpen(true); toast.success(mode === 'bonus' ? `Bônus aplicado a ${selectedClient.nome}.` : `${selectedClient.nome} renovado.`); await Promise.all(['dashboard-stats-modern', 'financeiro-summary', 'movimentacoes', 'clients-active', 'clients-expired', 'financeiro-operational-analytics'].map(key => queryClient.invalidateQueries({ queryKey: [key] }))); await refetch();
     } catch (error) { console.error(error); toast.error('Não foi possível renovar o cliente.'); }
     finally { setIsRenewing(false); }
   }
