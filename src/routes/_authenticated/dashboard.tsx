@@ -76,7 +76,7 @@ function Dashboard(){
   const paymentUrl=`https://gestorbot.lovable.app/pagar/${client.id}`;
   const raw=String(client.whatsapp).replace(/\D/g,"");
   const phone=raw.startsWith("55")?raw:`55${raw}`;
-  let message=BOT_TEMPLATES.COBRANCA(firstName,brDate,paymentUrl);
+  let message=BOT_TEMPLATES.COBRANCA(firstName,brDate);
   let imageUrl:string|null=null;
   try{
    const {data}=await supabase.from("templates_whatsapp" as any).select("nome,mensagem,imagem_url");
