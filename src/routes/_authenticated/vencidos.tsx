@@ -3,10 +3,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { BOT_TEMPLATES, renderClientTemplate } from '@/lib/templates';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Clock, MessageCircle, Send, RefreshCw, Gift, Minus, Plus, MoreVertical, Trash2 } from 'lucide-react';
+import { Pencil, Clock, MessageCircle, Send, RefreshCw, Gift, Minus, Plus, MoreVertical, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
@@ -25,6 +27,11 @@ function addDaysISO(iso: string, days: number) {
 
 function VencidosPage() {
   const queryClient = useQueryClient();
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editPlans, setEditPlans] = useState<{ id: string; name: string; price: number }[]>([]);
+  const [editServers, setEditServers] = useState<{ id: string; name: string }[]>([]);
+  const [editForm, setEditForm] = useState({ nome: '', whatsapp: '', vencimento: '', plano_id: '', desconto: '', servidores_ids: [] as string[] });
   const [selectedClient, setSelectedClient] = useState<Client>(null);
   const [isMessageOpen, setIsMessageOpen] = useState(false);
   const [isRenewOpen, setIsRenewOpen] = useState(false);
@@ -183,12 +190,45 @@ function VencidosPage() {
     }
   }
 
+  async function openEdit(client: Client) {
+    try {
+      const [plans, servers] = await Promise.all([
+        supabase.from('plans').select('id, name, price').order('name'),
+        supabase.from('servidores_iptv').select('id, name').order('name'),
+      ]);
+      if (plans.error) throw plans.error;
+      if (servers.error) throw servers.error;
+      setEditPlans(plans.data || []); setEditServers(servers.data || []);
+      setSelectedClient(client);
+      const date = client.vencimento || '';
+      setEditForm({ nome: client.nome || '', whatsapp: client.whatsapp || '', vencimento: date.includes('/') ? date.split('/').reverse().join('-') : date, plano_id: client.plano_id || '', desconto: String(client.desconto ?? ''), servidores_ids: client.servidores_ids || [] });
+      setIsEditOpen(true);
+    } catch (error) { console.error(error); toast.error('Não foi possível abrir a edição do cliente.'); }
+  }
+
+  async function saveEdit() {
+    if (!selectedClient || isSavingEdit) return;
+    if (!editForm.nome.trim() || !editForm.vencimento || !editForm.plano_id || !editForm.servidores_ids.length) { toast.error('Preencha nome, vencimento, plano e servidor.'); return; }
+    const desconto = Number(editForm.desconto.replace(',', '.') || 0);
+    if (!Number.isFinite(desconto) || desconto < 0) { toast.error('Desconto inválido.'); return; }
+    setIsSavingEdit(true);
+    try {
+      const { error } = await supabase.from('clientes').update({ nome: editForm.nome.trim(), whatsapp: editForm.whatsapp.trim(), vencimento: editForm.vencimento, plano_id: editForm.plano_id, desconto, servidores_ids: editForm.servidores_ids }).eq('id', selectedClient.id);
+      if (error) throw error;
+      setIsEditOpen(false);
+      toast.success('Cliente atualizado.');
+      await Promise.all(['clients-active', 'clients-expired', 'dashboard-stats-modern', 'financeiro-operational-analytics'].map(key => queryClient.invalidateQueries({ queryKey: [key] })));
+      await refetch();
+    } catch (error) { console.error(error); toast.error('Não foi possível salvar o cliente.'); }
+    finally { setIsSavingEdit(false); }
+  }
+
   const ClientMenu = ({ client, mobile = false }: { client: Client; mobile?: boolean }) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon" className={`${mobile ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl text-muted-foreground`} aria-label={`Mais opções para ${client.nome}`} title="Mais opções"><MoreVertical size={mobile ? 18 : 16} /></Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="rounded-xl"><DropdownMenuItem onClick={() => openDelete(client)} className="cursor-pointer gap-2 text-rose-500 focus:text-rose-500"><Trash2 size={15} />Excluir cliente</DropdownMenuItem></DropdownMenuContent>
+      <DropdownMenuContent align="end" className="rounded-xl"><DropdownMenuItem onClick={() => openEdit(client)} className="cursor-pointer gap-2"><Pencil size={15} />Editar cliente</DropdownMenuItem><DropdownMenuItem onClick={() => openDelete(client)} className="cursor-pointer gap-2 text-rose-500 focus:text-rose-500"><Trash2 size={15} />Excluir cliente</DropdownMenuItem></DropdownMenuContent>
     </DropdownMenu>
   );
 
@@ -210,6 +250,14 @@ function VencidosPage() {
         <div className="md:hidden space-y-4">{clients.map(client => <div key={client.id} className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3"><div className="flex justify-between items-start gap-3"><div className="min-w-0"><h3 className="font-black text-lg uppercase leading-tight break-words">{client.nome}</h3><p className="break-words"><ServerBadge name={client.serverName} /></p></div><span className="bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full text-[10px] font-black uppercase whitespace-nowrap">{client.daysOverdue} dias</span></div><div className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Vencimento:</span><span className="text-rose-500 font-bold font-mono">{client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento}</span></div><Actions client={client} mobile /></div>)}</div>
       </>}
 
+      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!isSavingEdit) setIsEditOpen(open); }}><DialogContent onOpenAutoFocus={(event) => event.preventDefault()} className="max-w-md rounded-2xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Editar cliente</DialogTitle><DialogDescription>Altere os dados do cadastro.</DialogDescription></DialogHeader><div className="space-y-4 py-3">
+        <label className="block text-sm font-medium">Nome<Input value={editForm.nome} onChange={e => setEditForm(f => ({ ...f, nome: e.target.value }))} /></label>
+        <label className="block text-sm font-medium">WhatsApp<Input inputMode="tel" value={editForm.whatsapp} onChange={e => setEditForm(f => ({ ...f, whatsapp: e.target.value }))} /></label>
+        <div><p className="text-sm font-medium mb-1">Vencimento</p><DatePicker value={editForm.vencimento} onChange={vencimento => setEditForm(f => ({ ...f, vencimento }))} /></div>
+        <label className="block text-sm font-medium">Plano<select className="w-full h-10 rounded-md border bg-background px-3" value={editForm.plano_id} onChange={e => setEditForm(f => ({ ...f, plano_id: e.target.value }))}><option value="">Selecione</option>{editPlans.map(plan => <option key={plan.id} value={plan.id}>{plan.name} — R$ {Number(plan.price || 0).toFixed(2).replace('.', ',')}</option>)}</select></label>
+        <label className="block text-sm font-medium">Desconto (R$)<Input inputMode="decimal" value={editForm.desconto} onChange={e => setEditForm(f => ({ ...f, desconto: e.target.value }))} /></label>
+        <div><p className="text-sm font-medium mb-2">Servidores</p><div className="grid grid-cols-3 gap-2">{editServers.map(server => <button key={server.id} type="button" aria-pressed={editForm.servidores_ids.includes(server.id)} onClick={() => setEditForm(f => ({ ...f, servidores_ids: f.servidores_ids.includes(server.id) ? f.servidores_ids.filter(id => id !== server.id) : [...f.servidores_ids, server.id] }))} className={`rounded-xl border px-2 py-2 text-xs font-semibold ${editForm.servidores_ids.includes(server.id) ? 'border-primary bg-primary/10 text-primary' : 'border-border'}`}>{server.name}</button>)}</div></div>
+      </div><div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={isSavingEdit} onClick={() => setIsEditOpen(false)}>Cancelar</Button><Button disabled={isSavingEdit} onClick={saveEdit}>{isSavingEdit ? 'Salvando...' : 'Salvar alterações'}</Button></div></DialogContent></Dialog>
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black tracking-tighter">Excluir cliente?</DialogTitle><DialogDescription>Excluir <strong>{selectedClient?.nome}</strong> definitivamente? Esta ação não pode ser desfeita.</DialogDescription></DialogHeader><div className="grid grid-cols-2 gap-2 pt-3"><Button variant="outline" disabled={isDeleting} onClick={() => setIsDeleteOpen(false)}>Cancelar</Button><Button variant="destructive" disabled={isDeleting} onClick={confirmDelete}>{isDeleting ? 'Excluindo...' : 'Excluir'}</Button></div></DialogContent></Dialog>
       <Dialog open={isRenewOpen} onOpenChange={setIsRenewOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">{selectedClient?.nome}</DialogTitle><DialogDescription>Ajuste a nova data e escolha o tipo de renovação.</DialogDescription></DialogHeader><div className="grid grid-cols-[52px_1fr_52px] gap-2 py-4"><Button variant="outline" onClick={() => setRenewDate(d => addDaysISO(d, -1))} className="h-12 rounded-xl"><Minus size={18} /></Button><div className="flex h-12 items-center justify-center rounded-xl border bg-muted/30 font-mono font-bold">{renewDate ? format(parseISO(renewDate), 'dd/MM/yyyy') : ''}</div><Button variant="outline" onClick={() => setRenewDate(d => addDaysISO(d, 1))} className="h-12 rounded-xl"><Plus size={18} /></Button></div><div className="grid gap-2"><Button disabled={isRenewing} onClick={() => confirmRenew("normal")} className="gap-2"><RefreshCw size={16}/>{isRenewing ? "Renovando..." : "Renovação normal"}</Button><Button variant="outline" disabled={isRenewing} onClick={() => confirmRenew("bonus")} className="gap-2"><Gift size={16}/>Bônus por indicação</Button></div></DialogContent></Dialog>
       <Dialog open={isRenewSuccessOpen} onOpenChange={setIsRenewSuccessOpen}><DialogContent className="max-w-sm rounded-2xl"><DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter">Renovado — {selectedClient?.nome}</DialogTitle><DialogDescription>{selectedClient?.vencimento ? format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy') : ''}</DialogDescription></DialogHeader><div className="grid gap-2 pt-2">{selectedClient?.whatsapp && <Button onClick={sendRenewalMessage} className="h-11 rounded-xl gap-2"><MessageCircle size={16} />Enviar mensagem</Button>}<Button variant="outline" onClick={() => setIsRenewSuccessOpen(false)} className="h-11 rounded-xl">Fechar</Button></div></DialogContent></Dialog>
