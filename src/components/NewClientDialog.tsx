@@ -37,7 +37,6 @@ export function NewClientDialog() {
     if (!form.nome.trim() || !form.whatsapp.trim() || !form.vencimento || !form.plano_id || form.servidores_ids.length === 0) { toast.error('Preencha nome, WhatsApp, vencimento, plano e servidor.'); return; }
     const desconto = Number(form.desconto.replace(',', '.') || 0);
     if (!Number.isFinite(desconto) || desconto < 0) { toast.error('Desconto inválido.'); return; }
-    if ((appAccessFields(form.app_nome).mac && !form.mac_address.trim()) || (appAccessFields(form.app_nome).key && !form.app_key.trim())) { toast.error(appAccessFields(form.app_nome).key ? 'Informe o MAC e a Key do aplicativo.' : 'Informe o MAC do aplicativo.'); return; }
     setSaving(true);
     let createdClientId: string | null = null;
     try {
@@ -64,7 +63,7 @@ export function NewClientDialog() {
       createdClientId = client.id;
 
       if (form.app_nome) {
-        const { error: deviceError } = await supabase.from('dispositivos').insert({ cliente_id: client.id, app_nome: form.app_nome, mac_address: requiresAppAccess(form.app_nome) ? form.mac_address.trim() : '', app_key: appAccessFields(form.app_nome).key ? form.app_key.trim() : null });
+        const { error: deviceError } = await supabase.from('dispositivos').insert({ cliente_id: client.id, app_nome: form.app_nome, mac_address: requiresAppAccess(form.app_nome) ? form.mac_address.trim() : '', app_key: appAccessFields(form.app_nome).key ? form.app_key.trim() || null : null });
         if (deviceError) throw deviceError;
       }
 

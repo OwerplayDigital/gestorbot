@@ -97,14 +97,13 @@ function ApplicationsPage() {
   async function linkClient(client: AppClient, access = { mac: '', key: '' }) {
     if (!group || linkingId) return;
     const app = group;
-    if ((appAccessFields(app.name).mac && !access.mac.trim()) || (appAccessFields(app.name).key && !access.key.trim())) { toast.error(appAccessFields(group?.name || form.app_nome).key ? 'Informe o MAC e a Key do aplicativo.' : 'Informe o MAC do aplicativo.'); return; }
     setLinkingId(client.id);
     try {
       const existing = await fetchAllPages<AppDevice>((from, to) => supabase.from('dispositivos').select('id,cliente_id,app_nome').eq('cliente_id', client.id).order('id').range(from, to));
       if (existing.some(device => normalizeAppName(device.app_nome) === app.key)) {
         toast.info('Este cliente já está vinculado ao aplicativo.');
       } else {
-        const { error } = await supabase.from('dispositivos').insert({ cliente_id: client.id, app_nome: app.name, mac_address: requiresAppAccess(app.name) ? access.mac.trim() : '', app_key: appAccessFields(app.name).key ? access.key.trim() : null });
+        const { error } = await supabase.from('dispositivos').insert({ cliente_id: client.id, app_nome: app.name, mac_address: requiresAppAccess(app.name) ? access.mac.trim() : '', app_key: appAccessFields(app.name).key ? access.key.trim() || null : null });
         if (error) throw error;
         toast.success(`${client.nome} vinculado a ${app.name}.`);
       }
@@ -125,11 +124,10 @@ function ApplicationsPage() {
   async function saveDevice() {
     if (!selectedClient || saving) return;
     if (!form.app_nome.trim()) { toast.error('Informe o aplicativo.'); return; }
-    if ((appAccessFields(form.app_nome).mac && !form.mac_address.trim()) || (appAccessFields(form.app_nome).key && !form.app_key.trim())) { toast.error('Informe o MAC e a Key do aplicativo.'); return; }
     setSaving(true);
     try {
       const canonical = appNames.find(name => normalizeAppName(name) === normalizeAppName(form.app_nome));
-      const payload = { cliente_id: selectedClient.id, app_nome: canonical || form.app_nome.trim().replace(/\s+/g, ' '), mac_address: requiresAppAccess(form.app_nome) ? form.mac_address.trim() : '', app_key: appAccessFields(form.app_nome).key ? form.app_key.trim() : null };
+      const payload = { cliente_id: selectedClient.id, app_nome: canonical || form.app_nome.trim().replace(/\s+/g, ' '), mac_address: requiresAppAccess(form.app_nome) ? form.mac_address.trim() : '', app_key: appAccessFields(form.app_nome).key ? form.app_key.trim() || null : null };
       const response = form.id
         ? await supabase.from('dispositivos').update(payload).eq('id', form.id).eq('cliente_id', selectedClient.id)
         : await supabase.from('dispositivos').insert(payload);
@@ -176,8 +174,8 @@ function ApplicationsPage() {
         <DialogHeader><DialogTitle>Vincular cliente a {group?.name}</DialogTitle><DialogDescription className="sr-only">Vínculo do cliente ao aplicativo</DialogDescription></DialogHeader>
         {clientToLink ? <form className="space-y-4" onSubmit={event => { event.preventDefault(); void linkClient(clientToLink, linkAccess); }}>
           <p className="font-semibold">{clientToLink.nome}</p>
-          <label className="block text-sm font-medium">MAC<Input required autoComplete="off" value={linkAccess.mac} disabled={!!linkingId} onChange={event => setLinkAccess(value => ({ ...value, mac: event.target.value }))} /></label>
-          {group && appAccessFields(group.name).key && <label className="block text-sm font-medium">Key<Input required autoComplete="off" value={linkAccess.key} disabled={!!linkingId} onChange={event => setLinkAccess(value => ({ ...value, key: event.target.value }))} /></label>}
+          <label className="block text-sm font-medium">MAC<Input autoComplete="off" value={linkAccess.mac} disabled={!!linkingId} onChange={event => setLinkAccess(value => ({ ...value, mac: event.target.value }))} /></label>
+          {group && appAccessFields(group.name).key && <label className="block text-sm font-medium">Key<Input autoComplete="off" value={linkAccess.key} disabled={!!linkingId} onChange={event => setLinkAccess(value => ({ ...value, key: event.target.value }))} /></label>}
           <div className="grid grid-cols-2 gap-2"><Button type="button" variant="outline" disabled={!!linkingId} onClick={() => setClientToLink(null)}>Voltar</Button><Button type="submit" disabled={!!linkingId}>{linkingId ? 'Vinculando...' : 'Confirmar vínculo'}</Button></div>
         </form> : <>
         <Input aria-label="Buscar cliente para vincular" placeholder="Buscar por nome ou telefone..." value={linkSearch} disabled={!!linkingId} onChange={event => setLinkSearch(event.target.value)} />

@@ -75,6 +75,6 @@ export async function fetchAllPages<T>(read: (from: number, to: number) => Promi
 export function appAccessFields(name: string) {
   const key = normalizeAppName(name);
   const mac = !!key && !['uniplay', 'uniplay p2p', 'goat', 'goat p2p', 'orange player'].includes(key);
-  return { mac, key: mac && !['ibo new', 'ibo revenda', 'ibi revenda'].includes(key) };
+  return { mac, key: mac && !['ibo new', 'ibo revenda', 'ibi revenda', 'funplay'].includes(key) };
 }
 export const requiresAppAccess = (name: string) => appAccessFields(name).mac;
