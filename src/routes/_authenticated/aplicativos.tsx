@@ -12,7 +12,7 @@ import { useAppCatalog } from '@/hooks/use-app-catalog';
 import { AppIcon } from '@/components/AppIcon';
 import { AppCatalogDialog } from '@/components/AppCatalogDialog';
 import { toast } from 'sonner';
-import { APP_CATALOG, getAppUrl, normalizeAppName, groupClientApps, countAppStatuses, clientAppStatus, fetchAllPages, type AppClient, type AppDevice, type AppStatus } from '@/lib/client-apps';
+import { APP_CATALOG, appAccessFields, requiresAppAccess, getAppUrl, normalizeAppName, groupClientApps, countAppStatuses, clientAppStatus, fetchAllPages, type AppClient, type AppDevice, type AppStatus } from '@/lib/client-apps';
 
 export const Route = createFileRoute('/_authenticated/aplicativos')({ component: ApplicationsPage });
 type DeviceDetails = AppDevice & { mac_address: string; app_key: string | null };
@@ -36,6 +36,8 @@ function ApplicationsPage() {
   const catalog = catalogQuery.data || APP_CATALOG;
   // null: catálogo; "": clientes sem aplicativo; demais: nome normalizado.
   const [selectedApp, setSelectedApp] = useState<string | null>(null);
+  const [clientToLink, setClientToLink] = useState<AppClient | null>(null);
+  const [linkAccess, setLinkAccess] = useState({ mac: '', key: '' });
   const [isLinkOpen, setIsLinkOpen] = useState(false);
   const [linkSearch, setLinkSearch] = useState('');
   const [linkingId, setLinkingId] = useState<string | null>(null);
@@ -87,16 +89,22 @@ function ApplicationsPage() {
       || (linkDigits.length > 0 && !/[a-zà-ú]/i.test(linkSearch) && String(client.whatsapp || '').replace(/\D/g, '').includes(linkDigits))
   )).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
-  async function linkClient(client: AppClient) {
+  function chooseLinkClient(client: AppClient) {
+    if (!group || linkingId) return;
+    if (requiresAppAccess(group.name)) { setClientToLink(client); setLinkAccess({ mac: '', key: '' }); }
+    else void linkClient(client);
+  }
+  async function linkClient(client: AppClient, access = { mac: '', key: '' }) {
     if (!group || linkingId) return;
     const app = group;
+    if ((appAccessFields(app.name).mac && !access.mac.trim()) || (appAccessFields(app.name).key && !access.key.trim())) { toast.error(appAccessFields(group?.name || form.app_nome).key ? 'Informe o MAC e a Key do aplicativo.' : 'Informe o MAC do aplicativo.'); return; }
     setLinkingId(client.id);
     try {
       const existing = await fetchAllPages<AppDevice>((from, to) => supabase.from('dispositivos').select('id,cliente_id,app_nome').eq('cliente_id', client.id).order('id').range(from, to));
       if (existing.some(device => normalizeAppName(device.app_nome) === app.key)) {
         toast.info('Este cliente já está vinculado ao aplicativo.');
       } else {
-        const { error } = await supabase.from('dispositivos').insert({ cliente_id: client.id, app_nome: app.name, mac_address: '', app_key: null });
+        const { error } = await supabase.from('dispositivos').insert({ cliente_id: client.id, app_nome: app.name, mac_address: requiresAppAccess(app.name) ? access.mac.trim() : '', app_key: appAccessFields(app.name).key ? access.key.trim() : null });
         if (error) throw error;
         toast.success(`${client.nome} vinculado a ${app.name}.`);
       }
@@ -105,7 +113,7 @@ function ApplicationsPage() {
         queryClient.invalidateQueries({ queryKey: ['client-application-details', client.id] }),
         queryClient.invalidateQueries({ queryKey: ['clients-active'] }),
       ]);
-      setIsLinkOpen(false); setLinkSearch('');
+      setIsLinkOpen(false); setLinkSearch(''); setClientToLink(null);
     } catch (error) { console.error(error); toast.error('Não foi possível vincular o cliente. Tente novamente.'); }
     finally { setLinkingId(null); }
   }
@@ -117,10 +125,11 @@ function ApplicationsPage() {
   async function saveDevice() {
     if (!selectedClient || saving) return;
     if (!form.app_nome.trim()) { toast.error('Informe o aplicativo.'); return; }
+    if ((appAccessFields(form.app_nome).mac && !form.mac_address.trim()) || (appAccessFields(form.app_nome).key && !form.app_key.trim())) { toast.error('Informe o MAC e a Key do aplicativo.'); return; }
     setSaving(true);
     try {
       const canonical = appNames.find(name => normalizeAppName(name) === normalizeAppName(form.app_nome));
-      const payload = { cliente_id: selectedClient.id, app_nome: canonical || form.app_nome.trim().replace(/\s+/g, ' '), mac_address: form.mac_address.trim(), app_key: form.app_key.trim() || null };
+      const payload = { cliente_id: selectedClient.id, app_nome: canonical || form.app_nome.trim().replace(/\s+/g, ' '), mac_address: requiresAppAccess(form.app_nome) ? form.mac_address.trim() : '', app_key: appAccessFields(form.app_nome).key ? form.app_key.trim() : null };
       const response = form.id
         ? await supabase.from('dispositivos').update(payload).eq('id', form.id).eq('cliente_id', selectedClient.id)
         : await supabase.from('dispositivos').insert(payload);
@@ -150,7 +159,7 @@ function ApplicationsPage() {
         <div className="grid gap-3 md:grid-cols-2">{visibleGroups.map(item => <button key={item.key} onClick={() => selectApp(item.key)} className="flex items-center gap-4 rounded-2xl border bg-card p-4 text-left shadow-sm transition-colors hover:border-primary/40"><AppIcon app={catalog.find(app => normalizeAppName(app.name) === item.key)} /><div className="min-w-0 flex-1"><h2 className="break-words font-bold">{item.name}</h2><p className="my-1 text-sm text-muted-foreground">{item.clients.length} clientes</p><StatusTotals clients={item.clients} today={today} /></div><ChevronRight size={18} className="shrink-0 text-muted-foreground" /></button>)}</div>
         {!visibleGroups.length && <div className="rounded-2xl border bg-card p-8 text-center text-muted-foreground">{search ? 'Nenhum aplicativo encontrado.' : 'Nenhum aplicativo vinculado ainda. Comece pelos clientes sem aplicativo.'}</div>}
       </> : <>
-        {group && <Button className="gap-2 rounded-xl" onClick={() => { setLinkSearch(''); setIsLinkOpen(true); }}><Plus size={17} />Vincular cliente</Button>}
+        {group && <Button className="gap-2 rounded-xl" onClick={() => { setLinkSearch(''); setClientToLink(null); setLinkAccess({ mac: '', key: '' }); setIsLinkOpen(true); }}><Plus size={17} />Vincular cliente</Button>}
         <div className="flex items-center gap-3 rounded-2xl border bg-card p-4"><AppIcon app={catalog.find(app => normalizeAppName(app.name) === selectedApp)} /><StatusTotals clients={appClients} today={today} /></div>
         <label className="relative block"><Search size={18} className="absolute left-3 top-3 text-muted-foreground" /><Input aria-label="Buscar cliente ou telefone" placeholder="Buscar cliente ou telefone..." className="h-11 rounded-xl pl-10" value={search} onChange={event => setSearch(event.target.value)} /></label>
         <select aria-label="Filtrar por vencimento" className="h-10 w-full rounded-xl border bg-background px-3 text-sm md:w-56" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}><option value="all">Todos os vencimentos</option>{Object.entries(statusLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
@@ -164,14 +173,21 @@ function ApplicationsPage() {
     </>}
     <Dialog open={isLinkOpen} onOpenChange={open => { if (!linkingId) setIsLinkOpen(open); }}>
       <DialogContent onOpenAutoFocus={event => event.preventDefault()} className="max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Vincular cliente a {group?.name}</DialogTitle><DialogDescription>Escolha um cliente já cadastrado. Os dados de acesso podem ser preenchidos depois.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Vincular cliente a {group?.name}</DialogTitle><DialogDescription>Escolha um cliente já cadastrado. {group && requiresAppAccess(group.name) ? (appAccessFields(group.name).key ? 'Depois de escolher o cliente, informe o MAC e a Key.' : 'Depois de escolher o cliente, informe o MAC.') : 'Este aplicativo não precisa de MAC ou Key.'}</DialogDescription></DialogHeader>
+        {clientToLink ? <form className="space-y-4" onSubmit={event => { event.preventDefault(); void linkClient(clientToLink, linkAccess); }}>
+          <p className="font-semibold">{clientToLink.nome}</p>
+          <label className="block text-sm font-medium">MAC<Input required autoComplete="off" value={linkAccess.mac} disabled={!!linkingId} onChange={event => setLinkAccess(value => ({ ...value, mac: event.target.value }))} /></label>
+          {group && appAccessFields(group.name).key && <label className="block text-sm font-medium">Key<Input required autoComplete="off" value={linkAccess.key} disabled={!!linkingId} onChange={event => setLinkAccess(value => ({ ...value, key: event.target.value }))} /></label>}
+          <div className="grid grid-cols-2 gap-2"><Button type="button" variant="outline" disabled={!!linkingId} onClick={() => setClientToLink(null)}>Voltar</Button><Button type="submit" disabled={!!linkingId}>{linkingId ? 'Vinculando...' : 'Confirmar vínculo'}</Button></div>
+        </form> : <>
         <Input aria-label="Buscar cliente para vincular" placeholder="Buscar por nome ou telefone..." value={linkSearch} disabled={!!linkingId} onChange={event => setLinkSearch(event.target.value)} />
         <p className="text-xs text-muted-foreground">{linkCandidates.length} clientes disponíveis</p>
-        <div className="max-h-[50vh] space-y-2 overflow-y-auto">{linkCandidates.map(client => <button key={client.id} type="button" disabled={!!linkingId} onClick={() => void linkClient(client)} className="flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left hover:bg-muted/40 disabled:opacity-50">
+        <div className="max-h-[50vh] space-y-2 overflow-y-auto">{linkCandidates.map(client => <button key={client.id} type="button" disabled={!!linkingId} onClick={() => chooseLinkClient(client)} className="flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left hover:bg-muted/40 disabled:opacity-50">
           <div className="min-w-0"><p className="break-words text-sm font-semibold">{client.nome}</p><p className="mt-1 text-xs text-muted-foreground">{client.whatsapp || 'Sem WhatsApp'}</p><span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] ${statusColors[clientAppStatus(client.vencimento, today)]}`}>{statusLabels[clientAppStatus(client.vencimento, today)]}</span></div>
           <span className="shrink-0 text-xs font-semibold text-primary">{linkingId === client.id ? 'Vinculando...' : 'Vincular'}</span>
         </button>)}</div>
         {!linkCandidates.length && <p className="py-4 text-center text-sm text-muted-foreground">{linkSearch ? 'Nenhum cliente encontrado.' : 'Todos os clientes já estão vinculados a este aplicativo.'}</p>}
+        </>}
       </DialogContent>
     </Dialog>
     <Dialog open={!!selectedClient} onOpenChange={open => { if (!open && !saving) setSelectedClient(null); }}>
@@ -181,8 +197,8 @@ function ApplicationsPage() {
           <div className="rounded-xl bg-muted/40 p-3 text-sm"><p>{activeClient.whatsapp || 'Sem WhatsApp cadastrado'}</p><p className="mt-1 text-muted-foreground">Vencimento: {activeClient.vencimento?.includes('-') ? activeClient.vencimento.slice(0, 10).split('-').reverse().join('/') : activeClient.vencimento || 'Não informado'}</p><p className="mt-1 text-muted-foreground">Plano: {activeClient.plans?.name || 'Não informado'}</p><p className="mt-1 text-muted-foreground">Servidores: {(activeClient.servidores_ids || []).map(id => data?.servers.find(server => server.id === id)?.name).filter(Boolean).join(', ') || 'Não informado'}</p></div>
           {editing ? <form className="space-y-3" onSubmit={event => { event.preventDefault(); void saveDevice(); }}>
             <label className="block text-sm font-medium">Aplicativo<Input required list="gestor-app-names" value={form.app_nome} onChange={event => setForm(f => ({ ...f, app_nome: event.target.value }))} placeholder="Selecione ou digite o nome" /><datalist id="gestor-app-names">{appNames.map(name => <option key={name} value={name} />)}</datalist></label>
-            <label className="block text-sm font-medium">MAC<Input value={form.mac_address} onChange={event => setForm(f => ({ ...f, mac_address: event.target.value }))} /></label>
-            <label className="block text-sm font-medium">Key<Input value={form.app_key} onChange={event => setForm(f => ({ ...f, app_key: event.target.value }))} /></label>
+            <div hidden={!requiresAppAccess(form.app_nome)}><label className="block text-sm font-medium">MAC<Input value={form.mac_address} onChange={event => setForm(f => ({ ...f, mac_address: event.target.value }))} /></label>
+            {appAccessFields(form.app_nome).key && <label className="block text-sm font-medium">Key<Input value={form.app_key} onChange={event => setForm(f => ({ ...f, app_key: event.target.value }))} /></label>}</div>
             <div className="grid grid-cols-2 gap-2"><Button type="button" variant="outline" disabled={saving} onClick={() => setEditing(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? 'Salvando...' : 'Salvar aplicativo'}</Button></div>
           </form> : <>
             {deviceQuery.isPending ? <p className="text-sm text-muted-foreground">Carregando dados dos aplicativos...</p> : deviceQuery.error ? <div><p className="text-sm text-rose-500">Não foi possível carregar os dados.</p><Button variant="outline" onClick={() => deviceQuery.refetch()}>Tentar novamente</Button></div> : <>
