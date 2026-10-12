@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { groupClientApps, clientAppStatus, countAppStatuses, fetchAllPages } from '../src/lib/client-apps.ts';
+import { APP_CATALOG, normalizeAppName, groupClientApps, clientAppStatus, countAppStatuses, fetchAllPages } from '../src/lib/client-apps.ts';
 
 const clients = [
   { id: 'a', nome: 'Ana', vencimento: '2026-10-12' },
@@ -34,3 +34,12 @@ assert.equal(calls, 3);
 assert.deepEqual(await fetchAllPages(async () => ({ data: [], error: null })), []);
 await assert.rejects(fetchAllPages(async () => ({ data: null, error: Error('consulta falhou') })));
 console.log('PASS: aplicativos, clientes únicos, múltiplos dispositivos, status e paginação.');
+
+assert.equal(APP_CATALOG.length, 11);
+assert.equal(new Set(APP_CATALOG.map(app => normalizeAppName(app.name))).size, 11);
+const defaults = groupClientApps([], [], APP_CATALOG);
+assert.equal(defaults.groups.length, 11);
+assert.ok(defaults.groups.every(group => group.clients.length === 0));
+assert.equal(normalizeAppName('Uniplayer P2P'), normalizeAppName('Uniplay P2P'));
+assert.equal(normalizeAppName('Fanplay'), normalizeAppName('FunPlay'));
+console.log('PASS: 11 aplicativos pré-cadastrados, sem clientes e aliases normalizados.');

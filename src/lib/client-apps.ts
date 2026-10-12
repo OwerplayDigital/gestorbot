@@ -1,14 +1,26 @@
-export const APP_CATALOG = [
-  { name: 'Ibo Pro', url: 'https://iboproapp.com/manage-playlists/login/' },
-  { name: 'Ibo Player', url: 'https://iboplayer.com/device/login' },
-  { name: 'Bob Player', url: 'https://bobplayer.com/device/login' },
-] as const;
+export type AppDefinition = { name: string; url?: string | undefined; icon?: string | undefined; crop?: { width: number; size: number; x: number; y: number } };
+export const APP_CATALOG: AppDefinition[] = [
+  { name: 'Uniplay P2P', icon: '/app-icons/reference.webp', crop: { width: 691, size: 84, x: 49, y: 417 } },
+  { name: 'Goat P2P', icon: '/app-icons/goat.webp' },
+  { name: 'Orange Player', icon: '/app-icons/orange.webp' },
+  { name: 'Ibo Player', url: 'https://iboplayer.com/device/login', icon: '/app-icons/ibo-player.webp' },
+  { name: 'Ibo Pro', url: 'https://iboproapp.com/manage-playlists/login/', icon: '/app-icons/ibo-pro.webp' },
+  { name: 'Ibo Revenda', icon: '/app-icons/ibo-revenda.webp' },
+  { name: 'Ibo New', icon: '/app-icons/ibo-new.webp' },
+  { name: 'Bob Player', url: 'https://bobplayer.com/device/login', icon: '/app-icons/bob-player.webp' },
+  { name: 'See Play', icon: '/app-icons/see-play.webp' },
+  { name: 'FunPlay', icon: '/app-icons/reference.webp', crop: { width: 691, size: 84, x: 49, y: 695 } },
+  { name: 'Lazer Play', icon: '/app-icons/lazer-play.webp' },
+];
 
 export type AppClient = { id: string; nome: string; whatsapp: string | null; vencimento: string | null; servidores_ids: string[] | null; plans?: { name: string } | null };
 export type AppDevice = { id: string; cliente_id: string; app_nome: string };
 export type AppStatus = 'active' | 'today' | 'expired' | 'unknown';
-export const normalizeAppName = (name: string) => name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR');
-export const getAppUrl = (name: string) => APP_CATALOG.find(app => normalizeAppName(app.name) === normalizeAppName(name))?.url;
+export const normalizeAppName = (name: string) => {
+  const key = name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR');
+  return key === 'uniplayer p2p' ? 'uniplay p2p' : key === 'fanplay' ? 'funplay' : key;
+};
+export const getAppUrl = (name: string, catalog: AppDefinition[] = APP_CATALOG) => catalog.find(app => normalizeAppName(app.name) === normalizeAppName(name))?.url;
 
 export function clientAppStatus(vencimento: string | null, today: string): AppStatus {
   if (!vencimento) return 'unknown';
@@ -19,10 +31,11 @@ export function clientAppStatus(vencimento: string | null, today: string): AppSt
   return date < today ? 'expired' : date === today ? 'today' : 'active';
 }
 
-export function groupClientApps(clients: AppClient[], devices: AppDevice[]) {
+export function groupClientApps(clients: AppClient[], devices: AppDevice[], catalog: AppDefinition[] = []) {
   const byId = new Map(clients.map(client => [client.id, client]));
   const assigned = new Set<string>();
   const groups = new Map<string, { key: string; name: string; clients: Map<string, AppClient> }>();
+  for (const app of catalog) groups.set(normalizeAppName(app.name), { key: normalizeAppName(app.name), name: app.name, clients: new Map() });
   for (const device of devices) {
     const client = byId.get(device.cliente_id);
     const key = normalizeAppName(device.app_nome);
