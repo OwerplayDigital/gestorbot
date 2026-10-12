@@ -45,7 +45,10 @@ export function AppCatalogDialog({ catalog }: { catalog: AppDefinition[] }) {
         const { error: uploadError } = await supabase.storage.from('application-icons').upload(path, iconFile, { contentType: iconFile.type, upsert: false });
         if (uploadError) throw uploadError;
         uploadedPath = path;
-        iconUrl = supabase.storage.from('application-icons').getPublicUrl(path).data.publicUrl;
+        // Armazenamento privado: link assinado de longa duração (10 anos).
+        const { data: signed, error: signError } = await supabase.storage.from('application-icons').createSignedUrl(path, 315360000);
+        if (signError || !signed) throw signError || new Error('Falha ao gerar link do ícone.');
+        iconUrl = signed.signedUrl;
       }
       const { error } = await (supabase as any).from('aplicativos_catalogo').insert({ user_id: auth.user.id, nome, icon_url: iconUrl, painel_url: panel.trim() || null });
       if (error) throw error;
