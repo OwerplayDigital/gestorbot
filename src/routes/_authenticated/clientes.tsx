@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { APP_CATALOG, getAppUrl } from '@/lib/client-apps';
 import { BOT_TEMPLATES } from '@/lib/templates';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -22,18 +23,12 @@ type Option = { id: string; name: string; price?: number; valor?: number };
 type AppMode = 'view' | 'edit' | 'new';
 type RenewMode = 'normal' | 'bonus';
 
-const APP_CATALOG = [
-  { name: 'Ibo Pro', url: 'https://iboproapp.com/manage-playlists/login/' },
-  { name: 'Ibo Player', url: 'https://iboplayer.com/device/login' },
-  { name: 'Bob Player', url: 'https://bobplayer.com/device/login' },
-] as const;
 const SERVER_PANELS = [
   { names: ['uniplay'], url: 'https://searchdefense.top/#/login' },
   { names: ['goat'], url: 'https://goatnt.com/' },
   { names: ['p2braz', 'p2bras', 'p2 braz', 'p2 bras'], url: 'https://painel.fun/lock?redirect=%2Fusers' },
 ] as const;
 
-function getAppUrl(name: string) { return APP_CATALOG.find((app) => app.name.toLowerCase() === String(name || '').toLowerCase())?.url; }
 function getServerPanelUrl(name: string) { const normalized = String(name || '').trim().toLowerCase(); return SERVER_PANELS.find((server) => server.names.some((alias) => alias === normalized))?.url; }
 function getServerPanelClass(name: string) {
   if (/uniplay/i.test(name)) return 'bg-sky-500/10 text-sky-500 border-sky-500/30 hover:bg-sky-500/15';
@@ -144,7 +139,7 @@ function ClientesPage() {
   async function confirmDelete() { if (!selectedClient || isDeleting) return; setIsDeleting(true); try { const { error } = await supabase.from('clientes').delete().eq('id', selectedClient.id); if (error) throw error; toast.success(`${selectedClient.nome} excluído.`); setIsDeleteOpen(false); setSelectedClient(null); await refetch(); } catch (error) { console.error(error); toast.error('Não foi possível excluir o cliente.'); } finally { setIsDeleting(false); } }
   async function saveAppData() {
     if (!selectedClient || isAppSaving) return; if (!appForm.app_nome.trim()) { toast.error('Informe o aplicativo.'); return; } setIsAppSaving(true);
-    try { const payload = { cliente_id: selectedClient.id, app_nome: appForm.app_nome.trim(), mac_address: appForm.mac_address.trim(), app_key: appForm.app_key.trim() || null }; if (appForm.id) { const { error } = await supabase.from('dispositivos').update(payload).eq('id', appForm.id); if (error) throw error; } else { const { error } = await supabase.from('dispositivos').insert(payload); if (error) throw error; } toast.success(appForm.id ? 'Dados do aplicativo atualizados.' : 'Aplicativo adicionado.'); await refetch(); setAppMode('view'); } catch (error) { console.error(error); toast.error('Não foi possível salvar os dados do aplicativo.'); } finally { setIsAppSaving(false); }
+    try { const payload = { cliente_id: selectedClient.id, app_nome: appForm.app_nome.trim(), mac_address: appForm.mac_address.trim(), app_key: appForm.app_key.trim() || null }; if (appForm.id) { const { error } = await supabase.from('dispositivos').update(payload).eq('id', appForm.id); if (error) throw error; } else { const { error } = await supabase.from('dispositivos').insert(payload); if (error) throw error; } toast.success(appForm.id ? 'Dados do aplicativo atualizados.' : 'Aplicativo adicionado.'); await queryClient.invalidateQueries({ queryKey: ['client-applications'] }); await refetch(); setAppMode('view'); } catch (error) { console.error(error); toast.error('Não foi possível salvar os dados do aplicativo.'); } finally { setIsAppSaving(false); }
   }
   const handleSendMessage = (template: any) => { if (!selectedClient) return; const firstName = selectedClient.nome.split(' ')[0]; const valor = selectedClient.plans ? (Number(selectedClient.plans.price) - Number(selectedClient.desconto || 0)).toFixed(2) : '0.00'; const vencimentoBr = selectedClient.vencimento?.includes('-') ? format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy') : selectedClient.vencimento; const message = template.mensagem.replace(/{nome}/g, selectedClient.nome).replace(/{primeiro_nome}/g, firstName).replace(/{vencimento}/g, vencimentoBr || '').replace(/{valor}/g, `R$ ${valor}`); const phoneRaw = selectedClient.whatsapp.replace(/\D/g, ''); const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`; const bridge = (window as any).OwerAppsExternal; if (template.imagem_url && bridge?.shareWhatsAppImage) { bridge.shareWhatsAppImage(phone, message, template.imagem_url); } else { openWhatsApp(phone, message); } setIsMessageOpen(false); };
   async function sendRenewalMessage() {
