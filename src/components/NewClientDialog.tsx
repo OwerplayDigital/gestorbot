@@ -1,4 +1,4 @@
-import { APP_CATALOG, normalizeAppName } from '@/lib/client-apps';
+import { APP_CATALOG, appAccessFields, requiresAppAccess, normalizeAppName } from '@/lib/client-apps';
 import { useAppCatalog } from '@/hooks/use-app-catalog';
 import { AppIcon } from '@/components/AppIcon';
 import { useState } from 'react';
@@ -37,6 +37,7 @@ export function NewClientDialog() {
     if (!form.nome.trim() || !form.whatsapp.trim() || !form.vencimento || !form.plano_id || form.servidores_ids.length === 0) { toast.error('Preencha nome, WhatsApp, vencimento, plano e servidor.'); return; }
     const desconto = Number(form.desconto.replace(',', '.') || 0);
     if (!Number.isFinite(desconto) || desconto < 0) { toast.error('Desconto inválido.'); return; }
+    if ((appAccessFields(form.app_nome).mac && !form.mac_address.trim()) || (appAccessFields(form.app_nome).key && !form.app_key.trim())) { toast.error(appAccessFields(form.app_nome).key ? 'Informe o MAC e a Key do aplicativo.' : 'Informe o MAC do aplicativo.'); return; }
     setSaving(true);
     let createdClientId: string | null = null;
     try {
@@ -63,7 +64,7 @@ export function NewClientDialog() {
       createdClientId = client.id;
 
       if (form.app_nome) {
-        const { error: deviceError } = await supabase.from('dispositivos').insert({ cliente_id: client.id, app_nome: form.app_nome, mac_address: form.mac_address.trim(), app_key: form.app_key.trim() || null });
+        const { error: deviceError } = await supabase.from('dispositivos').insert({ cliente_id: client.id, app_nome: form.app_nome, mac_address: requiresAppAccess(form.app_nome) ? form.mac_address.trim() : '', app_key: appAccessFields(form.app_nome).key ? form.app_key.trim() : null });
         if (deviceError) throw deviceError;
       }
 
@@ -114,7 +115,7 @@ export function NewClientDialog() {
       <label className="block text-sm font-medium">Desconto (R$)<Input className="mt-1" inputMode="decimal" value={form.desconto} onChange={(e) => setForm((f) => ({ ...f, desconto: e.target.value }))} /></label>
       <div><p className="text-sm font-medium mb-2">Servidor <span className="font-normal text-muted-foreground">(selecione um ou mais)</span></p><div className="grid grid-cols-3 gap-2">{servers.map((server) => { const selected = form.servidores_ids.includes(server.id); return <button key={server.id} type="button" onClick={() => toggleServer(server.id)} aria-pressed={selected} className={`relative flex min-w-0 items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-semibold transition-colors ${selected ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-foreground hover:bg-muted/50'}`}><span className="truncate">{server.name}</span>{selected && <Check size={14} className="shrink-0" />}</button>; })}</div></div>
       <div className="space-y-3 rounded-xl border p-3"><label className="block text-sm font-medium">Aplicativo (opcional)<select className="mt-1 w-full h-10 rounded-md border bg-background px-3 text-sm" value={form.app_nome} onChange={event => setForm(f => ({ ...f, app_nome: event.target.value, mac_address: '', app_key: '' }))}><option value="">Cadastrar sem aplicativo</option>{catalog.map(app => <option key={normalizeAppName(app.name)} value={app.name}>{app.name}</option>)}</select></label>
-      {form.app_nome && <><div className="flex items-center gap-2"><AppIcon className="h-9 w-9" app={catalog.find(app => app.name === form.app_nome)} /><span className="text-sm font-semibold">{form.app_nome}</span></div><label className="block text-sm font-medium">MAC (opcional)<Input value={form.mac_address} onChange={event => setForm(f => ({ ...f, mac_address: event.target.value }))} /></label><label className="block text-sm font-medium">Key (opcional)<Input value={form.app_key} onChange={event => setForm(f => ({ ...f, app_key: event.target.value }))} /></label></>}
+      {form.app_nome && <><div className="flex items-center gap-2"><AppIcon className="h-9 w-9" app={catalog.find(app => app.name === form.app_nome)} /><span className="text-sm font-semibold">{form.app_nome}</span></div>{requiresAppAccess(form.app_nome) && <><label className="block text-sm font-medium">MAC<Input value={form.mac_address} onChange={event => setForm(f => ({ ...f, mac_address: event.target.value }))} /></label>{appAccessFields(form.app_nome).key && <label className="block text-sm font-medium">Key<Input value={form.app_key} onChange={event => setForm(f => ({ ...f, app_key: event.target.value }))} /></label>}</>}</>}
       </div>
     </div><div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={saving} onClick={() => setOpen(false)}>Cancelar</Button><Button disabled={saving} onClick={save}>{saving ? 'Salvando...' : 'Cadastrar'}</Button></div></DialogContent></Dialog>
   </>;
