@@ -3,8 +3,9 @@ import { useAppCatalog } from '@/hooks/use-app-catalog';
 import { AppIcon } from '@/components/AppIcon';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, Plus, UserPlus } from 'lucide-react';
+import { Plus, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { ServerSelector } from '@/components/ServerSelector';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -100,9 +101,6 @@ export function NewClientDialog() {
     } finally { setSaving(false); }
   }
 
-  function toggleServer(id: string) {
-    setForm((f) => ({ ...f, servidores_ids: f.servidores_ids.includes(id) ? f.servidores_ids.filter((serverId) => serverId !== id) : [...f.servidores_ids, id] }));
-  }
 
   return <>
     <Button onClick={openDialog} className="h-9 rounded-xl gap-2 px-3" title="Novo cliente"><Plus size={17} /><span className="hidden sm:inline">Novo cliente</span></Button>
@@ -112,7 +110,7 @@ export function NewClientDialog() {
       <label className="block text-sm font-medium">Vencimento<DatePicker className="mt-1" value={form.vencimento} onChange={(vencimento) => setForm((f) => ({ ...f, vencimento }))} /></label>
       <label className="block text-sm font-medium">Plano<select className="mt-1 w-full h-10 rounded-md border bg-background px-3 text-sm" value={form.plano_id} onChange={(e) => setForm((f) => ({ ...f, plano_id: e.target.value }))}><option value="">Selecione</option>{plans.map((plan) => <option key={plan.id} value={plan.id}>{plan.name} — R$ {Number(plan.price || 0).toFixed(2).replace('.', ',')}</option>)}</select></label>
       <label className="block text-sm font-medium">Desconto (R$)<Input className="mt-1" inputMode="decimal" value={form.desconto} onChange={(e) => setForm((f) => ({ ...f, desconto: e.target.value }))} /></label>
-      <div><p className="text-sm font-medium mb-2">Servidor </p><div className="grid grid-cols-3 gap-2">{servers.map((server) => { const selected = form.servidores_ids.includes(server.id); return <button key={server.id} type="button" onClick={() => toggleServer(server.id)} aria-pressed={selected} className={`relative flex min-w-0 items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-semibold transition-colors ${selected ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-foreground hover:bg-muted/50'}`}><span className="truncate">{server.name}</span>{selected && <Check size={14} className="shrink-0" />}</button>; })}</div></div>
+      <div><p className="mb-2 text-sm font-medium">Servidor</p><ServerSelector options={servers} value={form.servidores_ids} onChange={servidores_ids => setForm(f => ({ ...f, servidores_ids }))} /></div>
       <div className="space-y-3 rounded-xl border p-3"><label className="block text-sm font-medium">Aplicativo (opcional)<select className="mt-1 w-full h-10 rounded-md border bg-background px-3 text-sm" value={form.app_nome} onChange={event => setForm(f => ({ ...f, app_nome: event.target.value, mac_address: '', app_key: '' }))}><option value="">Cadastrar sem aplicativo</option>{catalog.map(app => <option key={normalizeAppName(app.name)} value={app.name}>{app.name}</option>)}</select></label>
       {form.app_nome && <><div className="flex items-center gap-2"><AppIcon className="h-9 w-9" app={catalog.find(app => app.name === form.app_nome)} /><span className="text-sm font-semibold">{form.app_nome}</span></div>{requiresAppAccess(form.app_nome) && <><label className="block text-sm font-medium">MAC<Input value={form.mac_address} onChange={event => setForm(f => ({ ...f, mac_address: event.target.value }))} /></label>{appAccessFields(form.app_nome).key && <label className="block text-sm font-medium">Key<Input value={form.app_key} onChange={event => setForm(f => ({ ...f, app_key: event.target.value }))} /></label>}</>}</>}
       </div>
