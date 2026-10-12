@@ -8,6 +8,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useAppCatalog } from '@/hooks/use-app-catalog';
+import { AppIcon } from '@/components/AppIcon';
+import { AppCatalogDialog } from '@/components/AppCatalogDialog';
 import { toast } from 'sonner';
 import { APP_CATALOG, getAppUrl, normalizeAppName, groupClientApps, countAppStatuses, clientAppStatus, fetchAllPages, type AppClient, type AppDevice, type AppStatus } from '@/lib/client-apps';
 
@@ -29,6 +32,8 @@ function StatusTotals({ clients, today }: { clients: AppClient[]; today: string 
 
 function ApplicationsPage() {
   const queryClient = useQueryClient();
+  const catalogQuery = useAppCatalog();
+  const catalog = catalogQuery.data || APP_CATALOG;
   // null: catálogo; "": clientes sem aplicativo; demais: nome normalizado.
   const [selectedApp, setSelectedApp] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -50,7 +55,7 @@ function ApplicationsPage() {
       return { clients, devices, servers };
     },
   });
-  const grouped = useMemo(() => groupClientApps(data?.clients || [], data?.devices || []), [data]);
+  const grouped = useMemo(() => groupClientApps(data?.clients || [], data?.devices || [], catalog), [data, catalog]);
   const group = grouped.groups.find(item => item.key === selectedApp);
   const appClients = selectedApp === '' ? grouped.unassigned : group?.clients || [];
   const title = selectedApp === '' ? 'Sem aplicativo' : group?.name || 'Aplicativo';
@@ -68,7 +73,7 @@ function ApplicationsPage() {
     enabled: !!selectedClient,
     queryFn: () => fetchAllPages<DeviceDetails>((from, to) => supabase.from('dispositivos').select('id,cliente_id,app_nome,mac_address,app_key').eq('cliente_id', selectedClient!.id).order('id').range(from, to)),
   });
-  const appNames = Array.from(new Set([...APP_CATALOG.map(app => app.name), ...grouped.groups.map(item => item.name)])).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const appNames = Array.from(new Set([...catalog.map(app => app.name), ...grouped.groups.map(item => item.name)])).sort((a, b) => a.localeCompare(b, 'pt-BR'));
   const activeClient = data?.clients.find(client => client.id === selectedClient?.id) || selectedClient;
   function selectApp(key: string | null) { setSelectedApp(key); setSearch(''); setStatusFilter('all'); }
   function openClient(client: AppClient) { setSelectedClient(client); setEditing(false); setForm(emptyForm); }
@@ -100,17 +105,19 @@ function ApplicationsPage() {
   return <div className="mx-auto max-w-6xl space-y-5 p-4 md:p-8">
     <div className="flex items-center gap-3">
       {selectedApp !== null && <Button variant="outline" size="icon" aria-label="Voltar aos aplicativos" onClick={() => selectApp(null)}><ArrowLeft size={18} /></Button>}
-      <div><h1 className="flex items-center gap-2 text-2xl font-black tracking-tight"><Smartphone className="text-primary" size={25} />{selectedApp === null ? 'Aplicativos' : title}</h1><p className="mt-1 text-sm text-muted-foreground">{selectedApp === null ? 'Seus clientes, organizados por aplicativo.' : `${appClients.length} clientes neste grupo`}</p></div>
+      <div><h1 className="flex items-center gap-2 text-2xl font-black tracking-tight"><Smartphone className="text-primary" size={25} />{selectedApp === null ? 'Aplicativos' : title}</h1><p className="mt-1 text-sm text-muted-foreground">{selectedApp === null ? 'Seu catálogo de aplicativos e clientes.' : `${appClients.length} clientes neste grupo`}</p></div>
     </div>
+    {selectedApp === null && <AppCatalogDialog catalog={catalog} />}
+    {catalogQuery.error && <p className="text-sm text-rose-500">Não foi possível carregar os aplicativos personalizados. <button className="underline" onClick={() => catalogQuery.refetch()}>Tentar novamente</button></p>}
     {isPending ? <div className="rounded-2xl border bg-card p-8 text-center text-muted-foreground">Carregando aplicativos...</div> : error ? <div className="rounded-2xl border bg-card p-6 text-center"><p>Não foi possível carregar os aplicativos.</p><Button className="mt-3" onClick={() => refetch()}>Tentar novamente</Button></div> : <>
       {selectedApp === null ? <>
-        <div className="grid grid-cols-2 gap-3"><div className="rounded-2xl border bg-card p-4"><p className="text-xs text-muted-foreground">Aplicativos em uso</p><p className="mt-1 text-2xl font-black">{grouped.groups.length}</p></div><div className="rounded-2xl border bg-card p-4"><p className="text-xs text-muted-foreground">Clientes com aplicativo</p><p className="mt-1 text-2xl font-black">{(data?.clients.length || 0) - grouped.unassigned.length}</p></div></div>
+        <div className="grid grid-cols-2 gap-3"><div className="rounded-2xl border bg-card p-4"><p className="text-xs text-muted-foreground">Aplicativos cadastrados</p><p className="mt-1 text-2xl font-black">{grouped.groups.length}</p></div><div className="rounded-2xl border bg-card p-4"><p className="text-xs text-muted-foreground">Clientes com aplicativo</p><p className="mt-1 text-2xl font-black">{(data?.clients.length || 0) - grouped.unassigned.length}</p></div></div>
         <button onClick={() => selectApp('')} className="flex w-full items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/5 p-4 text-left"><div><p className="font-bold">{grouped.unassigned.length} clientes sem aplicativo</p><p className="mt-1 text-xs text-muted-foreground">Veja os clientes e complete o cadastro.</p></div><ChevronRight size={20} className="shrink-0 text-amber-600" /></button>
         <label className="relative block"><Search size={18} className="absolute left-3 top-3 text-muted-foreground" /><Input aria-label="Buscar aplicativo" placeholder="Buscar aplicativo..." className="h-11 rounded-xl pl-10" value={search} onChange={event => setSearch(event.target.value)} /></label>
-        <div className="grid gap-3 md:grid-cols-2">{visibleGroups.map(item => <button key={item.key} onClick={() => selectApp(item.key)} className="flex items-center gap-4 rounded-2xl border bg-card p-4 text-left shadow-sm transition-colors hover:border-primary/40"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Smartphone size={24} /></div><div className="min-w-0 flex-1"><h2 className="break-words font-bold">{item.name}</h2><p className="my-1 text-sm text-muted-foreground">{item.clients.length} clientes</p><StatusTotals clients={item.clients} today={today} /></div><ChevronRight size={18} className="shrink-0 text-muted-foreground" /></button>)}</div>
+        <div className="grid gap-3 md:grid-cols-2">{visibleGroups.map(item => <button key={item.key} onClick={() => selectApp(item.key)} className="flex items-center gap-4 rounded-2xl border bg-card p-4 text-left shadow-sm transition-colors hover:border-primary/40"><AppIcon app={catalog.find(app => normalizeAppName(app.name) === item.key)} /><div className="min-w-0 flex-1"><h2 className="break-words font-bold">{item.name}</h2><p className="my-1 text-sm text-muted-foreground">{item.clients.length} clientes</p><StatusTotals clients={item.clients} today={today} /></div><ChevronRight size={18} className="shrink-0 text-muted-foreground" /></button>)}</div>
         {!visibleGroups.length && <div className="rounded-2xl border bg-card p-8 text-center text-muted-foreground">{search ? 'Nenhum aplicativo encontrado.' : 'Nenhum aplicativo vinculado ainda. Comece pelos clientes sem aplicativo.'}</div>}
       </> : <>
-        <div className="rounded-2xl border bg-card p-4"><StatusTotals clients={appClients} today={today} /></div>
+        <div className="flex items-center gap-3 rounded-2xl border bg-card p-4"><AppIcon app={catalog.find(app => normalizeAppName(app.name) === selectedApp)} /><StatusTotals clients={appClients} today={today} /></div>
         <label className="relative block"><Search size={18} className="absolute left-3 top-3 text-muted-foreground" /><Input aria-label="Buscar cliente ou telefone" placeholder="Buscar cliente ou telefone..." className="h-11 rounded-xl pl-10" value={search} onChange={event => setSearch(event.target.value)} /></label>
         <select aria-label="Filtrar por vencimento" className="h-10 w-full rounded-xl border bg-background px-3 text-sm md:w-56" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}><option value="all">Todos os vencimentos</option>{Object.entries(statusLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
         <p className="text-xs text-muted-foreground">{visibleClients.length} clientes encontrados</p>
@@ -134,7 +141,7 @@ function ApplicationsPage() {
           </form> : <>
             {deviceQuery.isPending ? <p className="text-sm text-muted-foreground">Carregando dados dos aplicativos...</p> : deviceQuery.error ? <div><p className="text-sm text-rose-500">Não foi possível carregar os dados.</p><Button variant="outline" onClick={() => deviceQuery.refetch()}>Tentar novamente</Button></div> : <>
               {!deviceQuery.data?.length && <p className="text-sm text-muted-foreground">Este cliente ainda não tem aplicativo cadastrado.</p>}
-              {deviceQuery.data?.map(device => <div key={device.id} className="space-y-2 rounded-2xl border p-4"><div className="flex items-center justify-between gap-2"><b className="break-words">{device.app_nome}</b><Button size="icon" variant="outline" aria-label={`Editar ${device.app_nome}`} onClick={() => { setForm({ id: device.id, app_nome: device.app_nome, mac_address: device.mac_address || '', app_key: device.app_key || '' }); setEditing(true); }}><Pencil size={15} /></Button></div>{[['MAC', device.mac_address], ['Key', device.app_key]].map(([label, value]) => value && <div key={label} className="flex items-center justify-between gap-2 text-sm"><span className="break-all"><span className="text-muted-foreground">{label}: </span>{value}</span><Button size="icon" variant="ghost" aria-label={`Copiar ${label}`} onClick={() => copy(value)}><Copy size={15} /></Button></div>)}{getAppUrl(device.app_nome) && <a href={getAppUrl(device.app_nome)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-semibold text-primary"><ExternalLink size={15} />Acessar painel do aplicativo</a>}</div>)}
+              {deviceQuery.data?.map(device => <div key={device.id} className="space-y-2 rounded-2xl border p-4"><div className="flex items-center justify-between gap-2"><b className="break-words">{device.app_nome}</b><Button size="icon" variant="outline" aria-label={`Editar ${device.app_nome}`} onClick={() => { setForm({ id: device.id, app_nome: device.app_nome, mac_address: device.mac_address || '', app_key: device.app_key || '' }); setEditing(true); }}><Pencil size={15} /></Button></div>{[['MAC', device.mac_address], ['Key', device.app_key]].map(([label, value]) => value && <div key={label} className="flex items-center justify-between gap-2 text-sm"><span className="break-all"><span className="text-muted-foreground">{label}: </span>{value}</span><Button size="icon" variant="ghost" aria-label={`Copiar ${label}`} onClick={() => copy(value)}><Copy size={15} /></Button></div>)}{getAppUrl(device.app_nome, catalog) && <a href={getAppUrl(device.app_nome, catalog)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-semibold text-primary"><ExternalLink size={15} />Acessar painel do aplicativo</a>}</div>)}
               <Button className="w-full gap-2" variant="outline" onClick={() => { setForm({ ...emptyForm, app_nome: group?.name || '' }); setEditing(true); }}><Plus size={16} />Adicionar aplicativo</Button>
             </>}
           </>}

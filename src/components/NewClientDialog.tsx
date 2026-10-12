@@ -1,3 +1,6 @@
+import { APP_CATALOG, normalizeAppName } from '@/lib/client-apps';
+import { useAppCatalog } from '@/hooks/use-app-catalog';
+import { AppIcon } from '@/components/AppIcon';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Check, Plus, UserPlus } from 'lucide-react';
@@ -9,10 +12,12 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { toast } from 'sonner';
 
 type Option = { id: string; name: string; price?: number; valor?: number };
-const emptyForm = { nome: '', whatsapp: '', vencimento: '', plano_id: '', desconto: '', servidores_ids: [] as string[] };
+const emptyForm = { nome: '', whatsapp: '', vencimento: '', plano_id: '', desconto: '', app_nome: '', mac_address: '', app_key: '', servidores_ids: [] as string[] };
 
 export function NewClientDialog() {
   const queryClient = useQueryClient();
+  const catalogQuery = useAppCatalog();
+  const catalog = catalogQuery.data || APP_CATALOG;
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [plans, setPlans] = useState<Option[]>([]);
@@ -57,6 +62,11 @@ export function NewClientDialog() {
       if (clientError || !client) throw clientError || new Error('Cliente não criado.');
       createdClientId = client.id;
 
+      if (form.app_nome) {
+        const { error: deviceError } = await supabase.from('dispositivos').insert({ cliente_id: client.id, app_nome: form.app_nome, mac_address: form.mac_address.trim(), app_key: form.app_key.trim() || null });
+        if (deviceError) throw deviceError;
+      }
+
       const todayBr = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
       }).format(new Date());
@@ -77,6 +87,9 @@ export function NewClientDialog() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['clients-active'] }),
         queryClient.invalidateQueries({ queryKey: ['financeiro-history'] }),
+        queryClient.invalidateQueries({ queryKey: ['client-applications'] }),
+        queryClient.invalidateQueries({ queryKey: ['financeiro-summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats-modern'] }),
       ]);
       toast.success('Cliente cadastrado e lançado no financeiro.');
       setOpen(false);
@@ -100,6 +113,9 @@ export function NewClientDialog() {
       <label className="block text-sm font-medium">Plano<select className="mt-1 w-full h-10 rounded-md border bg-background px-3 text-sm" value={form.plano_id} onChange={(e) => setForm((f) => ({ ...f, plano_id: e.target.value }))}><option value="">Selecione</option>{plans.map((plan) => <option key={plan.id} value={plan.id}>{plan.name} — R$ {Number(plan.price || 0).toFixed(2).replace('.', ',')}</option>)}</select></label>
       <label className="block text-sm font-medium">Desconto (R$)<Input className="mt-1" inputMode="decimal" value={form.desconto} onChange={(e) => setForm((f) => ({ ...f, desconto: e.target.value }))} /></label>
       <div><p className="text-sm font-medium mb-2">Servidor <span className="font-normal text-muted-foreground">(selecione um ou mais)</span></p><div className="grid grid-cols-3 gap-2">{servers.map((server) => { const selected = form.servidores_ids.includes(server.id); return <button key={server.id} type="button" onClick={() => toggleServer(server.id)} aria-pressed={selected} className={`relative flex min-w-0 items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-semibold transition-colors ${selected ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-foreground hover:bg-muted/50'}`}><span className="truncate">{server.name}</span>{selected && <Check size={14} className="shrink-0" />}</button>; })}</div></div>
+      <div className="space-y-3 rounded-xl border p-3"><label className="block text-sm font-medium">Aplicativo (opcional)<select className="mt-1 w-full h-10 rounded-md border bg-background px-3 text-sm" value={form.app_nome} onChange={event => setForm(f => ({ ...f, app_nome: event.target.value, mac_address: '', app_key: '' }))}><option value="">Cadastrar sem aplicativo</option>{catalog.map(app => <option key={normalizeAppName(app.name)} value={app.name}>{app.name}</option>)}</select></label>
+      {form.app_nome && <><div className="flex items-center gap-2"><AppIcon className="h-9 w-9" app={catalog.find(app => app.name === form.app_nome)} /><span className="text-sm font-semibold">{form.app_nome}</span></div><label className="block text-sm font-medium">MAC (opcional)<Input value={form.mac_address} onChange={event => setForm(f => ({ ...f, mac_address: event.target.value }))} /></label><label className="block text-sm font-medium">Key (opcional)<Input value={form.app_key} onChange={event => setForm(f => ({ ...f, app_key: event.target.value }))} /></label></>}
+      </div>
     </div><div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={saving} onClick={() => setOpen(false)}>Cancelar</Button><Button disabled={saving} onClick={save}>{saving ? 'Salvando...' : 'Cadastrar'}</Button></div></DialogContent></Dialog>
   </>;
 }
