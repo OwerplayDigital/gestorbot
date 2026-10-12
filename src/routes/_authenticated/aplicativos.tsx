@@ -147,17 +147,17 @@ function ApplicationsPage() {
   return <div className="mx-auto max-w-6xl space-y-5 p-4 md:p-8">
     <div className="flex items-center gap-3">
       {selectedApp !== null && <Button variant="outline" size="icon" aria-label="Voltar aos aplicativos" onClick={() => selectApp(null)}><ArrowLeft size={18} /></Button>}
-      <div><h1 className="flex items-center gap-2 text-2xl font-black tracking-tight"><Smartphone className="text-primary" size={25} />{selectedApp === null ? 'Aplicativos' : title}</h1><p className="mt-1 text-sm text-muted-foreground">{selectedApp === null ? 'Seu catálogo de aplicativos e clientes.' : `${appClients.length} clientes neste grupo`}</p></div>
+      <div><h1 className="flex items-center gap-2 text-2xl font-black tracking-tight"><Smartphone className="text-primary" size={25} />{selectedApp === null ? 'Aplicativos' : title}</h1>{selectedApp !== null && <p className="mt-1 text-sm text-muted-foreground">{appClients.length} clientes</p>}</div>
     </div>
     {selectedApp === null && <AppCatalogDialog catalog={catalog} />}
     {catalogQuery.error && <p className="text-sm text-rose-500">Não foi possível carregar os aplicativos personalizados. <button className="underline" onClick={() => catalogQuery.refetch()}>Tentar novamente</button></p>}
     {isPending ? <div className="rounded-2xl border bg-card p-8 text-center text-muted-foreground">Carregando aplicativos...</div> : error ? <div className="rounded-2xl border bg-card p-6 text-center"><p>Não foi possível carregar os aplicativos.</p><Button className="mt-3" onClick={() => refetch()}>Tentar novamente</Button></div> : <>
       {selectedApp === null ? <>
         <div className="grid grid-cols-2 gap-3"><div className="rounded-2xl border bg-card p-4"><p className="text-xs text-muted-foreground">Aplicativos cadastrados</p><p className="mt-1 text-2xl font-black">{grouped.groups.length}</p></div><div className="rounded-2xl border bg-card p-4"><p className="text-xs text-muted-foreground">Clientes com aplicativo</p><p className="mt-1 text-2xl font-black">{(data?.clients.length || 0) - grouped.unassigned.length}</p></div></div>
-        <button onClick={() => selectApp('')} className="flex w-full items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/5 p-4 text-left"><div><p className="font-bold">{grouped.unassigned.length} clientes sem aplicativo</p><p className="mt-1 text-xs text-muted-foreground">Veja os clientes e complete o cadastro.</p></div><ChevronRight size={20} className="shrink-0 text-amber-600" /></button>
+        <button onClick={() => selectApp('')} className="flex w-full items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/5 p-4 text-left"><div><p className="font-bold">{grouped.unassigned.length} clientes sem aplicativo</p></div><ChevronRight size={20} className="shrink-0 text-amber-600" /></button>
         <label className="relative block"><Search size={18} className="absolute left-3 top-3 text-muted-foreground" /><Input aria-label="Buscar aplicativo" placeholder="Buscar aplicativo..." className="h-11 rounded-xl pl-10" value={search} onChange={event => setSearch(event.target.value)} /></label>
         <div className="grid gap-3 md:grid-cols-2">{visibleGroups.map(item => <button key={item.key} onClick={() => selectApp(item.key)} className="flex items-center gap-4 rounded-2xl border bg-card p-4 text-left shadow-sm transition-colors hover:border-primary/40"><AppIcon app={catalog.find(app => normalizeAppName(app.name) === item.key)} /><div className="min-w-0 flex-1"><h2 className="break-words font-bold">{item.name}</h2><p className="my-1 text-sm text-muted-foreground">{item.clients.length} clientes</p><StatusTotals clients={item.clients} today={today} /></div><ChevronRight size={18} className="shrink-0 text-muted-foreground" /></button>)}</div>
-        {!visibleGroups.length && <div className="rounded-2xl border bg-card p-8 text-center text-muted-foreground">{search ? 'Nenhum aplicativo encontrado.' : 'Nenhum aplicativo vinculado ainda. Comece pelos clientes sem aplicativo.'}</div>}
+        {!visibleGroups.length && <div className="rounded-2xl border bg-card p-8 text-center text-muted-foreground">{search ? 'Nenhum aplicativo encontrado.' : 'Nenhum aplicativo.'}</div>}
       </> : <>
         {group && <Button className="gap-2 rounded-xl" onClick={() => { setLinkSearch(''); setClientToLink(null); setLinkAccess({ mac: '', key: '' }); setIsLinkOpen(true); }}><Plus size={17} />Vincular cliente</Button>}
         <div className="flex items-center gap-3 rounded-2xl border bg-card p-4"><AppIcon app={catalog.find(app => normalizeAppName(app.name) === selectedApp)} /><StatusTotals clients={appClients} today={today} /></div>
@@ -173,7 +173,7 @@ function ApplicationsPage() {
     </>}
     <Dialog open={isLinkOpen} onOpenChange={open => { if (!linkingId) setIsLinkOpen(open); }}>
       <DialogContent onOpenAutoFocus={event => event.preventDefault()} className="max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Vincular cliente a {group?.name}</DialogTitle><DialogDescription>Escolha um cliente já cadastrado. {group && requiresAppAccess(group.name) ? (appAccessFields(group.name).key ? 'Depois de escolher o cliente, informe o MAC e a Key.' : 'Depois de escolher o cliente, informe o MAC.') : 'Este aplicativo não precisa de MAC ou Key.'}</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Vincular cliente a {group?.name}</DialogTitle><DialogDescription className="sr-only">Vínculo do cliente ao aplicativo</DialogDescription></DialogHeader>
         {clientToLink ? <form className="space-y-4" onSubmit={event => { event.preventDefault(); void linkClient(clientToLink, linkAccess); }}>
           <p className="font-semibold">{clientToLink.nome}</p>
           <label className="block text-sm font-medium">MAC<Input required autoComplete="off" value={linkAccess.mac} disabled={!!linkingId} onChange={event => setLinkAccess(value => ({ ...value, mac: event.target.value }))} /></label>
@@ -186,17 +186,17 @@ function ApplicationsPage() {
           <div className="min-w-0"><p className="break-words text-sm font-semibold">{client.nome}</p><p className="mt-1 text-xs text-muted-foreground">{client.whatsapp || 'Sem WhatsApp'}</p><span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] ${statusColors[clientAppStatus(client.vencimento, today)]}`}>{statusLabels[clientAppStatus(client.vencimento, today)]}</span></div>
           <span className="shrink-0 text-xs font-semibold text-primary">{linkingId === client.id ? 'Vinculando...' : 'Vincular'}</span>
         </button>)}</div>
-        {!linkCandidates.length && <p className="py-4 text-center text-sm text-muted-foreground">{linkSearch ? 'Nenhum cliente encontrado.' : 'Todos os clientes já estão vinculados a este aplicativo.'}</p>}
+        {!linkCandidates.length && <p className="py-4 text-center text-sm text-muted-foreground">{linkSearch ? 'Nenhum cliente encontrado.' : 'Nenhum cliente disponível.'}</p>}
         </>}
       </DialogContent>
     </Dialog>
     <Dialog open={!!selectedClient} onOpenChange={open => { if (!open && !saving) setSelectedClient(null); }}>
       <DialogContent onOpenAutoFocus={event => event.preventDefault()} className="max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>{activeClient?.nome}</DialogTitle><DialogDescription>Cadastro e dados dos aplicativos deste cliente.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>{activeClient?.nome}</DialogTitle><DialogDescription className="sr-only">Aplicativos do cliente</DialogDescription></DialogHeader>
         {activeClient && <div className="space-y-4">
           <div className="rounded-xl bg-muted/40 p-3 text-sm"><p>{activeClient.whatsapp || 'Sem WhatsApp cadastrado'}</p><p className="mt-1 text-muted-foreground">Vencimento: {activeClient.vencimento?.includes('-') ? activeClient.vencimento.slice(0, 10).split('-').reverse().join('/') : activeClient.vencimento || 'Não informado'}</p><p className="mt-1 text-muted-foreground">Plano: {activeClient.plans?.name || 'Não informado'}</p><p className="mt-1 text-muted-foreground">Servidores: {(activeClient.servidores_ids || []).map(id => data?.servers.find(server => server.id === id)?.name).filter(Boolean).join(', ') || 'Não informado'}</p></div>
           {editing ? <form className="space-y-3" onSubmit={event => { event.preventDefault(); void saveDevice(); }}>
-            <label className="block text-sm font-medium">Aplicativo<Input required list="gestor-app-names" value={form.app_nome} onChange={event => setForm(f => ({ ...f, app_nome: event.target.value }))} placeholder="Selecione ou digite o nome" /><datalist id="gestor-app-names">{appNames.map(name => <option key={name} value={name} />)}</datalist></label>
+            <label className="block text-sm font-medium">Aplicativo<Input required list="gestor-app-names" value={form.app_nome} onChange={event => setForm(f => ({ ...f, app_nome: event.target.value }))} placeholder="Nome do aplicativo" /><datalist id="gestor-app-names">{appNames.map(name => <option key={name} value={name} />)}</datalist></label>
             <div hidden={!requiresAppAccess(form.app_nome)}><label className="block text-sm font-medium">MAC<Input value={form.mac_address} onChange={event => setForm(f => ({ ...f, mac_address: event.target.value }))} /></label>
             {appAccessFields(form.app_nome).key && <label className="block text-sm font-medium">Key<Input value={form.app_key} onChange={event => setForm(f => ({ ...f, app_key: event.target.value }))} /></label>}</div>
             <div className="grid grid-cols-2 gap-2"><Button type="button" variant="outline" disabled={saving} onClick={() => setEditing(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? 'Salvando...' : 'Salvar aplicativo'}</Button></div>
