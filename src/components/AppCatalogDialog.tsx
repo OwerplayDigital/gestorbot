@@ -58,7 +58,7 @@ export function AppCatalogDialog({ catalog }: { catalog: AppDefinition[] }) {
     finally { setSaving(false); }
   }
   return <><Button className="gap-2 rounded-xl" onClick={() => { setName(''); setIconFile(null); setIcon(''); setPanel(''); setOpen(true); }}><Plus size={17} />Novo aplicativo</Button>
-    <Dialog open={open} onOpenChange={value => { if (!saving) setOpen(value); }}><DialogContent className="max-w-md rounded-2xl"><DialogHeader><DialogTitle>Cadastrar aplicativo</DialogTitle><DialogDescription>Ele fica disponível mesmo sem clientes vinculados.</DialogDescription></DialogHeader>
+    <Dialog open={open} onOpenChange={value => { if (!saving) setOpen(value); }}><DialogContent className="max-w-md rounded-2xl"><DialogHeader><DialogTitle>Cadastrar aplicativo</DialogTitle><DialogDescription className="sr-only">Novo aplicativo</DialogDescription></DialogHeader>
       <form className="space-y-4" onSubmit={event => { event.preventDefault(); void save(); }}>
         <label className="block text-sm font-medium">Nome<Input required value={name} onChange={event => setName(event.target.value)} /></label>
         <div className="flex items-center gap-3"><AppIcon app={{ name, icon }} /><label className="flex-1 text-sm font-medium">Ícone (opcional)<Input type="file" accept="image/png,image/jpeg,image/webp" onChange={event => void readIcon(event.target.files?.[0])} /></label></div>
