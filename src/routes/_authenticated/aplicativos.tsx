@@ -36,6 +36,9 @@ function ApplicationsPage() {
   const catalog = catalogQuery.data || APP_CATALOG;
   // null: catálogo; "": clientes sem aplicativo; demais: nome normalizado.
   const [selectedApp, setSelectedApp] = useState<string | null>(null);
+  const [isLinkOpen, setIsLinkOpen] = useState(false);
+  const [linkSearch, setLinkSearch] = useState('');
+  const [linkingId, setLinkingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedClient, setSelectedClient] = useState<AppClient | null>(null);
@@ -77,6 +80,36 @@ function ApplicationsPage() {
   const activeClient = data?.clients.find(client => client.id === selectedClient?.id) || selectedClient;
   function selectApp(key: string | null) { setSelectedApp(key); setSearch(''); setStatusFilter('all'); }
   function openClient(client: AppClient) { setSelectedClient(client); setEditing(false); setForm(emptyForm); }
+  const linkNeedle = linkSearch.trim().toLocaleLowerCase('pt-BR');
+  const linkDigits = linkSearch.replace(/\D/g, '');
+  const linkCandidates = (data?.clients || []).filter(client => !appClients.some(linked => linked.id === client.id) && (
+    !linkNeedle || client.nome.toLocaleLowerCase('pt-BR').includes(linkNeedle)
+      || (linkDigits.length > 0 && !/[a-zà-ú]/i.test(linkSearch) && String(client.whatsapp || '').replace(/\D/g, '').includes(linkDigits))
+  )).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+  async function linkClient(client: AppClient) {
+    if (!group || linkingId) return;
+    const app = group;
+    setLinkingId(client.id);
+    try {
+      const existing = await fetchAllPages<AppDevice>((from, to) => supabase.from('dispositivos').select('id,cliente_id,app_nome').eq('cliente_id', client.id).order('id').range(from, to));
+      if (existing.some(device => normalizeAppName(device.app_nome) === app.key)) {
+        toast.info('Este cliente já está vinculado ao aplicativo.');
+      } else {
+        const { error } = await supabase.from('dispositivos').insert({ cliente_id: client.id, app_nome: app.name, mac_address: '', app_key: null });
+        if (error) throw error;
+        toast.success(`${client.nome} vinculado a ${app.name}.`);
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['client-applications'] }),
+        queryClient.invalidateQueries({ queryKey: ['client-application-details', client.id] }),
+        queryClient.invalidateQueries({ queryKey: ['clients-active'] }),
+      ]);
+      setIsLinkOpen(false); setLinkSearch('');
+    } catch (error) { console.error(error); toast.error('Não foi possível vincular o cliente. Tente novamente.'); }
+    finally { setLinkingId(null); }
+  }
+
   async function copy(value: string) {
     try { await navigator.clipboard.writeText(value); toast.success('Copiado.'); }
     catch { toast.error('Não foi possível copiar.'); }
@@ -117,6 +150,7 @@ function ApplicationsPage() {
         <div className="grid gap-3 md:grid-cols-2">{visibleGroups.map(item => <button key={item.key} onClick={() => selectApp(item.key)} className="flex items-center gap-4 rounded-2xl border bg-card p-4 text-left shadow-sm transition-colors hover:border-primary/40"><AppIcon app={catalog.find(app => normalizeAppName(app.name) === item.key)} /><div className="min-w-0 flex-1"><h2 className="break-words font-bold">{item.name}</h2><p className="my-1 text-sm text-muted-foreground">{item.clients.length} clientes</p><StatusTotals clients={item.clients} today={today} /></div><ChevronRight size={18} className="shrink-0 text-muted-foreground" /></button>)}</div>
         {!visibleGroups.length && <div className="rounded-2xl border bg-card p-8 text-center text-muted-foreground">{search ? 'Nenhum aplicativo encontrado.' : 'Nenhum aplicativo vinculado ainda. Comece pelos clientes sem aplicativo.'}</div>}
       </> : <>
+        {group && <Button className="gap-2 rounded-xl" onClick={() => { setLinkSearch(''); setIsLinkOpen(true); }}><Plus size={17} />Vincular cliente</Button>}
         <div className="flex items-center gap-3 rounded-2xl border bg-card p-4"><AppIcon app={catalog.find(app => normalizeAppName(app.name) === selectedApp)} /><StatusTotals clients={appClients} today={today} /></div>
         <label className="relative block"><Search size={18} className="absolute left-3 top-3 text-muted-foreground" /><Input aria-label="Buscar cliente ou telefone" placeholder="Buscar cliente ou telefone..." className="h-11 rounded-xl pl-10" value={search} onChange={event => setSearch(event.target.value)} /></label>
         <select aria-label="Filtrar por vencimento" className="h-10 w-full rounded-xl border bg-background px-3 text-sm md:w-56" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}><option value="all">Todos os vencimentos</option>{Object.entries(statusLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
@@ -128,6 +162,18 @@ function ApplicationsPage() {
         {!visibleClients.length && <div className="rounded-2xl border bg-card p-8 text-center text-muted-foreground">Nenhum cliente encontrado.</div>}
       </>}
     </>}
+    <Dialog open={isLinkOpen} onOpenChange={open => { if (!linkingId) setIsLinkOpen(open); }}>
+      <DialogContent onOpenAutoFocus={event => event.preventDefault()} className="max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Vincular cliente a {group?.name}</DialogTitle><DialogDescription>Escolha um cliente já cadastrado. Os dados de acesso podem ser preenchidos depois.</DialogDescription></DialogHeader>
+        <Input aria-label="Buscar cliente para vincular" placeholder="Buscar por nome ou telefone..." value={linkSearch} disabled={!!linkingId} onChange={event => setLinkSearch(event.target.value)} />
+        <p className="text-xs text-muted-foreground">{linkCandidates.length} clientes disponíveis</p>
+        <div className="max-h-[50vh] space-y-2 overflow-y-auto">{linkCandidates.map(client => <button key={client.id} type="button" disabled={!!linkingId} onClick={() => void linkClient(client)} className="flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left hover:bg-muted/40 disabled:opacity-50">
+          <div className="min-w-0"><p className="break-words text-sm font-semibold">{client.nome}</p><p className="mt-1 text-xs text-muted-foreground">{client.whatsapp || 'Sem WhatsApp'}</p><span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] ${statusColors[clientAppStatus(client.vencimento, today)]}`}>{statusLabels[clientAppStatus(client.vencimento, today)]}</span></div>
+          <span className="shrink-0 text-xs font-semibold text-primary">{linkingId === client.id ? 'Vinculando...' : 'Vincular'}</span>
+        </button>)}</div>
+        {!linkCandidates.length && <p className="py-4 text-center text-sm text-muted-foreground">{linkSearch ? 'Nenhum cliente encontrado.' : 'Todos os clientes já estão vinculados a este aplicativo.'}</p>}
+      </DialogContent>
+    </Dialog>
     <Dialog open={!!selectedClient} onOpenChange={open => { if (!open && !saving) setSelectedClient(null); }}>
       <DialogContent onOpenAutoFocus={event => event.preventDefault()} className="max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{activeClient?.nome}</DialogTitle><DialogDescription>Cadastro e dados dos aplicativos deste cliente.</DialogDescription></DialogHeader>
