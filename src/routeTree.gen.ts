@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as ExtratoDemoRouteImport } from './routes/extrato-demo'
 import { Route as AuthenticatedAnalisesRouteImport } from './routes/_authenticated/analises'
+import { Route as AuthenticatedAplicativosRouteImport } from './routes/_authenticated/aplicativos'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedCreditosRouteImport } from './routes/_authenticated/creditos'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -47,6 +48,12 @@ const AuthenticatedAnalisesRoute = AuthenticatedAnalisesRouteImport.update({
   path: '/analises',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAplicativosRoute =
+  AuthenticatedAplicativosRouteImport.update({
+    id: '/aplicativos',
+    path: '/aplicativos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
   id: '/clientes',
   path: '/clientes',
@@ -126,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/extrato-demo': typeof ExtratoDemoRoute
   '/analises': typeof AuthenticatedAnalisesRoute
+  '/aplicativos': typeof AuthenticatedAplicativosRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/creditos': typeof AuthenticatedCreditosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -145,6 +153,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/extrato-demo': typeof ExtratoDemoRoute
   '/analises': typeof AuthenticatedAnalisesRoute
+  '/aplicativos': typeof AuthenticatedAplicativosRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/creditos': typeof AuthenticatedCreditosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -166,6 +175,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/extrato-demo': typeof ExtratoDemoRoute
   '/_authenticated/analises': typeof AuthenticatedAnalisesRoute
+  '/_authenticated/aplicativos': typeof AuthenticatedAplicativosRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/creditos': typeof AuthenticatedCreditosRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -187,6 +197,7 @@ export interface FileRouteTypes {
     | '/'
     | '/extrato-demo'
     | '/analises'
+    | '/aplicativos'
     | '/clientes'
     | '/creditos'
     | '/dashboard'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/'
     | '/extrato-demo'
     | '/analises'
+    | '/aplicativos'
     | '/clientes'
     | '/creditos'
     | '/dashboard'
@@ -226,6 +238,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/extrato-demo'
     | '/_authenticated/analises'
+    | '/_authenticated/aplicativos'
     | '/_authenticated/clientes'
     | '/_authenticated/creditos'
     | '/_authenticated/dashboard'
@@ -280,6 +293,13 @@ declare module '@tanstack/react-router' {
       path: '/analises'
       fullPath: '/analises'
       preLoaderRoute: typeof AuthenticatedAnalisesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/aplicativos': {
+      id: '/_authenticated/aplicativos'
+      path: '/aplicativos'
+      fullPath: '/aplicativos'
+      preLoaderRoute: typeof AuthenticatedAplicativosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/clientes': {
@@ -385,6 +405,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalisesRoute: typeof AuthenticatedAnalisesRoute
+  AuthenticatedAplicativosRoute: typeof AuthenticatedAplicativosRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedCreditosRoute: typeof AuthenticatedCreditosRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -399,6 +420,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalisesRoute: AuthenticatedAnalisesRoute,
+  AuthenticatedAplicativosRoute: AuthenticatedAplicativosRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedCreditosRoute: AuthenticatedCreditosRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
