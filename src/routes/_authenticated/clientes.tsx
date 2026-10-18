@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppCatalog } from '@/hooks/use-app-catalog';
-import { APP_CATALOG, appAccessFields, requiresAppAccess, getAppUrl } from '@/lib/client-apps';
+import { APP_CATALOG, fetchAllPages, appAccessFields, requiresAppAccess, getAppUrl } from '@/lib/client-apps';
 import { BOT_TEMPLATES } from '@/lib/templates';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ServerSelector } from '@/components/ServerSelector';
@@ -86,11 +86,11 @@ function ClientesPage() {
   async function exportClients(filter: 'todos' | 'uniplay' | 'goat') {
     setIsExporting(true);
     try {
-      const [{ data: clientsData, error }, { data: serversData }] = await Promise.all([
-        supabase.from('clientes').select('nome, vencimento, servidores_ids').order('nome'),
+      const [clientsData, { data: serversData, error: serversError }] = await Promise.all([
+        fetchAllPages<any>((from, to) => supabase.from('clientes').select('nome, vencimento, servidores_ids').order('nome').order('id').range(from, to)),
         supabase.from('servidores_iptv').select('id, name'),
       ]);
-      if (error) throw error;
+      if (serversError) throw serversError;
       const nameById = new Map((serversData || []).map((s: any) => [s.id, s.name as string]));
       const rows = (clientsData || [])
         .map((c: any) => ({
@@ -104,7 +104,16 @@ function ClientesPage() {
       const sheet = XLSX.utils.json_to_sheet(rows, { header: ['Nome', 'Servidor', 'Vencimento'] });
       const book = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(book, sheet, 'Clientes');
-      XLSX.writeFile(book, `clientes-${filter}.xlsx`);
+      const filename = `clientes-${filter}.xlsx`;
+      const bridge = (window as any).OwerAppsExternal;
+      if (typeof bridge?.saveFile === 'function') {
+        bridge.saveFile(filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', XLSX.write(book, { bookType: 'xlsx', type: 'base64', compression: true }));
+      } else if (bridge) {
+        toast.error('Atualize o APK para salvar a exportação.');
+        return;
+      } else {
+        XLSX.writeFile(book, filename, { compression: true });
+      }
       setIsExportOpen(false);
     } catch (e) {
       console.error(e);
