@@ -86,22 +86,27 @@ function ClientesPage() {
   async function exportClients(filter: 'todos' | 'uniplay' | 'goat') {
     setIsExporting(true);
     try {
-      const [clientsData, { data: serversData, error: serversError }] = await Promise.all([
-        fetchAllPages<any>((from, to) => supabase.from('clientes').select('nome, vencimento, servidores_ids').order('nome').order('id').range(from, to)),
+      const [clientsData, { data: serversData, error: serversError }, { data: plansData, error: plansError }] = await Promise.all([
+        fetchAllPages<any>((from, to) => supabase.from('clientes').select('nome, whatsapp, vencimento, servidores_ids, plano_id').order('nome').order('id').range(from, to)),
         supabase.from('servidores_iptv').select('id, name'),
+        supabase.from('plans').select('id, name'),
       ]);
       if (serversError) throw serversError;
+      if (plansError) throw plansError;
       const nameById = new Map((serversData || []).map((s: any) => [s.id, s.name as string]));
+      const planById = new Map((plansData || []).map((p: any) => [p.id, p.name as string]));
       const rows = (clientsData || [])
         .map((c: any) => ({
           Nome: c.nome || '',
+          WhatsApp: c.whatsapp || '',
           Servidor: (c.servidores_ids || []).map((id: string) => nameById.get(id)).filter(Boolean).join(', '),
+          Plano: planById.get(c.plano_id) || '',
           Vencimento: c.vencimento?.includes('-') ? format(parseISO(c.vencimento), 'dd/MM/yyyy') : (c.vencimento || ''),
         }))
         .filter((r) => filter === 'todos' || r.Servidor.toLowerCase().includes(filter));
       if (!rows.length) { toast.error('Nenhum cliente encontrado para essa seleção.'); return; }
       const XLSX = await import('xlsx');
-      const sheet = XLSX.utils.json_to_sheet(rows, { header: ['Nome', 'Servidor', 'Vencimento'] });
+      const sheet = XLSX.utils.json_to_sheet(rows, { header: ['Nome', 'WhatsApp', 'Servidor', 'Plano', 'Vencimento'] });
       const book = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(book, sheet, 'Clientes');
       const filename = `clientes-${filter}.xlsx`;
