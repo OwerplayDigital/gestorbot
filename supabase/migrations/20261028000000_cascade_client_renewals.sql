@@ -1,5 +1,5 @@
--- A exclusão de clientes com histórico era bloqueada por esta FK.
--- A operação continua atômica: se outra restrição falhar, nada é removido.
+-- Permite excluir o cadastro sem apagar o histórico de renovações.
+-- cliente_id já é opcional no esquema original.
 BEGIN;
 
 ALTER TABLE public.renovacoes
@@ -9,6 +9,6 @@ ALTER TABLE public.renovacoes
   ADD CONSTRAINT renovacoes_cliente_id_fkey
   FOREIGN KEY (cliente_id)
   REFERENCES public.clientes(id)
-  ON DELETE CASCADE;
+  ON DELETE SET NULL;
 
 COMMIT;
