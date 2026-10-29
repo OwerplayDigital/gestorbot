@@ -1,6 +1,6 @@
 import officialLogo from '@/assets/logo-owerplay.png.asset.json';
 import { useEffect, useRef, useState } from 'react';
-import { CalendarDays, Check, Copy, Info, LoaderCircle } from 'lucide-react';
+import { CalendarDays, Check, Copy, LoaderCircle } from 'lucide-react';
 import { copyPixKey, pixAmount, pixDueDate, PIX_BANK, PIX_RECIPIENT, type PixCheckoutInfo } from '@/lib/pix-payment';
 import '../styles/pix-checkout.css';
 
@@ -21,11 +21,9 @@ export function PixCheckout({ info, loading = false, error, onRetry }: {
   onRetry?: () => void;
 }) {
   const [copyState, setCopyState] = useState<'idle' | 'copying' | 'copied' | 'failed'>('idle');
-  const [hasCopied, setHasCopied] = useState(false);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
     setCopyState('idle');
-    setHasCopied(false);
     return () => clearTimeout(resetTimer.current);
   }, [info]);
   async function handleCopy() {
@@ -35,7 +33,6 @@ export function PixCheckout({ info, loading = false, error, onRetry }: {
     try {
       await copyPixKey();
       setCopyState('copied');
-      setHasCopied(true);
       resetTimer.current = setTimeout(() => setCopyState('idle'), 3000);
     } catch {
       setCopyState('failed');
@@ -69,9 +66,7 @@ export function PixCheckout({ info, loading = false, error, onRetry }: {
             <span aria-live="polite">{copyState === 'copied' ? 'Chave copiada' : copyState === 'copying' ? 'Copiando…' : 'Copiar chave Pix'}</span>
           </button>
           {copyState === 'failed' && <p className="pix-copy-error" role="alert">Não foi possível copiar. Toque no botão para tentar novamente.</p>}
-          {hasCopied && <div className="pix-instructions" role="status"><Info aria-hidden="true" /><p>Abra o app do seu banco e escolha Pix → Pagar com chave.</p></div>}
         </section>
-        <p className="pix-receipt">Após pagar, envie o comprovante pelo WhatsApp.</p>
       </>}
     </div>
   </div>;
