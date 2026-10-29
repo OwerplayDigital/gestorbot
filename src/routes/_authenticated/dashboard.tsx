@@ -73,7 +73,6 @@ function Dashboard(){
   if(!client.whatsapp){toast.error("Cliente sem WhatsApp cadastrado.");return}
   const firstName=(client.nome||"Cliente").trim().split(" ")[0]||"Cliente";
   const brDate=client.vencimento?format(parseISO(client.vencimento),"dd/MM/yyyy"):"";
-  const paymentUrl=`https://gestorbot.lovable.app/pagar/${client.id}`;
   const raw=String(client.whatsapp).replace(/\D/g,"");
   const phone=raw.startsWith("55")?raw:`55${raw}`;
   let message=BOT_TEMPLATES.COBRANCA(firstName,brDate);
@@ -83,7 +82,7 @@ function Dashboard(){
    const list=(data??[]) as any[];
    const tpl=list.find(t=>String(t.nome||"").trim().toLocaleLowerCase("pt-BR")==="cobrança oficial");
    if(tpl){
-    message=String(tpl.mensagem||message).replace(/{nome}/g,client.nome||firstName).replace(/{primeiro_nome}/g,firstName).replace(/{vencimento}/g,brDate).replace(/{valor}/g,formatBRL(client.valorFinal??client.valor??0)).replace(/{url}/g,paymentUrl).replace(/{link}/g,paymentUrl);
+    message=String(tpl.mensagem||message).replace(/{nome}/g,client.nome||firstName).replace(/{primeiro_nome}/g,firstName).replace(/{vencimento}/g,brDate).replace(/{valor}/g,formatBRL(client.valorFinal??client.valor??0));
     imageUrl=tpl.imagem_url||null;
    }
   }catch(error){console.warn("Falha ao carregar template de cobrança; usando texto padrão.",error)}

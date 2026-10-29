@@ -7,17 +7,11 @@ export const BOT_TEMPLATES = {
     `82iptv@gmail.com\n\n` +
     `✅ *Favor enviar comprovante*`,
 
-  VENCIDO: (nome: string, data: string, url: string = ""): string =>
+  VENCIDO: (nome: string, data: string): string =>
     `Olá ${nome}, tudo bem?\n` +
     `Seu plano de TV venceu em *${data}*.\n` +
-    `Para reativar o serviço, faça a renovação pelo link abaixo:\n\n` +
-    `${url}`,
-
-  RENOVACAO_LINK: (nome: string, url: string = ""): string =>
-    `Olá!\n\n` +
-    `Aqui está o seu link para renovação da assinatura:\n\n` +
-    `🔗 ${url}\n\n` +
-    `Após o pagamento, sua assinatura será renovada automaticamente.`,
+    `💳 *PIX:*\n82iptv@gmail.com\n\n` +
+    `✅ *Favor enviar comprovante*`,
 
   CONFIRMACAO: (nome: string, data: string): string =>
     `📌 Obrigado pela confiança!\n\n` +

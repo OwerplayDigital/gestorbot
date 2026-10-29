@@ -172,13 +172,11 @@ function ClientesPage() {
       const { data: templates, error } = await supabase.from('templates_whatsapp').select('nome,mensagem,imagem_url').order('nome');
       if (error) throw error;
       const template = templates?.find(t => t.nome.trim().toLocaleLowerCase('pt-BR') === 'renovação');
-      const paymentUrl = `https://gestorbot.lovable.app/pagar/${client.id}`;
       const message = String(template?.mensagem || BOT_TEMPLATES.CONFIRMACAO(firstName, brDate))
         .replace(/{nome}/g, client.nome || firstName)
         .replace(/{primeiro_nome}/g, firstName)
         .replace(/{vencimento}/g, brDate)
-        .replace(/{valor}/g, `R$ ${Math.max(0, Number(client.plans?.price || 0) - Number(client.desconto || 0)).toFixed(2)}`)
-        .replace(/{link_pagamento}|{url}|{link}/g, paymentUrl);
+        .replace(/{valor}/g, `R$ ${Math.max(0, Number(client.plans?.price || 0) - Number(client.desconto || 0)).toFixed(2)}`);
       const bridge = (window as any).OwerAppsExternal;
       if (template?.imagem_url && bridge?.shareWhatsAppImage) {
         await bridge.shareWhatsAppImage(phone, message, template.imagem_url);

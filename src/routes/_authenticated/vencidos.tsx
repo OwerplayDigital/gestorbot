@@ -78,11 +78,10 @@ function VencidosPage() {
   async function sendTemplateMessage(client: Client, template: any, fallback: string) {
     const firstName = (client.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
     const vencimento = client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento || '';
-    const paymentUrl = `https://gestorbot.lovable.app/pagar/${client.id}`;
     const valor = Math.max(0, Number(client.plans?.price || 0) - Number(client.desconto || 0));
     const message = renderClientTemplate(template?.mensagem || fallback, {
       nome: client.nome || firstName, primeiro_nome: firstName, vencimento,
-      valor: `R$ ${valor.toFixed(2)}`, link_pagamento: paymentUrl, url: paymentUrl, link: paymentUrl,
+      valor: `R$ ${valor.toFixed(2)}`,
     });
     const raw = String(client.whatsapp || '').replace(/\D/g, '');
     if (!raw) { toast.error('Cliente sem WhatsApp cadastrado.'); return false; }
@@ -115,12 +114,11 @@ function VencidosPage() {
     const client = selectedClient;
     const firstName = (client.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
     const vencimento = client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento || '';
-    const paymentUrl = `https://gestorbot.lovable.app/pagar/${client.id}`;
     let fallback = template.mensagem || '';
     try {
       if (template.system) {
         const isCharge = template.system === 'cobranca';
-        fallback = isCharge ? BOT_TEMPLATES.COBRANCA(firstName, vencimento) : BOT_TEMPLATES.VENCIDO(firstName, vencimento, paymentUrl);
+        fallback = isCharge ? BOT_TEMPLATES.COBRANCA(firstName, vencimento) : BOT_TEMPLATES.VENCIDO(firstName, vencimento);
         template = await loadSystemTemplate(isCharge ? 'Cobrança Oficial' : /vencid|expir/i);
       }
       if (await sendTemplateMessage(client, template, fallback)) setIsMessageOpen(false);
