@@ -25,7 +25,6 @@ import { Route as AuthenticatedPendenciasRouteImport } from './routes/_authentic
 import { Route as AuthenticatedRevendedoresRouteImport } from './routes/_authenticated/revendedores'
 import { Route as AuthenticatedVencidosRouteImport } from './routes/_authenticated/vencidos'
 import { Route as ExtratoTokenRouteImport } from './routes/extrato.$token'
-import { Route as PagarIdRouteImport } from './routes/pagar.$id'
 import { Route as ApiPublicCronNotificationsRouteImport } from './routes/api/public/cron-notifications'
 import { Route as ApiPublicPushTestRouteImport } from './routes/api/public/push-test'
 
@@ -112,11 +111,6 @@ const ExtratoTokenRoute = ExtratoTokenRouteImport.update({
   path: '/extrato/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PagarIdRoute = PagarIdRouteImport.update({
-  id: '/pagar/$id',
-  path: '/pagar/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicCronNotificationsRoute =
   ApiPublicCronNotificationsRouteImport.update({
     id: '/api/public/cron-notifications',
@@ -145,7 +139,6 @@ export interface FileRoutesByFullPath {
   '/revendedores': typeof AuthenticatedRevendedoresRoute
   '/vencidos': typeof AuthenticatedVencidosRoute
   '/extrato/$token': typeof ExtratoTokenRoute
-  '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/push-test': typeof ApiPublicPushTestRoute
 }
@@ -165,7 +158,6 @@ export interface FileRoutesByTo {
   '/revendedores': typeof AuthenticatedRevendedoresRoute
   '/vencidos': typeof AuthenticatedVencidosRoute
   '/extrato/$token': typeof ExtratoTokenRoute
-  '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/push-test': typeof ApiPublicPushTestRoute
 }
@@ -187,7 +179,6 @@ export interface FileRoutesById {
   '/_authenticated/revendedores': typeof AuthenticatedRevendedoresRoute
   '/_authenticated/vencidos': typeof AuthenticatedVencidosRoute
   '/extrato/$token': typeof ExtratoTokenRoute
-  '/pagar/$id': typeof PagarIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/push-test': typeof ApiPublicPushTestRoute
 }
@@ -209,7 +200,6 @@ export interface FileRouteTypes {
     | '/revendedores'
     | '/vencidos'
     | '/extrato/$token'
-    | '/pagar/$id'
     | '/api/public/cron-notifications'
     | '/api/public/push-test'
   fileRoutesByTo: FileRoutesByTo
@@ -229,7 +219,6 @@ export interface FileRouteTypes {
     | '/revendedores'
     | '/vencidos'
     | '/extrato/$token'
-    | '/pagar/$id'
     | '/api/public/cron-notifications'
     | '/api/public/push-test'
   id:
@@ -250,7 +239,6 @@ export interface FileRouteTypes {
     | '/_authenticated/revendedores'
     | '/_authenticated/vencidos'
     | '/extrato/$token'
-    | '/pagar/$id'
     | '/api/public/cron-notifications'
     | '/api/public/push-test'
   fileRoutesById: FileRoutesById
@@ -260,7 +248,6 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   ExtratoDemoRoute: typeof ExtratoDemoRoute
   ExtratoTokenRoute: typeof ExtratoTokenRoute
-  PagarIdRoute: typeof PagarIdRoute
   ApiPublicCronNotificationsRoute: typeof ApiPublicCronNotificationsRoute
   ApiPublicPushTestRoute: typeof ApiPublicPushTestRoute
 }
@@ -379,13 +366,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExtratoTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pagar/$id': {
-      id: '/pagar/$id'
-      path: '/pagar/$id'
-      fullPath: '/pagar/$id'
-      preLoaderRoute: typeof PagarIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/cron-notifications': {
       id: '/api/public/cron-notifications'
       path: '/api/public/cron-notifications'
@@ -441,7 +421,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   ExtratoDemoRoute: ExtratoDemoRoute,
   ExtratoTokenRoute: ExtratoTokenRoute,
-  PagarIdRoute: PagarIdRoute,
   ApiPublicCronNotificationsRoute: ApiPublicCronNotificationsRoute,
   ApiPublicPushTestRoute: ApiPublicPushTestRoute,
 }
