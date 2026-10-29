@@ -25,6 +25,7 @@ import { Route as AuthenticatedPendenciasRouteImport } from './routes/_authentic
 import { Route as AuthenticatedRevendedoresRouteImport } from './routes/_authenticated/revendedores'
 import { Route as AuthenticatedVencidosRouteImport } from './routes/_authenticated/vencidos'
 import { Route as ExtratoTokenRouteImport } from './routes/extrato.$token'
+import { Route as PixIdRouteImport } from './routes/pix.$id'
 import { Route as ApiPublicCronNotificationsRouteImport } from './routes/api/public/cron-notifications'
 import { Route as ApiPublicPushTestRouteImport } from './routes/api/public/push-test'
 
@@ -111,6 +112,11 @@ const ExtratoTokenRoute = ExtratoTokenRouteImport.update({
   path: '/extrato/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PixIdRoute = PixIdRouteImport.update({
+  id: '/pix/$id',
+  path: '/pix/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronNotificationsRoute =
   ApiPublicCronNotificationsRouteImport.update({
     id: '/api/public/cron-notifications',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/revendedores': typeof AuthenticatedRevendedoresRoute
   '/vencidos': typeof AuthenticatedVencidosRoute
   '/extrato/$token': typeof ExtratoTokenRoute
+  '/pix/$id': typeof PixIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/push-test': typeof ApiPublicPushTestRoute
 }
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/revendedores': typeof AuthenticatedRevendedoresRoute
   '/vencidos': typeof AuthenticatedVencidosRoute
   '/extrato/$token': typeof ExtratoTokenRoute
+  '/pix/$id': typeof PixIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/push-test': typeof ApiPublicPushTestRoute
 }
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/_authenticated/revendedores': typeof AuthenticatedRevendedoresRoute
   '/_authenticated/vencidos': typeof AuthenticatedVencidosRoute
   '/extrato/$token': typeof ExtratoTokenRoute
+  '/pix/$id': typeof PixIdRoute
   '/api/public/cron-notifications': typeof ApiPublicCronNotificationsRoute
   '/api/public/push-test': typeof ApiPublicPushTestRoute
 }
@@ -200,6 +209,7 @@ export interface FileRouteTypes {
     | '/revendedores'
     | '/vencidos'
     | '/extrato/$token'
+    | '/pix/$id'
     | '/api/public/cron-notifications'
     | '/api/public/push-test'
   fileRoutesByTo: FileRoutesByTo
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/revendedores'
     | '/vencidos'
     | '/extrato/$token'
+    | '/pix/$id'
     | '/api/public/cron-notifications'
     | '/api/public/push-test'
   id:
@@ -239,6 +250,7 @@ export interface FileRouteTypes {
     | '/_authenticated/revendedores'
     | '/_authenticated/vencidos'
     | '/extrato/$token'
+    | '/pix/$id'
     | '/api/public/cron-notifications'
     | '/api/public/push-test'
   fileRoutesById: FileRoutesById
@@ -248,6 +260,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   ExtratoDemoRoute: typeof ExtratoDemoRoute
   ExtratoTokenRoute: typeof ExtratoTokenRoute
+  PixIdRoute: typeof PixIdRoute
   ApiPublicCronNotificationsRoute: typeof ApiPublicCronNotificationsRoute
   ApiPublicPushTestRoute: typeof ApiPublicPushTestRoute
 }
@@ -366,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExtratoTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pix/$id': {
+      id: '/pix/$id'
+      path: '/pix/$id'
+      fullPath: '/pix/$id'
+      preLoaderRoute: typeof PixIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron-notifications': {
       id: '/api/public/cron-notifications'
       path: '/api/public/cron-notifications'
@@ -421,6 +441,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   ExtratoDemoRoute: ExtratoDemoRoute,
   ExtratoTokenRoute: ExtratoTokenRoute,
+  PixIdRoute: PixIdRoute,
   ApiPublicCronNotificationsRoute: ApiPublicCronNotificationsRoute,
   ApiPublicPushTestRoute: ApiPublicPushTestRoute,
 }
