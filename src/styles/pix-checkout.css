@@ -29,24 +29,20 @@
 .pix-due-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid rgb(255 255 255 / 22%); padding-top: 11px; font-size: var(--pix-text); line-height: 1.4; }
 .pix-due-row > span { color: #edf3fc; display: inline-flex; align-items: center; gap: 9px; }
 .pix-due-row strong { font-weight: 500; }
-.pix-payment { margin-top: 12px; padding: 17px 18px; }
-.pix-payment h2 { display: flex; align-items: center; gap: 12px; margin: 0 0 9px; font-size: var(--pix-medium); line-height: 1.3; font-weight: 600; letter-spacing: -.25px; }
+.pix-payment { margin-top: 24px; padding: 22px 18px; }
+.pix-payment h2 { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; font-size: var(--pix-medium); line-height: 1.3; font-weight: 600; letter-spacing: -.25px; }
 .pix-symbol { width: 27px; height: 27px; flex-shrink: 0; }
 .pix-recipient { margin: 0; }
-.pix-recipient > div { display: grid; grid-template-columns: 85px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 11px 0; border-bottom: 1px solid #e8edf3; font-size: var(--pix-text); line-height: 1.4; }
+.pix-recipient > div { display: grid; grid-template-columns: 85px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid #e8edf3; font-size: var(--pix-text); line-height: 1.4; }
 .pix-recipient dt { color: #748097; font-weight: 400; }
 .pix-recipient dd { margin: 0; overflow-wrap: anywhere; font-weight: 500; }
-.pix-copy-button { display: flex; align-items: center; justify-content: center; gap: 11px; width: 100%; min-height: 50px; margin-top: 13px; padding: 11px; border: 0; border-radius: 12px; background: linear-gradient(115deg, #0763ff, #1475ff); box-shadow: 0 5px 12px rgb(0 102 255 / 12%); color: #fff; font: inherit; font-size: var(--pix-medium); font-weight: 600; line-height: 1.3; cursor: pointer; transition: background .15s, transform .15s; }
+.pix-copy-button { display: flex; align-items: center; justify-content: center; gap: 11px; width: 100%; min-height: 50px; margin-top: 20px; padding: 11px; border: 0; border-radius: 12px; background: linear-gradient(115deg, #0763ff, #1475ff); box-shadow: 0 5px 12px rgb(0 102 255 / 12%); color: #fff; font: inherit; font-size: var(--pix-medium); font-weight: 600; line-height: 1.3; cursor: pointer; transition: background .15s, transform .15s; }
 .pix-copy-button:hover { background: #075cec; }
 .pix-copy-button:active { transform: scale(.985); }
 .pix-copy-button:focus-visible { outline: 3px solid #87b9ff; outline-offset: 4px; }
 .pix-copy-button:disabled { cursor: wait; }
 .pix-copy-button[data-copied="true"] { background: #075cec; }
 .pix-copy-button svg { width: 23px; height: 23px; flex-shrink: 0; }
-.pix-instructions { display: flex; gap: 10px; align-items: center; margin-top: 11px; padding: 12px; border-radius: 11px; background: #eaf3ff; color: #155bb7; }
-.pix-instructions svg { width: 21px; height: 21px; flex-shrink: 0; }
-.pix-instructions p { margin: 0; font-size: var(--pix-text); font-weight: 400; line-height: 1.4; }
-.pix-receipt { margin: 13px 0 0; text-align: center; color: #6f7f98; font-size: var(--pix-text); font-weight: 400; line-height: 1.4; }
 .pix-copy-error { margin: 12px 0 0; font-size: var(--pix-text); color: #b42318; line-height: 1.5; }
 .pix-state { margin-top: 25px; padding: 22px; border: 1px solid #e6ebf2; border-radius: 15px; background: #fff; }
 .pix-state h1 { margin: 12px 0; font-size: var(--pix-medium); font-weight: 700; line-height: 1.3; }
@@ -64,9 +60,8 @@
   .pix-summary { padding: 13px 16px; }
   .pix-amount strong { font-size: 40px; }
   .pix-amount { margin-bottom: 9px; }
-  .pix-payment { padding: 14px 16px; margin-top: 10px; }
-  .pix-recipient > div { padding: 9px 0; }
-  .pix-receipt { margin-top: 10px; }
+  .pix-payment { padding: 18px 16px; margin-top: 18px; }
+  .pix-recipient > div { padding: 14px 0; }
 }
 @media (max-width: 359px) {
   .pix-checkout { padding-left: 14px; padding-right: 14px; }
