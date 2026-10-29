@@ -1,6 +1,6 @@
 import officialLogo from '@/assets/logo-owerplay.png.asset.json';
 import { useEffect, useRef, useState } from 'react';
-import { Check, Copy, Info, LoaderCircle } from 'lucide-react';
+import { CalendarDays, Check, Copy, Info, LoaderCircle } from 'lucide-react';
 import { copyPixKey, pixAmount, pixDueDate, PIX_BANK, PIX_RECIPIENT, type PixCheckoutInfo } from '@/lib/pix-payment';
 import '../styles/pix-checkout.css';
 
@@ -54,9 +54,9 @@ export function PixCheckout({ info, loading = false, error, onRetry }: {
           <h1>Renove seu acesso</h1>
         </header>
         <section className="pix-card pix-summary" aria-label="Resumo da renovação">
-          <p className="pix-amount-label">Valor da renovação</p>
+          <p className="pix-amount-label">Valor</p>
           <p className="pix-amount"><span>R$</span><strong>{amount}</strong></p>
-          <div className="pix-due-row"><span>Vencimento</span><strong>{pixDueDate(info.vencimento)}</strong></div>
+          <div className="pix-due-row"><span><CalendarDays size={17} aria-hidden="true" />Vencimento</span><strong>{pixDueDate(info.vencimento)}</strong></div>
         </section>
         <section className="pix-card pix-payment" aria-labelledby="pix-payment-heading">
           <h2 id="pix-payment-heading"><PixSymbol />Pague com Pix</h2>
@@ -70,8 +70,8 @@ export function PixCheckout({ info, loading = false, error, onRetry }: {
           </button>
           {copyState === 'failed' && <p className="pix-copy-error" role="alert">Não foi possível copiar. Toque no botão para tentar novamente.</p>}
           {hasCopied && <div className="pix-instructions" role="status"><Info aria-hidden="true" /><p>Abra o app do seu banco e escolha Pix → Pagar com chave.</p></div>}
-          <p className="pix-receipt">Após pagar, envie o comprovante pelo WhatsApp.</p>
         </section>
+        <p className="pix-receipt">Após pagar, envie o comprovante pelo WhatsApp.</p>
       </>}
     </div>
   </div>;
