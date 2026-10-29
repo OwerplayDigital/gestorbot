@@ -41,6 +41,32 @@ export type Database = {
         }
         Relationships: []
       }
+      client_payment_links: {
+        Row: {
+          cliente_id: string
+          code: string
+          created_at: string
+        }
+        Insert: {
+          cliente_id: string
+          code: string
+          created_at?: string
+        }
+        Update: {
+          cliente_id?: string
+          code?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_payment_links_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: true
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           cadastrado_em: string | null
@@ -592,6 +618,16 @@ export type Database = {
           id: string
           nome: string
           plan_name: string
+          plan_price: number
+          vencimento: string
+        }[]
+      }
+      get_or_create_pix_link: { Args: { p_client_id: string }; Returns: string }
+      get_pix_checkout: {
+        Args: { p_code: string }
+        Returns: {
+          desconto: number
+          nome: string
           plan_price: number
           vencimento: string
         }[]
