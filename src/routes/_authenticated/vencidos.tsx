@@ -1,3 +1,4 @@
+import { withPixPaymentLink, isPaymentTemplate } from '@/lib/pix-payment';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -75,14 +76,15 @@ function VencidosPage() {
     setSelectedClient(client); setIsMessageOpen(true);
   }
 
-  async function sendTemplateMessage(client: Client, template: any, fallback: string) {
+  async function sendTemplateMessage(client: Client, template: any, fallback: string, payment = false) {
     const firstName = (client.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
     const vencimento = client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento || '';
     const valor = Math.max(0, Number(client.plans?.price || 0) - Number(client.desconto || 0));
-    const message = renderClientTemplate(template?.mensagem || fallback, {
+    let message = renderClientTemplate(template?.mensagem || fallback, {
       nome: client.nome || firstName, primeiro_nome: firstName, vencimento,
       valor: `R$ ${valor.toFixed(2)}`,
     });
+    if (payment || isPaymentTemplate(template?.nome)) message = withPixPaymentLink(message, client.id);
     const raw = String(client.whatsapp || '').replace(/\D/g, '');
     if (!raw) { toast.error('Cliente sem WhatsApp cadastrado.'); return false; }
     const phone = raw.startsWith('55') ? raw : `55${raw}`;
@@ -114,6 +116,7 @@ function VencidosPage() {
     const client = selectedClient;
     const firstName = (client.nome || 'Cliente').trim().split(' ')[0] || 'Cliente';
     const vencimento = client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento || '';
+    const payment = !!template.system || isPaymentTemplate(template.nome);
     let fallback = template.mensagem || '';
     try {
       if (template.system) {
@@ -121,7 +124,7 @@ function VencidosPage() {
         fallback = isCharge ? BOT_TEMPLATES.COBRANCA(firstName, vencimento) : BOT_TEMPLATES.VENCIDO(firstName, vencimento);
         template = await loadSystemTemplate(isCharge ? 'Cobrança Oficial' : /vencid|expir/i);
       }
-      if (await sendTemplateMessage(client, template, fallback)) setIsMessageOpen(false);
+      if (await sendTemplateMessage(client, template, fallback, payment)) setIsMessageOpen(false);
     } catch (error) {
       console.error(error);
       toast.error('Não foi possível carregar o template. Tente novamente.');

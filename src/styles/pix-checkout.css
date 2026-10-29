@@ -1,0 +1,73 @@
+.pix-checkout {
+  color-scheme: light;
+  min-height: 100svh;
+  background: #fcfdff;
+  color: #071b42;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding: max(16px, env(safe-area-inset-top)) 24px max(40px, env(safe-area-inset-bottom));
+}
+.pix-checkout *, .pix-checkout *::before, .pix-checkout *::after { box-sizing: border-box; }
+.pix-checkout-inner { width: 100%; max-width: 560px; margin: 0 auto; }
+.pix-brand { display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 780; letter-spacing: 1.1px; line-height: 1; padding-left: 5px; }
+.pix-brand svg { width: 28px; height: 31px; flex-shrink: 0; }
+.pix-heading { margin: 35px 5px 27px; }
+.pix-eyebrow { margin: 0 0 8px; color: #77849a; font-size: 13px; font-weight: 650; letter-spacing: 1.05px; }
+.pix-heading h1 { margin: 0; color: #061a40; font-size: clamp(27px, 7.1vw, 42px); line-height: 1.2; font-weight: 780; letter-spacing: -1.2px; }
+.pix-greeting { margin: 9px 0 0; color: #071b42; font-size: 20px; font-weight: 550; line-height: 1.35; letter-spacing: -.5px; }
+.pix-card { background: #fff; border: 1px solid #e6ebf2; border-radius: 15px; box-shadow: 0 5px 18px rgb(18 37 65 / 5%); }
+.pix-summary { padding: 19px 20px 22px; }
+.pix-amount-label { margin: 0; color: #748097; font-size: 17px; line-height: 1.4; letter-spacing: -.4px; }
+.pix-amount { display: flex; align-items: baseline; gap: 9px; margin: 6px 0 17px; white-space: nowrap; line-height: 1.25; letter-spacing: -1.6px; }
+.pix-amount span { font-size: 27px; font-weight: 450; }
+.pix-amount strong { font-size: clamp(44px, 12vw, 62px); font-weight: 780; }
+.pix-due-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid #dfe5ed; padding-top: 16px; font-size: 17px; line-height: 1.4; letter-spacing: -.5px; }
+.pix-due-row > span { color: #748097; }
+.pix-due-row strong { font-weight: 650; }
+.pix-payment { margin-top: 15px; padding: 20px; }
+.pix-payment h2 { display: flex; align-items: center; gap: 16px; margin: 0 0 14px; font-size: 25px; line-height: 1.3; font-weight: 750; letter-spacing: -.75px; }
+.pix-symbol { width: 39px; height: 39px; flex-shrink: 0; }
+.pix-recipient { margin: 0; }
+.pix-recipient > div { display: grid; grid-template-columns: 94px minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 15px 0; border-bottom: 1px solid #e8edf3; font-size: 16px; line-height: 1.4; letter-spacing: -.3px; }
+.pix-recipient dt { color: #748097; }
+.pix-recipient dd { margin: 0; overflow-wrap: anywhere; font-weight: 500; }
+.pix-copy-button { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 57px; margin-top: 14px; padding: 12px; border: 0; border-radius: 12px; background: linear-gradient(115deg, #0763ff, #1475ff); box-shadow: 0 5px 12px rgb(0 102 255 / 12%); color: #fff; font: inherit; font-size: 18px; font-weight: 650; line-height: 1.3; cursor: pointer; transition: background .15s, transform .15s; }
+.pix-copy-button:hover { background: #075cec; }
+.pix-copy-button:active { transform: scale(.985); }
+.pix-copy-button:focus-visible { outline: 3px solid #87b9ff; outline-offset: 4px; }
+.pix-copy-button:disabled { cursor: wait; }
+.pix-copy-button[data-copied="true"] { background: #075cec; }
+.pix-copy-button svg { width: 24px; height: 24px; flex-shrink: 0; }
+.pix-instructions { display: flex; gap: 13px; align-items: center; margin-top: 15px; padding: 15px; border-radius: 12px; background: #eaf3ff; color: #155bb7; }
+.pix-instructions svg { width: 23px; height: 23px; flex-shrink: 0; }
+.pix-instructions p { margin: 0; font-size: 13px; line-height: 1.45; letter-spacing: -.15px; }
+.pix-receipt { margin: 16px 0 0; text-align: center; color: #6f7f98; font-size: 12px; line-height: 1.5; letter-spacing: -.25px; }
+.pix-copy-error { margin: 12px 0 0; font-size: 13px; color: #b42318; line-height: 1.5; }
+.pix-state { margin-top: 48px; padding: 28px; border: 1px solid #e6ebf2; border-radius: 15px; background: #fff; }
+.pix-state h1 { margin: 12px 0; font-size: 23px; font-weight: 700; line-height: 1.3; }
+.pix-state p { margin: 12px 0; color: #6f7f98; font-size: 15px; line-height: 1.5; }
+.pix-spinner { animation: pix-spin 1s linear infinite; }
+@keyframes pix-spin { to { transform: rotate(360deg); } }
+@media (min-width: 600px) {
+  .pix-checkout { padding-top: 28px; padding-bottom: 70px; }
+  .pix-brand { font-size: 25px; }
+  .pix-brand svg { width: 32px; height: 36px; }
+  .pix-heading { margin-top: 43px; margin-bottom: 30px; }
+  .pix-eyebrow { font-size: 15px; }
+  .pix-greeting { font-size: 23px; }
+  .pix-summary, .pix-payment { padding: 25px; border-radius: 18px; }
+  .pix-amount-label, .pix-due-row { font-size: 20px; }
+  .pix-payment { margin-top: 18px; }
+  .pix-payment h2 { font-size: 29px; }
+  .pix-recipient > div { font-size: 18px; grid-template-columns: 120px minmax(0, 1fr); padding: 18px 0; }
+  .pix-copy-button { min-height: 63px; font-size: 20px; }
+  .pix-instructions p { font-size: 15px; }
+  .pix-receipt { font-size: 14px; }
+}
+@media (max-width: 359px) {
+  .pix-checkout { padding-left: 16px; padding-right: 16px; }
+  .pix-payment, .pix-summary { padding: 16px; }
+  .pix-recipient > div { grid-template-columns: 76px minmax(0, 1fr); gap: 8px; font-size: 14px; }
+  .pix-heading h1 { font-size: 26px; }
+}
+@media (prefers-reduced-motion: reduce) { .pix-spinner { animation: none; } .pix-copy-button { transition: none; } }
