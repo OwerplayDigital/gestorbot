@@ -49,8 +49,8 @@ export function PixCheckout({ info, loading = false, error, onRetry }: {
         {loading ? <><LoaderCircle className="pix-spinner" size={30} /><h1>Carregando pagamento…</h1></> : <><h1>Pagamento indisponível</h1><p>{error || 'Não foi possível encontrar esta cobrança.'}</p>{onRetry && <button className="pix-copy-button" onClick={onRetry}>Tentar novamente</button>}</>}
       </section> : <>
         <header className="pix-heading">
-          <h1>Renove seu acesso</h1>
           <p className="pix-greeting">Olá, {firstName}</p>
+          <h1>Renove seu acesso</h1>
         </header>
         <section className="pix-card pix-summary" aria-label="Resumo da renovação">
           <p className="pix-amount-label">Valor da renovação</p>
