@@ -1,4 +1,4 @@
-import { withPixPaymentLink } from '@/lib/pix-payment';
+import { withClientPixPaymentLink } from '@/lib/pix-links';
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -87,7 +87,8 @@ function Dashboard(){
     imageUrl=tpl.imagem_url||null;
    }
   }catch(error){console.warn("Falha ao carregar template de cobrança; usando texto padrão.",error)}
-  message=withPixPaymentLink(message,client.id);
+  try { message=await withClientPixPaymentLink(message,client.id); }
+  catch(error) { console.error(error); toast.error("Não foi possível preparar o link de pagamento."); return; }
   const bridge=(window as any).OwerAppsExternal;
   if(imageUrl&&bridge?.shareWhatsAppImage) bridge.shareWhatsAppImage(phone,message,imageUrl); else openWhatsApp(phone,message);
  }

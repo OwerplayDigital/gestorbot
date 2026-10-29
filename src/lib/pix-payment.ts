@@ -6,19 +6,25 @@ export function getPixPaymentUrl(clientId: string): string {
   return `https://gestorbot.lovable.app/pix/${encodeURIComponent(clientId)}`;
 }
 
+export function getShortPixPaymentUrl(code: string): string {
+  if (!/^[A-Za-z0-9_-]{10}$/.test(code)) throw new Error('Código de pagamento inválido.');
+  return `https://gestorbot.lovable.app/p/${code}`;
+}
+
 export function isPaymentTemplate(name: string = ''): boolean {
   const normalized = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   return /cobranc|vencid|expir/.test(normalized);
 }
 
 /** Cobranças recebem o link sem depender de marcadores no template salvo. */
-export function withPixPaymentLink(message: string, clientId: string): string {
-  const url = getPixPaymentUrl(clientId);
+export function withPixPaymentLink(message: string, clientId: string, paymentUrl?: string): string {
+  const url = paymentUrl || getPixPaymentUrl(clientId);
   let result = message
     .replace(/\{(?:link_pagamento|url|link)\}/gi, url)
-    .replace(/https:\/\/gestorbot\.lovable\.app\/(?:pagar|pix)\/[^\s*<>]+/g, url)
+    .replace(/https:\/\/gestorbot\.lovable\.app\/(?:pagar|pix|p)\/[^\s*<>]+/g, url)
     .replaceAll(PIX_KEY, url);
-  if (!result.includes(url)) result = `${result.trim()}\n\n💳 Pague via Pix:\n${url}`;
+  result = result.replace(/(?:💳\s*)?\*?PIX\*?\s*:?\*?\s*(?=https:\/\/gestorbot\.lovable\.app\/)/gi, '💳 Acesse para copiar a chave Pix:\n');
+  if (!result.includes(url)) result = `${result.trim()}\n\n💳 Acesse para copiar a chave Pix:\n${url}`;
   // Um único endereço, mesmo em templates antigos com chave e marcador.
   const first = result.indexOf(url);
   return result.slice(0, first + url.length) + result.slice(first + url.length).replaceAll(url, '');
