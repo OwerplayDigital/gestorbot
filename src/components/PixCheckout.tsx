@@ -1,10 +1,11 @@
+import officialLogo from '@/assets/logo-owerplay.png.asset.json';
 import { useEffect, useRef, useState } from 'react';
 import { Check, Copy, Info, LoaderCircle } from 'lucide-react';
 import { copyPixKey, pixAmount, pixDueDate, PIX_BANK, PIX_RECIPIENT, type PixCheckoutInfo } from '@/lib/pix-payment';
 import '../styles/pix-checkout.css';
 
 function OwerplayBrand() {
-  return <div className="pix-brand"><img src="/og-logo.png" alt="Owerplay TV online" width="96" height="96" /></div>;
+  return <div className="pix-brand"><img src={officialLogo.url} alt="Owerplay TV online" width="96" height="96" /></div>;
 }
 
 function PixSymbol() {
