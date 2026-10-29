@@ -4,13 +4,7 @@ import { copyPixKey, pixAmount, pixDueDate, PIX_BANK, PIX_RECIPIENT, type PixChe
 import '../styles/pix-checkout.css';
 
 function OwerplayBrand() {
-  return <div className="pix-brand" aria-label="Owerplay">
-    <svg viewBox="0 0 40 44" fill="none" aria-hidden="true">
-      <defs><linearGradient id="pix-brand-blue" x1="0" y1="0" x2="40" y2="44" gradientUnits="userSpaceOnUse"><stop stopColor="#318bff"/><stop offset="1" stopColor="#0755ff"/></linearGradient></defs>
-      <path d="M5 3.5C5-0.1 9.3-1 12 0.7L35 15.5c5.3 3.4 5.3 9.6 0 13L12 43.3C9.3 45 5 43.1 5 39.5Z" fill="url(#pix-brand-blue)"/>
-      <path d="M15 14.5c0-1.2 1.3-2 2.4-1.3l10 6.4c1 .6 1 2.1 0 2.8l-10 6.3c-1.1.7-2.4-.1-2.4-1.3Z" fill="white"/>
-    </svg><span>OWERPLAY</span>
-  </div>;
+  return <div className="pix-brand"><img src="/og-logo.png" alt="Owerplay TV online" width="96" height="96" /></div>;
 }
 
 function PixSymbol() {
@@ -26,9 +20,11 @@ export function PixCheckout({ info, loading = false, error, onRetry }: {
   onRetry?: () => void;
 }) {
   const [copyState, setCopyState] = useState<'idle' | 'copying' | 'copied' | 'failed'>('idle');
+  const [hasCopied, setHasCopied] = useState(false);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
     setCopyState('idle');
+    setHasCopied(false);
     return () => clearTimeout(resetTimer.current);
   }, [info]);
   async function handleCopy() {
@@ -38,6 +34,7 @@ export function PixCheckout({ info, loading = false, error, onRetry }: {
     try {
       await copyPixKey();
       setCopyState('copied');
+      setHasCopied(true);
       resetTimer.current = setTimeout(() => setCopyState('idle'), 3000);
     } catch {
       setCopyState('failed');
@@ -52,7 +49,6 @@ export function PixCheckout({ info, loading = false, error, onRetry }: {
         {loading ? <><LoaderCircle className="pix-spinner" size={30} /><h1>Carregando pagamento…</h1></> : <><h1>Pagamento indisponível</h1><p>{error || 'Não foi possível encontrar esta cobrança.'}</p>{onRetry && <button className="pix-copy-button" onClick={onRetry}>Tentar novamente</button>}</>}
       </section> : <>
         <header className="pix-heading">
-          <p className="pix-eyebrow">PAGAMENTO VIA PIX</p>
           <h1>Renove seu acesso</h1>
           <p className="pix-greeting">Olá, {firstName}</p>
         </header>
@@ -72,7 +68,7 @@ export function PixCheckout({ info, loading = false, error, onRetry }: {
             <span aria-live="polite">{copyState === 'copied' ? 'Chave copiada' : copyState === 'copying' ? 'Copiando…' : 'Copiar chave Pix'}</span>
           </button>
           {copyState === 'failed' && <p className="pix-copy-error" role="alert">Não foi possível copiar. Toque no botão para tentar novamente.</p>}
-          <div className="pix-instructions"><Info aria-hidden="true" /><p>Depois de copiar, abra o app do seu banco e escolha Pix → Pagar com chave.</p></div>
+          {hasCopied && <div className="pix-instructions" role="status"><Info aria-hidden="true" /><p>Abra o app do seu banco e escolha Pix → Pagar com chave.</p></div>}
           <p className="pix-receipt">Após pagar, envie o comprovante pelo WhatsApp.</p>
         </section>
       </>}

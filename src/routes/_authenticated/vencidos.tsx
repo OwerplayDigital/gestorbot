@@ -1,4 +1,5 @@
-import { withPixPaymentLink, isPaymentTemplate } from '@/lib/pix-payment';
+import { isPaymentTemplate } from '@/lib/pix-payment';
+import { withClientPixPaymentLink } from '@/lib/pix-links';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -84,7 +85,7 @@ function VencidosPage() {
       nome: client.nome || firstName, primeiro_nome: firstName, vencimento,
       valor: `R$ ${valor.toFixed(2)}`,
     });
-    if (payment || isPaymentTemplate(template?.nome)) message = withPixPaymentLink(message, client.id);
+    if (payment || isPaymentTemplate(template?.nome)) message = await withClientPixPaymentLink(message, client.id);
     const raw = String(client.whatsapp || '').replace(/\D/g, '');
     if (!raw) { toast.error('Cliente sem WhatsApp cadastrado.'); return false; }
     const phone = raw.startsWith('55') ? raw : `55${raw}`;

@@ -1,4 +1,5 @@
-import { withPixPaymentLink, isPaymentTemplate } from '@/lib/pix-payment';
+import { isPaymentTemplate } from '@/lib/pix-payment';
+import { withClientPixPaymentLink } from '@/lib/pix-links';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -161,7 +162,26 @@ function ClientesPage() {
     if (!selectedClient || isAppSaving) return; if (!appForm.app_nome.trim()) { toast.error('Informe o aplicativo.'); return; } setIsAppSaving(true);
     try { const payload = { cliente_id: selectedClient.id, app_nome: appForm.app_nome.trim(), mac_address: requiresAppAccess(appForm.app_nome) ? appForm.mac_address.trim() : '', app_key: appAccessFields(appForm.app_nome).key ? appForm.app_key.trim() || null : null }; if (appForm.id) { const { error } = await supabase.from('dispositivos').update(payload).eq('id', appForm.id); if (error) throw error; } else { const { error } = await supabase.from('dispositivos').insert(payload); if (error) throw error; } toast.success(appForm.id ? 'Dados do aplicativo atualizados.' : 'Aplicativo adicionado.'); await queryClient.invalidateQueries({ queryKey: ['client-applications'] }); await refetch(); setAppMode('view'); } catch (error) { console.error(error); toast.error('Não foi possível salvar os dados do aplicativo.'); } finally { setIsAppSaving(false); }
   }
-  const handleSendMessage = (template: any) => { if (!selectedClient) return; const firstName = selectedClient.nome.split(' ')[0]; const valor = selectedClient.plans ? (Number(selectedClient.plans.price) - Number(selectedClient.desconto || 0)).toFixed(2) : '0.00'; const vencimentoBr = selectedClient.vencimento?.includes('-') ? format(parseISO(selectedClient.vencimento), 'dd/MM/yyyy') : selectedClient.vencimento; let message = template.mensagem.replace(/{nome}/g, selectedClient.nome).replace(/{primeiro_nome}/g, firstName).replace(/{vencimento}/g, vencimentoBr || '').replace(/{valor}/g, `R$ ${valor}`); if (isPaymentTemplate(template.nome)) message = withPixPaymentLink(message, selectedClient.id); const phoneRaw = selectedClient.whatsapp.replace(/\D/g, ''); const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`; const bridge = (window as any).OwerAppsExternal; if (template.imagem_url && bridge?.shareWhatsAppImage) { bridge.shareWhatsAppImage(phone, message, template.imagem_url); } else { openWhatsApp(phone, message); } setIsMessageOpen(false); };
+  const handleSendMessage = async (template: any) => {
+    if (!selectedClient?.whatsapp) { toast.error('Cliente sem WhatsApp cadastrado.'); return; }
+    const client = selectedClient;
+    try {
+      const firstName = client.nome.split(' ')[0];
+      const valor = client.plans ? Math.max(0, Number(client.plans.price) - Number(client.desconto || 0)).toFixed(2) : '0.00';
+      const vencimentoBr = client.vencimento?.includes('-') ? format(parseISO(client.vencimento), 'dd/MM/yyyy') : client.vencimento;
+      let message = template.mensagem.replace(/{nome}/g, client.nome).replace(/{primeiro_nome}/g, firstName).replace(/{vencimento}/g, vencimentoBr || '').replace(/{valor}/g, `R$ ${valor}`);
+      if (isPaymentTemplate(template.nome)) message = await withClientPixPaymentLink(message, client.id);
+      const phoneRaw = client.whatsapp.replace(/\D/g, '');
+      const phone = phoneRaw.startsWith('55') ? phoneRaw : `55${phoneRaw}`;
+      const bridge = (window as any).OwerAppsExternal;
+      if (template.imagem_url && bridge?.shareWhatsAppImage) await bridge.shareWhatsAppImage(phone, message, template.imagem_url);
+      else openWhatsApp(phone, message);
+      setIsMessageOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error('Não foi possível preparar a mensagem. Tente novamente.');
+    }
+  };
   async function sendRenewalMessage() {
     if (!selectedClient?.whatsapp || !selectedClient?.vencimento) { toast.error('Cliente sem WhatsApp cadastrado.'); return; }
     const client = selectedClient;

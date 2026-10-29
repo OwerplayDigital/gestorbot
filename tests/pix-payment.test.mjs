@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getPixPaymentUrl, withPixPaymentLink, isPaymentTemplate, pixAmount, pixDueDate, copyPixKey, PIX_KEY } from '../src/lib/pix-payment.ts';
+import { getPixPaymentUrl, getShortPixPaymentUrl, withPixPaymentLink, isPaymentTemplate, pixAmount, pixDueDate, copyPixKey, PIX_KEY } from '../src/lib/pix-payment.ts';
 
 test('inclui automaticamente o endereço do cliente sem exigir marcador', () => {
   const url = getPixPaymentUrl('cliente-a');
-  assert.equal(withPixPaymentLink('Olá Daniel', 'cliente-a'), 'Olá Daniel\n\n💳 Pague via Pix:\n' + url);
+  assert.equal(withPixPaymentLink('Olá Daniel', 'cliente-a'), 'Olá Daniel\n\n💳 Acesse para copiar a chave Pix:\n' + url);
   assert.ok(!withPixPaymentLink('Olá', 'cliente-a').includes(getPixPaymentUrl('cliente-b')));
 });
 test('troca chave e links antigos pelo endereço atual, sem duplicar', () => {
@@ -62,20 +62,46 @@ test('cobranças das três telas incluem link e preservam imagem; confirmação 
   const client = { id: '11111111-1111-4111-8111-111111111111', nome: 'Daniel Silva', whatsapp: '21999999999', vencimento: '2026-10-31', plans: { price: 35 }, desconto: 0 };
   const template = { nome: 'Cobrança Oficial', mensagem: 'Olá {primeiro_nome}, PIX: ' + PIX_KEY, imagem_url: 'https://example.com/cobranca.webp' };
   let delivered;
-  const context = { selectedClient: client, withPixPaymentLink, isPaymentTemplate, renderClientTemplate, BOT_TEMPLATES, console, toast: { error: value => { throw Error(value); } }, format: () => '31/10/2026', parseISO: value => value, formatBRL: () => 'R$ 35,00', setIsMessageOpen() {}, openWhatsApp: (...args) => { delivered = args; }, window: { OwerAppsExternal: { shareWhatsAppImage: (...args) => { delivered = args; } } }, supabase: { from: () => ({ select: async () => ({ data: [template] }) }) } };
+  const context = { selectedClient: client, withPixPaymentLink, withClientPixPaymentLink: async (message, id) => withPixPaymentLink(message, id, getShortPixPaymentUrl('AbCdef1234')), isPaymentTemplate, renderClientTemplate, BOT_TEMPLATES, console, toast: { error: value => { throw Error(value); } }, format: () => '31/10/2026', parseISO: value => value, formatBRL: () => 'R$ 35,00', setIsMessageOpen() {}, openWhatsApp: (...args) => { delivered = args; }, window: { OwerAppsExternal: { shareWhatsAppImage: (...args) => { delivered = args; } } }, supabase: { from: () => ({ select: async () => ({ data: [template] }) }) } };
   vm.createContext(context);
   const dashboard = fs.readFileSync(new URL('../src/routes/_authenticated/dashboard.tsx', import.meta.url), 'utf8');
   vm.runInContext(stripTypeScriptTypes(dashboard.slice(dashboard.indexOf(' async function chargeClient'), dashboard.indexOf(' function openRenew'))), context);
   await context.chargeClient(client);
-  assert.equal(delivered[2], template.imagem_url); assert.ok(delivered[1].includes(getPixPaymentUrl(client.id)));
+  assert.equal(delivered[2], template.imagem_url); assert.ok(delivered[1].includes(getShortPixPaymentUrl('AbCdef1234')));
   const clients = fs.readFileSync(new URL('../src/routes/_authenticated/clientes.tsx', import.meta.url), 'utf8');
   vm.runInContext(stripTypeScriptTypes(clients.slice(clients.indexOf('  const handleSendMessage'), clients.indexOf('  async function sendRenewalMessage')) + '\nglobalThis.sendFromClients = handleSendMessage;'), context);
-  context.sendFromClients(template);
-  assert.equal(delivered[2], template.imagem_url); assert.ok(delivered[1].includes(getPixPaymentUrl(client.id)));
+  await context.sendFromClients(template);
+  assert.equal(delivered[2], template.imagem_url); assert.ok(delivered[1].includes(getShortPixPaymentUrl('AbCdef1234')));
   const expired = fs.readFileSync(new URL('../src/routes/_authenticated/vencidos.tsx', import.meta.url), 'utf8');
   vm.runInContext(stripTypeScriptTypes(expired.slice(expired.indexOf('  async function sendTemplateMessage'), expired.indexOf('  async function loadSystemTemplate'))), context);
   await context.sendTemplateMessage(client, template, '', true);
-  assert.equal(delivered[2], template.imagem_url); assert.ok(delivered[1].includes(getPixPaymentUrl(client.id)));
+  assert.equal(delivered[2], template.imagem_url); assert.ok(delivered[1].includes(getShortPixPaymentUrl('AbCdef1234')));
   await context.sendTemplateMessage(client, { ...template, nome: 'Renovação', mensagem: 'Assinatura renovada' }, '');
   assert.equal(delivered[1], 'Assinatura renovada');
+});
+
+
+test('link curto valida o código e acrescenta a frase antes do endereço', () => {
+  const url = getShortPixPaymentUrl('AbCd12_x-Y');
+  assert.equal(url, 'https://gestorbot.lovable.app/p/AbCd12_x-Y');
+  assert.throws(() => getShortPixPaymentUrl('invalid'));
+  for (const prefix of ['💳 PIX: ', '💳 *PIX:*\n', '*PIX*: ']) {
+    const message = withPixPaymentLink(prefix + PIX_KEY, 'cliente-a', url);
+    assert.ok(message.includes('💳 Acesse para copiar a chave Pix:\n' + url));
+    assert.equal(message.split(url).length - 1, 1);
+  }
+});
+
+test('serviço de links usa o código do banco, não oculta falta de permissão e mantém compatibilidade antes da migração', async () => {
+  const fs = await import('node:fs');
+  const vm = await import('node:vm');
+  const { stripTypeScriptTypes } = await import('node:module');
+  const source = fs.readFileSync(new URL('../src/lib/pix-links.ts', import.meta.url), 'utf8').replace(/^import .*;\n/gm, '').replace(/^export /gm, '') + '\nglobalThis.readLink = getClientPixPaymentUrl;';
+  let count = 0, mode = 'ok';
+  const context = { Map, Promise, String, console: { warn() {} }, getPixPaymentUrl, getShortPixPaymentUrl, withPixPaymentLink, supabase: { rpc: async (name, args) => { count++; assert.equal(name, 'get_or_create_pix_link'); assert.equal(args.p_client_id, 'client-a'); return mode === 'ok' ? { data: 'AbCd12_x-Y', error: null } : { data: null, error: { code: mode } }; } } };
+  vm.createContext(context);vm.runInContext(stripTypeScriptTypes(source), context);
+  const links = await Promise.all([context.readLink('client-a'), context.readLink('client-a')]);
+  assert.equal(count, 1);assert.deepEqual(links, [getShortPixPaymentUrl('AbCd12_x-Y'),getShortPixPaymentUrl('AbCd12_x-Y')]);
+  mode = 'PGRST202';assert.equal(await context.readLink('client-a'), getPixPaymentUrl('client-a'));
+  mode = '42501';await assert.rejects(context.readLink('client-a'));
 });
