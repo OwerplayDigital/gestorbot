@@ -39,7 +39,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
   override render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <div data-owerapps-ready="true" className="flex min-h-screen items-center justify-center bg-background p-4">
           <Card className="max-w-md w-full border-destructive/20 shadow-lg">
             <CardHeader className="text-center pb-2">
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
