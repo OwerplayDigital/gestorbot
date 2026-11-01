@@ -84,7 +84,7 @@ function Index() {
 
   if (!isSecretDoorOpen) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] dark:bg-[#090D16]">
+      <div data-owerapps-ready="true" className="flex min-h-screen items-center justify-center bg-[#F8FAFC] dark:bg-[#090D16]">
         <picture>
           <source media="(prefers-color-scheme: dark)" srcSet="/og-logo.svg" />
           <img src="/og-logo-light.svg" alt="Owerplay Gestor" className="h-28 w-28 object-contain" />
@@ -94,7 +94,7 @@ function Index() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+    <div data-owerapps-ready="true" className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md rounded-2xl border-border bg-card shadow-2xl dark:border-slate-800 dark:bg-[#131B2E]">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">

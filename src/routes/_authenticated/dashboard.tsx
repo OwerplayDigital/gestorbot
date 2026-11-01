@@ -157,7 +157,7 @@ const {error:updateError}=await supabase.from("clientes").update({vencimento:ren
 
  if(isLoading)return <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]"><div className="flex flex-col items-center gap-2"><Activity className="h-10 w-10 text-primary animate-pulse"/><span className="text-sm font-medium animate-pulse text-muted-foreground">Carregando painel...</span></div></div>;
 
- return <div className="dashboard-page flex flex-col gap-6 p-4 md:p-6 pb-10 max-w-7xl mx-auto w-full">
+ return <div data-owerapps-ready="true" className="dashboard-page flex flex-col gap-6 p-4 md:p-6 pb-10 max-w-7xl mx-auto w-full">
   <header className="dashboard-toolbar flex flex-col sm:flex-row sm:items-center justify-between gap-3">
    <div className="period-switch bg-card border border-border rounded-xl p-1 flex items-center gap-0.5 shadow-sm">{[{id:"hoje",label:"Hoje"},{id:"mes",label:currentMonthLabel},{id:"ano",label:"Ano"}].map(tab=><button key={tab.id} onClick={()=>setActiveTab(tab.id)} className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${activeTab===tab.id?"bg-primary text-primary-foreground shadow-sm":"text-muted-foreground hover:text-foreground"}`}>{tab.label}</button>)}</div>
   </header>
