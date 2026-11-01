@@ -2,7 +2,7 @@ import { withClientPixPaymentLink } from '@/lib/pix-links';
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Trash2, Activity, Eye, EyeOff, ReceiptText, RotateCw, Gift, Minus, Plus, MessageCircle } from "lucide-react";
+import { Trash2, Eye, EyeOff, ReceiptText, RotateCw, Gift, Minus, Plus, MessageCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toZonedTime, format as formatTz } from "date-fns-tz";
@@ -36,7 +36,7 @@ function Dashboard(){
  const [isRenewing,setIsRenewing]=useState(false);
  const nowBr=toZonedTime(new Date(),"America/Sao_Paulo");
  const currentMonthLabel=formatTz(nowBr,"MMMM/yy",{locale:ptBR}).replace(/^\w/,c=>c.toUpperCase());
- const {data:stats,isLoading,refetch}=useQuery<DashboardStats>({queryKey:["dashboard-stats-modern",activeTab],staleTime:300000,queryFn:async()=>{
+ const {data:stats,isLoading,refetch}=useQuery<DashboardStats>({queryKey:["dashboard-stats-modern",activeTab],staleTime:300000,gcTime:typeof window==="undefined"?undefined:86400000,queryFn:async()=>{
   const now=toZonedTime(new Date(),"America/Sao_Paulo"),todayStr=formatTz(now,"yyyy-MM-dd"),currentMonth=formatTz(now,"MM"),currentYear=formatTz(now,"yyyy");
   const [clientsRes,transactionsRes,serversRes]=await Promise.all([
    supabase.from("clientes").select("id, nome, whatsapp, vencimento, valor, status, servidores_ids, plano_id, desconto, plans(name, price)"),
@@ -155,7 +155,7 @@ const {error:updateError}=await supabase.from("clientes").update({vencimento:ren
   setIsRenewSuccessOpen(false);
  }
 
- if(isLoading)return <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]"><div className="flex flex-col items-center gap-2"><Activity className="h-10 w-10 text-primary animate-pulse"/><span className="text-sm font-medium animate-pulse text-muted-foreground">Carregando painel...</span></div></div>;
+ if(isLoading)return <DashboardPlaceholder />;
 
  return <div data-owerapps-ready="true" className="dashboard-page flex flex-col gap-6 p-4 md:p-6 pb-10 max-w-7xl mx-auto w-full">
   <header className="dashboard-toolbar flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -178,3 +178,20 @@ const {error:updateError}=await supabase.from("clientes").update({vencimento:ren
 }
 
 function DeleteTransaction({id}:{id:any}){return <Dialog><DialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-rose-500"><Trash2 size={14}/></Button></DialogTrigger><DialogContent className="max-w-[350px] rounded-2xl"><DialogHeader><DialogTitle className="text-center font-bold">Confirmar exclusão</DialogTitle></DialogHeader><p className="text-center text-sm text-muted-foreground py-4">Deseja realmente excluir este registro de transação?</p><div className="flex gap-2"><DialogTrigger asChild><Button variant="outline" className="flex-1 rounded-xl font-semibold">Cancelar</Button></DialogTrigger><Button variant="destructive" className="flex-1 rounded-xl font-bold" onClick={async()=>{const{error}=await supabase.from("transacoes").delete().eq("id",id);if(error)toast.error("Erro ao excluir registro");else{toast.success("Registro removido");setTimeout(()=>window.location.reload(),300)}}}>Excluir</Button></div></DialogContent></Dialog>}
+
+
+function DashboardPlaceholder() {
+ return <div className="flex flex-col gap-6 p-4 md:p-6 max-w-7xl mx-auto w-full" aria-busy="true" aria-label="Preparando painel">
+  <div className="h-10 w-52 rounded-xl bg-muted/50" />
+  <div className="grid grid-cols-1 lg:grid-cols-[1.45fr_1fr] gap-4" aria-hidden="true">
+   <div className="min-h-36 rounded-2xl border border-border bg-card p-5 space-y-4">
+    <div className="h-3 w-24 rounded bg-muted/60" /><div className="h-8 w-40 rounded bg-muted/60" />
+   </div>
+   <div className="grid grid-cols-2 gap-3">{[0,1,2,3].map(i=><div key={i} className="rounded-2xl border border-border bg-card p-4 space-y-3"><div className="h-3 w-16 rounded bg-muted/60" /><div className="h-6 w-20 rounded bg-muted/60" /></div>)}</div>
+  </div>
+  <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_.65fr] gap-4" aria-hidden="true">
+   <div className="h-64 rounded-2xl border border-border bg-card" />
+   <div className="h-64 rounded-2xl border border-border bg-card p-5 space-y-4"><div className="h-4 w-28 rounded bg-muted/60" />{[0,1,2].map(i=><div key={i} className="h-10 rounded-xl bg-muted/40" />)}</div>
+  </div>
+ </div>;
+}
