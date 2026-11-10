@@ -36,7 +36,7 @@ function Dashboard(){
  const [isRenewing,setIsRenewing]=useState(false);
  const nowBr=toZonedTime(new Date(),"America/Sao_Paulo");
  const currentMonthLabel=formatTz(nowBr,"MMMM/yy",{locale:ptBR}).replace(/^\w/,c=>c.toUpperCase());
- const {data:stats,isLoading,refetch}=useQuery<DashboardStats>({queryKey:["dashboard-stats-modern",activeTab],staleTime:300000,gcTime:typeof window==="undefined"?undefined:86400000,queryFn:async()=>{
+ const {data:stats,isLoading,refetch}=useQuery<DashboardStats>({queryKey:["dashboard-stats-modern",activeTab],staleTime:300000,gcTime:86400000,queryFn:async()=>{
   const now=toZonedTime(new Date(),"America/Sao_Paulo"),todayStr=formatTz(now,"yyyy-MM-dd"),currentMonth=formatTz(now,"MM"),currentYear=formatTz(now,"yyyy");
   const [clientsRes,transactionsRes,serversRes]=await Promise.all([
    supabase.from("clientes").select("id, nome, whatsapp, vencimento, valor, status, servidores_ids, plano_id, desconto, plans(name, price)"),
