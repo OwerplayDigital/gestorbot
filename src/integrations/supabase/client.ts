@@ -158,17 +158,18 @@ class LocalStorageBucket {
     const reader=new FileReader();
     const data=await new Promise<string>((resolve,reject)=>{reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file);});
     await putLocal('local_files',{id:key,dataUrl:data,bucket:this.bucket,path,contentType:file.type||'application/octet-stream',updated_at:now()});
+    try { localStorage.setItem(key,data); } catch { /* arquivo grande: permanece no IndexedDB e disponível por URL assinada */ }
     return {data:{path},error:null};
   }
   async remove(paths:string[]){
-    for(const path of paths) await deleteLocal('local_files','owerplay.file.'+this.bucket+'.'+path);
+    for(const path of paths) { const key='owerplay.file.'+this.bucket+'.'+path; await deleteLocal('local_files',key); try { localStorage.removeItem(key); } catch {} }
     return {data:paths.map(name=>({name})),error:null};
   }
   async createSignedUrl(path:string,_expiresIn:number){
     const file=await getLocal('local_files','owerplay.file.'+this.bucket+'.'+path);
     return file?{data:{signedUrl:String(file.dataUrl||'')},error:null}:{data:null,error:{message:'Arquivo local não encontrado.'}};
   }
-  getPublicUrl(_path:string){return {data:{publicUrl:''}};}
+  getPublicUrl(path:string){const key='owerplay.file.'+this.bucket+'.'+path;return {data:{publicUrl:typeof window!=='undefined'?localStorage.getItem(key)||'':''}};}
 }
 const listeners=new Set<(event:string,session:any)=>void>();
 let session:any=null;
