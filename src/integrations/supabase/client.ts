@@ -3,6 +3,7 @@
  * without a hosted database. Data stays in this browser profile.
  */
 import type { Database } from './types';
+import { getLocal, putLocal, deleteLocal, getAllLocal, clearLocalStore, putManyLocal } from '@/lib/local-db';
 
 type Row = Record<string, any>;
 type Result<T = any> = { data: T; error: null | { message: string; code?: string }; count?: number };
@@ -152,10 +153,22 @@ class LocalQuery implements PromiseLike<Result<any>> {
 }
 class LocalStorageBucket {
   constructor(private bucket:string){}
-  async upload(path:string,file:Blob|File,opts:any={}){const key='owerplay.file.'+this.bucket+'.'+path;const reader=new FileReader();const data=await new Promise<string>((resolve,reject)=>{reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file);});localStorage.setItem(key,data);return {data:{path},error:null};}
-  async remove(paths:string[]){for(const p of paths)localStorage.removeItem('owerplay.file.'+this.bucket+'.'+p);return {data:paths.map(name=>({name})),error:null};}
-  async createSignedUrl(path:string){return {data:{signedUrl:localStorage.getItem('owerplay.file.'+this.bucket+'.'+path)||''},error:null};}
-  getPublicUrl(path:string){return {data:{publicUrl:localStorage.getItem('owerplay.file.'+this.bucket+'.'+path)||''}};}
+  async upload(path:string,file:Blob|File,opts:any={}){
+    const key='owerplay.file.'+this.bucket+'.'+path;
+    const reader=new FileReader();
+    const data=await new Promise<string>((resolve,reject)=>{reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file);});
+    await putLocal('local_files',{id:key,dataUrl:data,bucket:this.bucket,path,contentType:file.type||'application/octet-stream',updated_at:now()});
+    return {data:{path},error:null};
+  }
+  async remove(paths:string[]){
+    for(const path of paths) await deleteLocal('local_files','owerplay.file.'+this.bucket+'.'+path);
+    return {data:paths.map(name=>({name})),error:null};
+  }
+  async createSignedUrl(path:string,_expiresIn:number){
+    const file=await getLocal('local_files','owerplay.file.'+this.bucket+'.'+path);
+    return file?{data:{signedUrl:String(file.dataUrl||'')},error:null}:{data:null,error:{message:'Arquivo local não encontrado.'}};
+  }
+  getPublicUrl(_path:string){return {data:{publicUrl:''}};}
 }
 const listeners=new Set<(event:string,session:any)=>void>();
 let session:any=null;
@@ -164,7 +177,7 @@ const auth={
   getSession:async()=>({data:{session:getSession()},error:null}),
   getUser:async()=>({data:{user:USER},error:null}),
   signInWithPassword:async({email}:{email:string})=>{session=getSession();for(const fn of listeners)fn('SIGNED_IN',session);return {data:{user:USER,session},error:null};},
-  signOut:async()=>{session=null;for(const fn of listeners)fn('SIGNED_OUT',null);return {error:null}},
+  signOut:async(_options?:any)=>{session=getSession();for(const fn of listeners)fn('SIGNED_OUT',null);return {error:null}},
   onAuthStateChange:(fn:(event:string,session:any)=>void)=>{listeners.add(fn);queueMicrotask(()=>fn('INITIAL_SESSION',getSession()));return {data:{subscription:{unsubscribe:()=>listeners.delete(fn)}}};},
   refreshSession:async()=>({data:{session:getSession(),user:USER},error:null}),
 };
@@ -183,8 +196,10 @@ const client:any={
 };
 export const supabase = new Proxy(client,{get(target,prop){return target[prop as keyof typeof target];}}) as any;
 export async function exportLocalBackup():Promise<string>{
+  const localFiles=await getAllLocal('local_files');
   const files:Record<string,string>={};
-  if(typeof window!=='undefined') for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key?.startsWith('owerplay.file.'))files[key]=localStorage.getItem(key)||'';}
+  for(const file of localFiles) files[file.id]=String(file.dataUrl||'');
+  if(typeof window!=='undefined') for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key?.startsWith('owerplay.file.')&&!files[key])files[key]=localStorage.getItem(key)||'';}
   return JSON.stringify({app:'Owerplay Gestor',format:'gestorbot-local-backup',version:1,exported_at:now(),data:readDb(),files},null,2);
 }
 export async function importLocalBackup(input:string|object){
@@ -194,7 +209,11 @@ export async function importLocalBackup(input:string|object){
   const db={...emptyDb(),...source};
   for(const t of TABLES)if(!Array.isArray(db[t]))db[t]=[];
   writeDb(db);
-  if(typeof window!=='undefined'&&parsed?.files&&typeof parsed.files==='object')for(const [key,value] of Object.entries(parsed.files))if(key.startsWith('owerplay.file.')&&typeof value==='string')localStorage.setItem(key,value);
+  if(parsed?.files&&typeof parsed.files==='object'){
+    await clearLocalStore('local_files');
+    const fileRows=Object.entries(parsed.files).filter(([key,value])=>key.startsWith('owerplay.file.')&&typeof value==='string').map(([key,value])=>({id:key,dataUrl:value}));
+    if(fileRows.length)await putManyLocal('local_files',fileRows);
+  }
   return {tables:TABLES.filter(t=>db[t].length).length,records:TABLES.reduce((n,t)=>n+db[t].length,0)};
 }
 export async function clearLocalData(){if(typeof window!=='undefined'){localStorage.removeItem(DB_KEY);for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k?.startsWith('owerplay.file.'))localStorage.removeItem(k);}}}
