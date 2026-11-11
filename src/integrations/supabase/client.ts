@@ -128,8 +128,8 @@ class LocalQuery implements PromiseLike<Result<any>> {
       } else if(this.action==='delete'){
         const gone=new Set(selected);this.db[this.table]=rows.filter(r=>!gone.has(r));selected=[...gone];
       }
-      writeDb(this.db);
       for(const item of selected) if(item.lucro_liquido===undefined && this.table==='transacoes') item.lucro_liquido=Number(item.entrada ?? item.valor ?? 0)-Number(item.custo ?? 0);
+      writeDb(this.db);
       for(const o of this.orders) selected.sort((a,b)=>{const av=a[o.key],bv=b[o.key];return (av>bv?1:av<bv?-1:0)*(o.asc?1:-1);});
       const count=selected.length;
       selected=selected.slice(this.offset,this.offset+this.take);
@@ -176,7 +176,7 @@ function getSession(){if(!session)session={access_token:'local.'+USER_ID+'.sessi
 const auth={
   getSession:async()=>({data:{session:getSession()},error:null}),
   getUser:async()=>({data:{user:USER},error:null}),
-  signInWithPassword:async({email}:{email:string})=>{session=getSession();for(const fn of listeners)fn('SIGNED_IN',session);return {data:{user:USER,session},error:null};},
+  signInWithPassword:async({email,password}:{email:string;password?:string})=>{session=getSession();for(const fn of listeners)fn('SIGNED_IN',session);return {data:{user:USER,session},error:null};},
   signOut:async(_options?:any)=>{session=getSession();for(const fn of listeners)fn('SIGNED_OUT',null);return {error:null}},
   onAuthStateChange:(fn:(event:string,session:any)=>void)=>{listeners.add(fn);queueMicrotask(()=>fn('INITIAL_SESSION',getSession()));return {data:{subscription:{unsubscribe:()=>listeners.delete(fn)}}};},
   refreshSession:async()=>({data:{session:getSession(),user:USER},error:null}),
