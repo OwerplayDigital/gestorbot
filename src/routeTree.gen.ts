@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as ExtratoDemoRouteImport } from './routes/extrato-demo'
 import { Route as AuthenticatedAnalisesRouteImport } from './routes/_authenticated/analises'
 import { Route as AuthenticatedAplicativosRouteImport } from './routes/_authenticated/aplicativos'
+import { Route as AuthenticatedBackupRouteImport } from './routes/_authenticated/backup'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedCreditosRouteImport } from './routes/_authenticated/creditos'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -55,6 +56,11 @@ const AuthenticatedAplicativosRoute =
     path: '/aplicativos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedBackupRoute = AuthenticatedBackupRouteImport.update({
+  id: '/backup',
+  path: '/backup',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
   id: '/clientes',
   path: '/clientes',
@@ -140,6 +146,8 @@ export interface FileRoutesByFullPath {
   '/extrato-demo': typeof ExtratoDemoRoute
   '/analises': typeof AuthenticatedAnalisesRoute
   '/aplicativos': typeof AuthenticatedAplicativosRoute
+  '/backup': typeof AuthenticatedBackupRoute
+  '/backup': typeof AuthenticatedBackupRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/creditos': typeof AuthenticatedCreditosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/extrato-demo': typeof ExtratoDemoRoute
   '/_authenticated/analises': typeof AuthenticatedAnalisesRoute
   '/_authenticated/aplicativos': typeof AuthenticatedAplicativosRoute
+  '/_authenticated/backup': typeof AuthenticatedBackupRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/creditos': typeof AuthenticatedCreditosRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -207,6 +216,8 @@ export interface FileRouteTypes {
     | '/extrato-demo'
     | '/analises'
     | '/aplicativos'
+    | '/backup'
+    | '/backup'
     | '/clientes'
     | '/creditos'
     | '/dashboard'
@@ -250,6 +261,7 @@ export interface FileRouteTypes {
     | '/extrato-demo'
     | '/_authenticated/analises'
     | '/_authenticated/aplicativos'
+    | '/_authenticated/backup'
     | '/_authenticated/clientes'
     | '/_authenticated/creditos'
     | '/_authenticated/dashboard'
@@ -313,6 +325,13 @@ declare module '@tanstack/react-router' {
       path: '/aplicativos'
       fullPath: '/aplicativos'
       preLoaderRoute: typeof AuthenticatedAplicativosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/backup': {
+      id: '/_authenticated/backup'
+      path: '/backup'
+      fullPath: '/backup'
+      preLoaderRoute: typeof AuthenticatedBackupRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/clientes': {
@@ -426,6 +445,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalisesRoute: typeof AuthenticatedAnalisesRoute
   AuthenticatedAplicativosRoute: typeof AuthenticatedAplicativosRoute
+  AuthenticatedBackupRoute: typeof AuthenticatedBackupRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedCreditosRoute: typeof AuthenticatedCreditosRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -441,6 +461,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalisesRoute: AuthenticatedAnalisesRoute,
   AuthenticatedAplicativosRoute: AuthenticatedAplicativosRoute,
+  AuthenticatedBackupRoute: AuthenticatedBackupRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedCreditosRoute: AuthenticatedCreditosRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
