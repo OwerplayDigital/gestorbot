@@ -24,10 +24,11 @@ jobs:
           path: .output/
           if-no-files-found: error
           retention-days: 7
+          include-hidden-files: true
       - name: Deploy to Cloudflare Workers (optional)
         if: ${{ env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' }}
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy .output/server/index.mjs --assets .output/public --name gestorbot-local --compatibility-date 2026-11-11 --compatibility-flags nodejs_compat
+          command: deploy --config .output/server/wrangler.json
