@@ -137,7 +137,7 @@ class LocalQuery implements PromiseLike<Result<any>> {
         const cols=(this as any).columns || '*';
         const result:Row = cols==='*' || parseSelect(cols).includes('*') ? {...row} : {};
         for(const part of parseSelect(cols)) {
-          const m=part.match(/^(\\w+)\\s*\\((.*)\\)$/);
+          const m=part.match(/^(\w+)\s*\((.*)\)$/);
           if(m) {
             const rel=relation(this.table,row,m[1],this.db);
             result[m[1]]=rel ? Object.fromEntries(parseSelect(m[2]).map(k=>[k,rel[k]])) : rel;
