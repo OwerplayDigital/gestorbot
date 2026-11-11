@@ -14,3 +14,17 @@ jobs:
           bun-version: latest
       - run: bun install --frozen-lockfile
       - run: bun run build
+      - name: Save production build
+        uses: actions/upload-artifact@v4
+        with:
+          name: gestorbot-local-build
+          path: .output/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Deploy to Cloudflare Workers (optional)
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy .output/server/index.mjs --assets .output/public --name gestorbot-local --compatibility-date 2026-11-11 --compatibility-flags nodejs_compat
