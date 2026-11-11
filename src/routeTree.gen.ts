@@ -147,7 +147,6 @@ export interface FileRoutesByFullPath {
   '/analises': typeof AuthenticatedAnalisesRoute
   '/aplicativos': typeof AuthenticatedAplicativosRoute
   '/backup': typeof AuthenticatedBackupRoute
-  '/backup': typeof AuthenticatedBackupRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/creditos': typeof AuthenticatedCreditosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -169,6 +168,7 @@ export interface FileRoutesByTo {
   '/extrato-demo': typeof ExtratoDemoRoute
   '/analises': typeof AuthenticatedAnalisesRoute
   '/aplicativos': typeof AuthenticatedAplicativosRoute
+  '/backup': typeof AuthenticatedBackupRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/creditos': typeof AuthenticatedCreditosRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
