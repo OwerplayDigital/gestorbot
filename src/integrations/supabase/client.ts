@@ -204,16 +204,22 @@ export async function exportLocalBackup():Promise<string>{
 }
 export async function importLocalBackup(input:string|object){
   const parsed=typeof input==='string'?JSON.parse(input):input as any;
-  const source=parsed?.data??parsed;
-  if(!source||typeof source!=='object'||Array.isArray(source))throw new Error('Arquivo de backup inválido.');
-  const db={...emptyDb(),...source};
-  for(const t of TABLES)if(!Array.isArray(db[t]))db[t]=[];
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('Arquivo de backup inválido.');
+  const source=parsed.data??parsed.tables??parsed.database??parsed;
+  if(!source||typeof source!=='object'||Array.isArray(source))throw new Error('Estrutura do backup não reconhecida.');
+  const db=emptyDb();
+  let importedTables=0;
+  for(const table of TABLES){
+    const rows=(source as any)[table]??(source as any).data?.[table]??(source as any).tables?.[table];
+    if(Array.isArray(rows)){db[table]=rows;importedTables++;}
+  }
+  if(importedTables===0)throw new Error('Não encontrei tabelas reconhecidas neste backup. Nenhum dado local foi substituído.');
   writeDb(db);
-  if(parsed?.files&&typeof parsed.files==='object'){
+  if(parsed.files&&typeof parsed.files==='object'){
     await clearLocalStore('local_files');
     const fileRows=Object.entries(parsed.files).filter(([key,value])=>key.startsWith('owerplay.file.')&&typeof value==='string').map(([key,value])=>({id:key,dataUrl:value}));
     if(fileRows.length)await putManyLocal('local_files',fileRows);
   }
-  return {tables:TABLES.filter(t=>db[t].length).length,records:TABLES.reduce((n,t)=>n+db[t].length,0)};
+  return {tables:importedTables,records:TABLES.reduce((n,t)=>n+db[t].length,0)};
 }
 export async function clearLocalData(){if(typeof window!=='undefined'){localStorage.removeItem(DB_KEY);for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k?.startsWith('owerplay.file.'))localStorage.removeItem(k);}}await clearLocalStore('local_files');}
