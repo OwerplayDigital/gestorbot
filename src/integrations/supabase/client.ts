@@ -216,4 +216,4 @@ export async function importLocalBackup(input:string|object){
   }
   return {tables:TABLES.filter(t=>db[t].length).length,records:TABLES.reduce((n,t)=>n+db[t].length,0)};
 }
-export async function clearLocalData(){if(typeof window!=='undefined'){localStorage.removeItem(DB_KEY);for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k?.startsWith('owerplay.file.'))localStorage.removeItem(k);}}}
+export async function clearLocalData(){if(typeof window!=='undefined'){localStorage.removeItem(DB_KEY);for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k?.startsWith('owerplay.file.'))localStorage.removeItem(k);}}await clearLocalStore('local_files');}
