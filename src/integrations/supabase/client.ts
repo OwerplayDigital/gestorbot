@@ -32,7 +32,18 @@ function normalize(table: string, row: Row): Row {
   if (table === 'revendedores') item.public_token ??= uid();
   return item;
 }
-function parseSelect(s: string) { return s.split(',').map(x => x.trim()).filter(Boolean); }
+function parseSelect(s: string) {
+  const parts: string[] = [];
+  let depth = 0, start = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '(') depth++;
+    else if (s[i] === ')') depth = Math.max(0, depth - 1);
+    else if (s[i] === ',' && depth === 0) { parts.push(s.slice(start, i).trim()); start = i + 1; }
+  }
+  const tail = s.slice(start).trim();
+  if (tail) parts.push(tail);
+  return parts.filter(Boolean);
+}
 function compare(a: any, op: string, b: any): boolean {
   if (op === 'eq') return a === b;
   if (op === 'neq') return a !== b;
@@ -118,19 +129,21 @@ class LocalQuery implements PromiseLike<Result<any>> {
       }
       writeDb(this.db);
       for(const item of selected) if(item.lucro_liquido===undefined && this.table==='transacoes') item.lucro_liquido=Number(item.entrada ?? item.valor ?? 0)-Number(item.custo ?? 0);
+      for(const o of this.orders) selected.sort((a,b)=>{const av=a[o.key],bv=b[o.key];return (av>bv?1:av<bv?-1:0)*(o.asc?1:-1);});
+      const count=selected.length;
+      selected=selected.slice(this.offset,this.offset+this.take);
       let output=selected.map(row=>{
         const cols=(this as any).columns || '*';
-        if(cols==='*'||cols.includes('*')) {
-          const result={...row};
-          for(const part of parseSelect(cols)) {const m=part.match(/^(\w+)\s*\((.*)\)$/);if(m)result[m[1]]=relation(this.table,row,m[1],this.db);}
-          return result;
+        const result:Row = cols==='*' || parseSelect(cols).includes('*') ? {...row} : {};
+        for(const part of parseSelect(cols)) {
+          const m=part.match(/^(\\w+)\\s*\\((.*)\\)$/);
+          if(m) {
+            const rel=relation(this.table,row,m[1],this.db);
+            result[m[1]]=rel ? Object.fromEntries(parseSelect(m[2]).map(k=>[k,rel[k]])) : rel;
+          } else if(part!=='*' && part in row) result[part]=row[part];
         }
-        const result:Row={};
-        for(const part of parseSelect(cols)){const m=part.match(/^(\w+)\s*\((.*)\)$/);if(m){const rel=relation(this.table,row,m[1],this.db);result[m[1]]=rel?Object.fromEntries(parseSelect(m[2]).map(k=>[k,rel[k]])):rel;}else if(part in row)result[part]=row[part];}
         return result;
       });
-      for(const o of this.orders) output.sort((a,b)=>{const av=a[o.key],bv=b[o.key];return (av>bv?1:av<bv?-1:0)*(o.asc?1:-1);});
-      const count=output.length;output=output.slice(this.offset,this.offset+this.take);
       if(this.singleMode==='single')return {data:output[0]??null,error:output.length?null:{message:'No rows found',code:'PGRST116'},count};
       if(this.singleMode==='maybe')return {data:output[0]??null,error:null,count};
       return {data:output,error:null,count};
@@ -169,6 +182,19 @@ const client:any={
   storage:{from:(bucket:string)=>new LocalStorageBucket(bucket)},
 };
 export const supabase = new Proxy(client,{get(target,prop){return target[prop as keyof typeof target];}}) as any;
-export async function exportLocalBackup():Promise<string>{return JSON.stringify({app:'Owerplay Gestor',format:'gestorbot-local-backup',version:1,exported_at:now(),data:readDb()},null,2);}
-export async function importLocalBackup(input:string|object){const parsed=typeof input==='string'?JSON.parse(input):input as any;const source=parsed?.data??parsed;if(!source||typeof source!=='object')throw new Error('Arquivo de backup inválido.');const db={...emptyDb(),...source};for(const t of TABLES)if(!Array.isArray(db[t]))db[t]=[];writeDb(db);return {tables:TABLES.filter(t=>db[t].length).length,records:TABLES.reduce((n,t)=>n+db[t].length,0)};}
+export async function exportLocalBackup():Promise<string>{
+  const files:Record<string,string>={};
+  if(typeof window!=='undefined') for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key?.startsWith('owerplay.file.'))files[key]=localStorage.getItem(key)||'';}
+  return JSON.stringify({app:'Owerplay Gestor',format:'gestorbot-local-backup',version:1,exported_at:now(),data:readDb(),files},null,2);
+}
+export async function importLocalBackup(input:string|object){
+  const parsed=typeof input==='string'?JSON.parse(input):input as any;
+  const source=parsed?.data??parsed;
+  if(!source||typeof source!=='object'||Array.isArray(source))throw new Error('Arquivo de backup inválido.');
+  const db={...emptyDb(),...source};
+  for(const t of TABLES)if(!Array.isArray(db[t]))db[t]=[];
+  writeDb(db);
+  if(typeof window!=='undefined'&&parsed?.files&&typeof parsed.files==='object')for(const [key,value] of Object.entries(parsed.files))if(key.startsWith('owerplay.file.')&&typeof value==='string')localStorage.setItem(key,value);
+  return {tables:TABLES.filter(t=>db[t].length).length,records:TABLES.reduce((n,t)=>n+db[t].length,0)};
+}
 export async function clearLocalData(){if(typeof window!=='undefined'){localStorage.removeItem(DB_KEY);for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k?.startsWith('owerplay.file.'))localStorage.removeItem(k);}}}
